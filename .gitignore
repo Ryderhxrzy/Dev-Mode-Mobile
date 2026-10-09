@@ -38,6 +38,35 @@ yarn-error.*
 
 example
 
-# generated native folders
+# iOS remains generated for this Android-only project
 /ios
-/android
+
+# Keep Android source/configuration under version control, but exclude builds and
+# machine-specific Android files. See android/.gitignore for the rest.
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/.cxx/
+/android/.idea/
+/android/captures/
+/android/.externalNativeBuild/
+/android/**/build/
+/android/**/.cxx/
+/android/key.properties
+/android/keystore.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.bin
+*.hprof
+*.iml
+/.gradle-user-home/
+/gradle-*.log
+
+# Generated Gradle/cache lockfiles. Keep npm's package-lock.json tracked.
+*.lock
+*.lck
+!package-lock.json

@@ -1,56 +1,54 @@
-# Welcome to your Expo app 👋
+# Dev Toggle
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Android utility for quick access to Developer Options, USB Debugging, and Wireless Debugging. The launcher name is **Dev Toggle**; the planned Google Play listing title is **Dev-Option: Toggle**. The Android application ID is `com.devtoggle.app`.
 
-## Get started
+## What it can actually do
 
-1. Install dependencies
+| Capability | Behavior |
+| --- | --- |
+| Read status | The Kotlin module reads Android global settings where the device permits it; otherwise the UI says **Unknown**. |
+| Open Developer Options | Uses Android's supported Developer Options intent. |
+| Open USB Debugging | Opens Developer Options, where USB Debugging is located. |
+| Open Wireless Debugging | Tries the device's Wireless Debugging settings intent and falls back to Developer Options. |
+| Change settings | Only attempted after Android confirms `WRITE_SECURE_SETTINGS`. The app rereads the value and reports failure if Android blocks it. |
 
-   ```bash
-   npm install
+The app never treats a button tap as success. It does not use root, hidden APIs, or Accessibility automation. Manufacturer ROMs and Android versions can refuse reads, settings intents, or writes.
+
+## Windows ADB setup
+
+1. Download [Android SDK Platform Tools](https://developer.android.com/tools/releases/platform-tools), extract the Windows ZIP, open the `platform-tools` folder, type `cmd` in its address bar, and press Enter.
+2. Enable Developer Options and USB Debugging manually on the phone, connect a data-capable USB cable, and accept the phone's ADB authorization dialog.
+3. Run `adb devices`. Continue only when the device has the `device` status (not `unauthorized`).
+4. Run:
+
+   ```text
+   adb shell pm grant com.devtoggle.app android.permission.WRITE_SECURE_SETTINGS
    ```
 
-2. Start the app
+5. Return to the app and choose **Check Permission**. The Android-native check determines the displayed result.
 
-   ```bash
-   npx expo start
-   ```
+If the grant fails, reconnect and re-authorize the phone, check that `adb devices` says `device`, and make sure the installed app uses the same application ID. Reinstalling the app or resetting the device may require granting it again.
 
-In the output, you'll find options to open the app in a
+## Development and builds
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+The native module lives at `modules/dev-toggle-native` and is automatically linked by Expo prebuild. It requires an Android development or production build; Expo Go cannot include it.
 
 ```bash
-npm run reset-project
+npx expo prebuild --clean
+npx expo start --dev-client
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Build with EAS:
 
-### Other setup steps
+```bash
+npx eas-cli@latest build --platform android --profile development
+npx eas-cli@latest build --platform android --profile production
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Run checks before submitting changes:
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx expo lint
+npx tsc --noEmit
+npx expo-doctor
+```

@@ -1,98 +1,23 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, Alert, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import DevToggle, { type DeviceStatus, type SettingName } from '@/modules/dev-toggle-native';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+const SETTINGS: Array<{key: SettingName; title: string; description: string}> = [
+  {key:'developerOptions',title:'Developer Options',description:'Controls access to Android developer settings.'},
+  {key:'usbDebugging',title:'USB Debugging',description:'Lets an authorized computer use ADB over USB.'},
+  {key:'wirelessDebugging',title:'Wireless Debugging',description:'Lets ADB connect over your local network on supported devices.'},
+];
+const EMPTY: DeviceStatus={developerOptions:'unknown',usbDebugging:'unknown',wirelessDebugging:'unknown',writeSecureSettings:'unknown',nativeAvailable:false};
+export default function Dashboard() {
+ const dark=useColorScheme()==='dark'; const [status,setStatus]=useState<DeviceStatus>(EMPTY); const [loading,setLoading]=useState(true);
+ const refresh=useCallback(async()=>{setLoading(true);try{setStatus(await DevToggle.getStatus());}finally{setLoading(false);}},[]);
+ useEffect(()=>{refresh();const sub=AppState.addEventListener('change',x=>{if(x==='active')refresh();});return()=>sub.remove();},[refresh]);
+ const open=async(key:SettingName)=>{const result=await DevToggle.openSettings(key);if(!result.opened)Alert.alert('Open settings',result.message);};
+ const toggle=async(key:SettingName)=>{const result=await DevToggle.setEnabled(key,status[key]!=='enabled');await refresh();if(!result.changed)Alert.alert('Could not change setting',result.message);};
+ const c={bg:dark?'#0B1220':'#F5F7FB',card:dark?'#162033':'#FFFFFF',text:dark?'#F8FAFC':'#10213A',muted:dark?'#AEBBCD':'#5E6B7D'};
+ return <View style={[s.screen,{backgroundColor:c.bg}]}><SafeAreaView style={s.safe} edges={['top']}><ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}><View style={s.hero}><Text style={s.overline}>ANDROID UTILITY</Text><Text style={[s.title,{color:c.text}]}>Dev Toggle</Text><Text style={[s.subtitle,{color:c.muted}]}>Quick access to Android settings for building, testing, and connecting.</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Refresh setting statuses" onPress={refresh} style={[s.refresh,{backgroundColor:dark?'#22314A':'#E8F1FF'}]}><Text style={s.blue}>{loading?'Checking status…':'↻  Refresh status'}</Text></Pressable>{SETTINGS.map(item=><View key={item.key} style={[s.card,{backgroundColor:c.card}]}><View style={s.cardTop}><View style={s.copy}><Text style={[s.cardTitle,{color:c.text}]}>{item.title}</Text><Text style={[s.description,{color:c.muted}]}>{item.description}</Text></View><Badge value={status[item.key]} /></View>{status[item.key]==='unknown'&&<Text style={[s.notice,{color:c.muted}]}>Android could not reliably report this setting here. Use Settings to confirm it.</Text>}<View style={s.actions}>{status.writeSecureSettings==='granted'&&<Pressable accessibilityRole="button" onPress={()=>toggle(item.key)} style={s.primary}><Text style={s.primaryText}>{status[item.key]==='enabled'?'Turn off in app':'Turn on in app'}</Text></Pressable>}<Pressable accessibilityRole="button" onPress={()=>open(item.key)} style={status.writeSecureSettings==='granted'?s.secondary:s.primary}><Text style={status.writeSecureSettings==='granted'?s.blue:s.primaryText}>Open Settings</Text></Pressable></View></View>)}<View style={[s.permission,{backgroundColor:status.writeSecureSettings==='granted'?(dark?'#103528':'#E9F8F0'):(dark?'#30291B':'#FFF7E5') }]}><Text style={[s.cardTitle,{color:c.text}]}>Advanced permission: {status.writeSecureSettings==='granted'?'Granted':status.writeSecureSettings==='denied'?'Not granted':'Unable to verify'}</Text><Text style={[s.description,{color:c.muted}]}>After the verified ADB permission is granted, the first button changes the Android setting directly in this app and rereads its result. Settings remains a manual fallback.</Text><Pressable onPress={()=>router.push('/setup')}><Text style={[s.blue,{marginTop:12}]}>Open ADB setup guide →</Text></Pressable></View>{!status.nativeAvailable&&<Text style={[s.note,{color:c.muted}]}>Native status checks require this app’s Android development or production build. Expo Go cannot include this module.</Text>}</ScrollView></SafeAreaView></View>;
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
+function Badge({value}:{value:DeviceStatus[SettingName]}){const color=value==='enabled'?'#159A63':value==='disabled'?'#D05B31':'#65758B';return <View style={[s.badge,{backgroundColor:`${color}20`}]}><View style={[s.dot,{backgroundColor:color}]}/><Text style={{color,fontWeight:'800',fontSize:12}}>{value==='enabled'?'Enabled':value==='disabled'?'Disabled':'Unknown'}</Text></View>}
+const s=StyleSheet.create({screen:{flex:1},safe:{flex:1},content:{padding:20,paddingBottom:40,gap:16},hero:{gap:7,paddingTop:16},overline:{color:'#1877F2',fontSize:12,fontWeight:'900',letterSpacing:1.2},title:{fontSize:34,fontWeight:'800'},subtitle:{fontSize:16,lineHeight:23},refresh:{borderRadius:12,padding:14,alignItems:'center'},blue:{color:'#1877F2',fontWeight:'800'},card:{borderRadius:20,padding:18,gap:16,elevation:2,shadowColor:'#0F172A',shadowOpacity:.06,shadowRadius:10,shadowOffset:{width:0,height:3}},cardTop:{flexDirection:'row',justifyContent:'space-between',gap:12},copy:{flex:1,gap:6},cardTitle:{fontSize:18,fontWeight:'800'},description:{fontSize:14,lineHeight:20},badge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',paddingHorizontal:10,paddingVertical:7,borderRadius:20,gap:6},dot:{width:7,height:7,borderRadius:4},notice:{fontSize:13,lineHeight:18},actions:{flexDirection:'row',gap:10,flexWrap:'wrap'},primary:{backgroundColor:'#1877F2',paddingVertical:12,paddingHorizontal:15,borderRadius:11},primaryText:{color:'#FFF',fontWeight:'800'},secondary:{borderWidth:1,borderColor:'#1877F2',paddingVertical:11,paddingHorizontal:15,borderRadius:11},permission:{borderRadius:18,padding:18},note:{fontSize:12,lineHeight:18,textAlign:'center'}});

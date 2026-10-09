@@ -1,0 +1,13 @@
+plugins { id 'com.android.library'; id 'kotlin-android' }
+group = 'expo.modules.devtoggle'
+version = '1.0.0'
+android {
+  namespace 'expo.modules.devtoggle'
+  compileSdk rootProject.ext.compileSdkVersion
+
+  defaultConfig {
+    minSdk rootProject.ext.minSdkVersion
+    targetSdk rootProject.ext.targetSdkVersion
+  }
+}
+dependencies { implementation project(':expo-modules-core') }

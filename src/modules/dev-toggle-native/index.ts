@@ -1,0 +1,10 @@
+import { requireOptionalNativeModule } from 'expo-modules-core';
+export type SettingName = 'developerOptions' | 'usbDebugging' | 'wirelessDebugging';
+export type SettingState = 'enabled' | 'disabled' | 'unknown';
+export type PermissionStatus = 'granted' | 'denied' | 'unknown';
+export type DeviceStatus = Record<SettingName, SettingState> & { writeSecureSettings: PermissionStatus; nativeAvailable: boolean };
+type Result = { opened?: boolean; changed?: boolean; message: string };
+type NativeModule = { getStatus(): Promise<DeviceStatus>; getPermissionStatus(): Promise<PermissionStatus>; openSettings(setting: SettingName): Promise<Result>; setEnabled(setting: SettingName, enabled: boolean): Promise<Result> };
+const native = requireOptionalNativeModule<NativeModule>('DevToggle');
+const unavailable: DeviceStatus = { developerOptions:'unknown', usbDebugging:'unknown', wirelessDebugging:'unknown', writeSecureSettings:'unknown', nativeAvailable:false };
+export default { getStatus: async () => native ? native.getStatus() : unavailable, getPermissionStatus: async () => native ? native.getPermissionStatus() : 'unknown' as PermissionStatus, openSettings: async (setting: SettingName) => native ? native.openSettings(setting) : { opened:false, message:'This feature requires an Android development or production build.' }, setEnabled: async (setting: SettingName, enabled: boolean) => native ? native.setEnabled(setting, enabled) : { changed:false, message:'This feature requires an Android development or production build.' } };
