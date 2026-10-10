@@ -8,3 +8,4 @@ if (Test-Path $iconPath) {
 } else {
     Write-Output "File not found"
 }
+

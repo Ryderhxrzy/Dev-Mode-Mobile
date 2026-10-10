@@ -37,3 +37,4 @@
             android:data="devmode://toggle/wirelessDebugging" />
     </shortcut>
 </shortcuts>
+

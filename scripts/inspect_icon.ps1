@@ -22,3 +22,4 @@ for ($y = 0; $y -lt $bmp.Height; $y += 4) {
 
 Write-Output "Bounds of non-transparent pixels: X=[$minX, $maxX], Y=[$minY, $maxY], Width=$($maxX - $minX), Height=$($maxY - $minY)"
 $bmp.Dispose()
+
