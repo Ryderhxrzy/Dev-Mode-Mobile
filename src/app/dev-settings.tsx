@@ -211,7 +211,7 @@ export default function DevSettings() {
   };
 
   return (
-    <View style={[s.screen, { backgroundColor: t.bg }]}>
+    <View style={s.screen}>
       <SafeAreaView style={s.screen} edges={['bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
