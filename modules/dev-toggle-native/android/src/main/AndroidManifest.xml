@@ -6,6 +6,7 @@
     <receiver
       android:name="expo.modules.devtoggle.DevToggleWidgetProvider"
       android:label="Dev Mode 3-in-1 Quick Toggle"
+      android:icon="@drawable/white_icon"
       android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -22,6 +23,7 @@
     <receiver
       android:name="expo.modules.devtoggle.DevToggleSingleDevWidgetProvider"
       android:label="Dev Mode (1x1)"
+      android:icon="@drawable/white_icon"
       android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
