@@ -230,16 +230,17 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
         }
 
         fun getPendingIntent(context: Context, action: String, requestCode: Int): PendingIntent {
-            val intent = Intent(context, DevToggleWidgetProvider::class.java).apply {
+            val intent = Intent(context, WidgetActionActivity::class.java).apply {
                 this.action = action
                 setPackage(context.packageName)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or Intent.FLAG_ACTIVITY_NO_ANIMATION)
             }
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             } else {
                 PendingIntent.FLAG_UPDATE_CURRENT
             }
-            return PendingIntent.getBroadcast(context, requestCode, intent, flags)
+            return PendingIntent.getActivity(context, requestCode, intent, flags)
         }
     }
 
@@ -265,8 +266,16 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 updateAllWidgets(context)
             }
             ACTION_TOGGLE_USB -> {
+                val devOn = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
                 val current = try { Settings.Global.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false }
                 val next = if (current) 0 else 1
+
+                if (next == 1 && !devOn) {
+                    showToast(context, "Developer Mode must be ON to enable USB Debugging")
+                    updateAllWidgets(context)
+                    return
+                }
+
                 val success = try {
                     Settings.Global.putInt(cr, USB_KEY, next)
                 } catch (_: Exception) {
@@ -281,8 +290,16 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 updateAllWidgets(context)
             }
             ACTION_TOGGLE_WIRELESS -> {
+                val devOn = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
                 val current = try { Settings.Global.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false }
                 val next = if (current) 0 else 1
+
+                if (next == 1 && !devOn) {
+                    showToast(context, "Developer Mode must be ON to enable Wireless Debugging")
+                    updateAllWidgets(context)
+                    return
+                }
+
                 val success = try {
                     Settings.Global.putInt(cr, WIRELESS_KEY, next)
                 } catch (_: Exception) {
