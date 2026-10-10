@@ -346,6 +346,16 @@ class DevToggleModule : Module() {
         "wirelessDebugging" -> wirelessKey
         else -> throw CodedException("ERR_SETTING", "Unsupported setting.", null)
       }
+      if ((setting == "usbDebugging" || setting == "wirelessDebugging") && enabled) {
+        val devOn = read(developerKey) == "enabled"
+        if (!devOn) {
+          val label = if (setting == "usbDebugging") "USB Debugging" else "Wireless Debugging"
+          return@AsyncFunction mapOf(
+            "changed" to false,
+            "message" to "Developer Mode must be ON to enable $label"
+          )
+        }
+      }
       try {
         val written = Settings.Global.putInt(context().contentResolver, settingKey, if (enabled) 1 else 0)
         val now = read(settingKey)
