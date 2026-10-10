@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import { AdbSetupGuide, useWriteSecurePermission } from '@/components/adb-setup';
 import { Button, Card, FeatureRow, IconContainer, Overline } from '@/components/ui';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { useOnboarding } from '@/state/onboarding';
 import { fonts, radius, space, useTheme } from '@/theme';
 
@@ -53,7 +54,7 @@ export default function Onboarding() {
   };
 
   return (
-    <View style={s.screen}>
+    <ScreenBackground>
       <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
         {/* Header Indicator */}
         <View style={s.header}>
@@ -141,7 +142,7 @@ export default function Onboarding() {
           )}
         </View>
       </SafeAreaView>
-    </View>
+    </ScreenBackground>
   );
 }
 

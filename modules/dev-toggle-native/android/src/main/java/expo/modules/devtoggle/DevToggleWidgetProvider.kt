@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -77,11 +78,23 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             } catch (_: Exception) {}
         }
 
+        private fun isDevEnabled(cr: ContentResolver): Boolean =
+            (try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }) ||
+            (try { Settings.Secure.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false })
+
+        private fun isUsbEnabled(cr: ContentResolver): Boolean =
+            (try { Settings.Global.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false }) ||
+            (try { Settings.Secure.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false })
+
+        private fun isWirelessEnabled(cr: ContentResolver): Boolean =
+            (try { Settings.Global.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false }) ||
+            (try { Settings.Secure.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false })
+
         fun buildRemoteViews(context: Context): RemoteViews {
             val cr = context.contentResolver
-            val devOn = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
-            val usbOn = try { Settings.Global.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false }
-            val wirelessOn = try { Settings.Global.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false }
+            val devOn = isDevEnabled(cr)
+            val usbOn = isUsbEnabled(cr)
+            val wirelessOn = isWirelessEnabled(cr)
 
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_widget)
 
@@ -135,12 +148,12 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_wireless, if (wirelessOn) colorActiveText else colorInactiveText)
             if (wirelessOn) {
                 val ep = AdbEndpointHelper.getEndpoint(context)
-                if (ep != null && ep.contains(":")) {
+                if (ep != null && ep.contains(":") && !ep.startsWith(":")) {
                     views.setTextViewText(R.id.tv_wireless_status, ep)
                 } else if (ep != null) {
-                    views.setTextViewText(R.id.tv_wireless_status, "$ep (Resolving)")
+                    views.setTextViewText(R.id.tv_wireless_status, ep)
                 } else {
-                    views.setTextViewText(R.id.tv_wireless_status, "NO WI-FI")
+                    views.setTextViewText(R.id.tv_wireless_status, "CONNECT WI-FI")
                 }
             } else {
                 views.setTextViewText(R.id.tv_wireless_status, "OFF")
@@ -157,7 +170,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
 
         fun buildSingleDevRemoteViews(context: Context): RemoteViews {
             val cr = context.contentResolver
-            val devOn = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
+            val devOn = isDevEnabled(cr)
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_dev_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
@@ -187,7 +200,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
 
         fun buildSingleUsbRemoteViews(context: Context): RemoteViews {
             val cr = context.contentResolver
-            val usbOn = try { Settings.Global.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false }
+            val usbOn = isUsbEnabled(cr)
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_usb_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
@@ -216,7 +229,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
 
         fun buildSingleWirelessRemoteViews(context: Context): RemoteViews {
             val cr = context.contentResolver
-            val wirelessOn = try { Settings.Global.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false }
+            val wirelessOn = isWirelessEnabled(cr)
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_wireless_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
@@ -236,16 +249,14 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_single_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             if (wirelessOn) {
                 val ep = AdbEndpointHelper.getEndpoint(context)
-                if (ep != null && ep.contains(":")) {
+                if (ep != null && ep.contains(":") && !ep.startsWith(":")) {
                     views.setTextViewText(R.id.tv_single_wireless_endpoint, ep)
-                    views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
                 } else if (ep != null) {
-                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "$ep (Resolving)")
-                    views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, ep)
                 } else {
-                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "No Wi-Fi Connection")
-                    views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "Connect Wi-Fi to view IP")
                 }
+                views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
             } else {
                 views.setTextViewText(R.id.tv_single_wireless_endpoint, "")
             }

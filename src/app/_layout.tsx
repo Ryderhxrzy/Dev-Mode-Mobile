@@ -64,8 +64,8 @@ function RootStack() {
       />
       <Stack
         screenOptions={{
-          contentStyle: { backgroundColor: 'transparent' },
-          headerStyle: { backgroundColor: 'transparent' },
+          contentStyle: { backgroundColor: '#050D0A' },
+          headerStyle: { backgroundColor: '#050D0A' },
           headerShadowVisible: false,
           headerTintColor: t.primaryLight,
           headerTitleStyle: {

@@ -74,6 +74,17 @@ object AdbEndpointHelper {
             if (!line.isNullOrEmpty() && line != "0.0.0.0") return line
         } catch (_: Exception) {}
 
+        // 5. Outbound UDP routing interface (instant, 0 network packets, highly reliable on Android)
+        try {
+            java.net.DatagramSocket().use { socket ->
+                socket.connect(java.net.InetAddress.getByName("8.8.8.8"), 53)
+                val ip = socket.localAddress?.hostAddress
+                if (!ip.isNullOrBlank() && ip != "0.0.0.0" && !ip.startsWith(":") && !ip.startsWith("127.")) {
+                    return ip
+                }
+            }
+        } catch (_: Exception) {}
+
         return null
     }
 
@@ -237,12 +248,20 @@ object AdbEndpointHelper {
 
         startDiscovery(context)
         val port = getPort(context)
-        val ip = cachedIp ?: getLocalIpAddress(context)
+        val rawIp = if (!cachedIp.isNullOrBlank() && !cachedIp!!.startsWith(":") && cachedIp != "0.0.0.0") {
+            cachedIp
+        } else {
+            getLocalIpAddress(context)
+        }
+
+        val ip = if (!rawIp.isNullOrBlank() && !rawIp.startsWith(":") && rawIp != "0.0.0.0") rawIp else null
 
         return if (ip != null && port > 0) {
             "$ip:$port"
         } else if (ip != null) {
             ip
+        } else if (port > 0) {
+            "Port: $port"
         } else {
             null
         }

@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowRight } from 'lucide-react-native';
 import { AdbSetupGuide, useWriteSecurePermission } from '@/components/adb-setup';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { Button, Overline } from '@/components/ui';
 import { fonts, space, useTheme } from '@/theme';
 
@@ -11,7 +12,7 @@ export default function Setup() {
   const { permission, checking, check } = useWriteSecurePermission();
 
   return (
-    <View style={s.screen}>
+    <ScreenBackground>
       <SafeAreaView style={s.screen} edges={['bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           <View style={s.header}>
@@ -34,7 +35,7 @@ export default function Setup() {
           )}
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </ScreenBackground>
   );
 }
 

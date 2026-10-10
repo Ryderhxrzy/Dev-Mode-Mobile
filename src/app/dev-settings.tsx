@@ -33,6 +33,7 @@ import DevToggle, {
   type SettingState,
 } from '@/modules/dev-toggle-native';
 import { Button, Card, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { fonts, radius, space, useTheme } from '@/theme';
 import { SCALE_OPTIONS } from '@/app/index';
 
@@ -211,7 +212,7 @@ export default function DevSettings() {
   };
 
   return (
-    <View style={s.screen}>
+    <ScreenBackground>
       <SafeAreaView style={s.screen} edges={['bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           {/* Header */}
@@ -410,7 +411,7 @@ export default function DevSettings() {
           </Card>
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </ScreenBackground>
   );
 }
 

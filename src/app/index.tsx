@@ -27,12 +27,10 @@ import {
   Sliders,
   RotateCcw,
   Zap,
-  Gauge,
-  ChevronDown,
-  ChevronUp,
-  Check,
   CheckCircle2,
   Settings as SettingsIcon,
+  SunMedium,
+  Hand,
 } from 'lucide-react-native';
 import DevToggle, {
   UNAVAILABLE_STATUS,
@@ -41,6 +39,7 @@ import DevToggle, {
   type SettingName,
 } from '@/modules/dev-toggle-native';
 import { Button, Card, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { useOnboarding } from '@/state/onboarding';
 import { fonts, radius, space, useTheme } from '@/theme';
 
@@ -59,7 +58,6 @@ export default function Dashboard() {
   const [status, setStatus] = useState<DeviceStatus>(UNAVAILABLE_STATUS);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
-  const [scaleDropdownOpen, setScaleDropdownOpen] = useState(false);
 
   // Animation scales
   const [animationScales, setAnimationScales] = useState<AnimationScales>({
@@ -68,15 +66,31 @@ export default function Dashboard() {
     animator: 1.0,
   });
 
+  // Extra dev settings (Stay awake & Show touches)
+  const [extraSettings, setExtraSettings] = useState<{
+    stayAwake: string;
+    showTouches: string;
+  }>({
+    stayAwake: 'unknown',
+    showTouches: 'unknown',
+  });
+
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [newStatus, scales] = await Promise.all([
+      const [newStatus, scales, extra] = await Promise.all([
         DevToggle.getStatus(),
         DevToggle.getAnimationScales(),
+        DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
       ]);
       setStatus(newStatus);
       setAnimationScales(scales);
+      if (extra) {
+        setExtraSettings({
+          stayAwake: extra.stayAwake || 'unknown',
+          showTouches: extra.showTouches || 'unknown',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -84,10 +98,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([DevToggle.getStatus(), DevToggle.getAnimationScales()]).then(([st, sc]) => {
+    Promise.all([
+      DevToggle.getStatus(),
+      DevToggle.getAnimationScales(),
+      DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
+    ]).then(([st, sc, extra]) => {
       if (active) {
         setStatus(st);
         setAnimationScales(sc);
+        if (extra) {
+          setExtraSettings({
+            stayAwake: extra.stayAwake || 'unknown',
+            showTouches: extra.showTouches || 'unknown',
+          });
+        }
         setLoading(false);
       }
     });
@@ -162,6 +186,28 @@ export default function Dashboard() {
     [refresh, showToast]
   );
 
+  const toggleExtra = useCallback(
+    async (setting: 'stayAwake' | 'showTouches') => {
+      setBusy(setting);
+      try {
+        const willEnable = extraSettings[setting] !== 'enabled';
+        const res = await DevToggle.setExtraSetting(setting, willEnable);
+        setExtraSettings(prev => ({ ...prev, [setting]: willEnable ? 'enabled' : 'disabled' }));
+        if (!res.changed) {
+          showToast(res.message || 'Action failed');
+        } else {
+          const name = setting === 'stayAwake' ? 'Stay Awake While Charging' : 'Visual Touch Taps';
+          showToast(`${name}: ${willEnable ? 'Enabled' : 'Disabled'}`);
+        }
+      } catch (err: any) {
+        showToast(err?.message || 'Failed to update setting');
+      } finally {
+        setBusy(null);
+      }
+    },
+    [extraSettings, showToast]
+  );
+
   useEffect(() => {
     const handleUrl = (event: { url: string }) => {
       const u = event.url;
@@ -233,7 +279,6 @@ export default function Dashboard() {
   };
 
   const selectCustomScale = async (scale: number) => {
-    setScaleDropdownOpen(false);
     setBusy('customScale');
     try {
       const res = await DevToggle.setAnimationScale('all', scale);
@@ -262,7 +307,7 @@ export default function Dashboard() {
     };
 
   return (
-    <View style={s.screen}>
+    <ScreenBackground>
       <SafeAreaView style={s.screen} edges={['top']}>
         <ScrollView
           contentContainerStyle={s.content}
@@ -275,19 +320,27 @@ export default function Dashboard() {
               tintColor={t.accentCyan}
             />
           }>
-          {/* Top Bar with Prominent Brand Icon & Settings Button */}
+          {/* Top Bar with Centered App Icon & Developer Options Redirection */}
           <Animated.View entering={FadeInDown.duration(300)} style={s.header}>
-            <View style={s.brandGroup}>
-              <Image
-                source={require('@/assets/images/icon2.png')}
-                style={s.headerLogoImage}
-                resizeMode="contain"
-              />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Developer Options in Settings"
+              onPress={() => {
+                void DevToggle.openSettings('developerOptions');
+              }}
+              style={({ pressed }) => [s.brandGroup, { opacity: pressed ? 0.75 : 1 }]}>
+              <View style={s.headerLogoContainer}>
+                <Image
+                  source={require('@/assets/images/icon.png')}
+                  style={s.headerLogoImage}
+                  resizeMode="contain"
+                />
+              </View>
               <View style={{ gap: 2 }}>
                 <Overline>DEVICE CONTROL</Overline>
                 <Text style={[s.title, { color: t.textPrimary }]}>Dev Mode</Text>
               </View>
-            </View>
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Developer Settings"
@@ -297,21 +350,30 @@ export default function Dashboard() {
             </Pressable>
           </Animated.View>
 
-          {/* Master Developer Options Switch Banner */}
+          {/* Master Developer Options Switch Banner (Prominently Highlighted) */}
           <Animated.View entering={FadeInDown.delay(30).duration(300)}>
             <Card
               style={{
-                borderColor: devOptionsEnabled ? `${t.success}60` : t.cardBorder,
+                borderColor: devOptionsEnabled ? `${t.success}90` : `${t.accentCyan}40`,
                 backgroundColor: devOptionsEnabled ? t.canvasElevated : t.canvas,
+                borderWidth: 1.5,
               }}>
               <View style={s.masterRow}>
-                <IconContainer tone={devOptionsEnabled ? 'success' : 'cyan'} size={44}>
-                  <Cpu size={22} color={devOptionsEnabled ? t.success : t.accentCyan} />
+                <IconContainer tone={devOptionsEnabled ? 'success' : 'cyan'} size={48}>
+                  <Cpu size={24} color={devOptionsEnabled ? t.success : t.accentCyan} />
                 </IconContainer>
                 <View style={s.switchCopy}>
-                  <Text style={[s.masterTitle, { color: t.textPrimary }]}>Developer Options</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[s.masterTitle, { color: t.textPrimary }]}>Developer Options</Text>
+                    <Pill
+                      label={devOptionsEnabled ? 'ACTIVE' : 'OFF'}
+                      tone={devOptionsEnabled ? 'success' : 'neutral'}
+                    />
+                  </View>
                   <Text style={[s.switchDesc, { color: t.textSecondary }]}>
-                    {devOptionsEnabled ? 'Developer mode is currently ON' : 'Developer mode is currently OFF'}
+                    {devOptionsEnabled
+                      ? 'System Developer Mode is active. Hardware debug bridges unlocked.'
+                      : 'Developer Mode is currently disabled in Android system settings.'}
                   </Text>
                 </View>
                 {granted ? (
@@ -333,110 +395,9 @@ export default function Dashboard() {
             </Card>
           </Animated.View>
 
-          {/* Speed & Animation Scales Optimizer Card */}
-          <Animated.View entering={FadeInDown.delay(60).duration(300)}>
-            <Card
-              style={{
-                borderColor: isSpeedOptimized ? `${t.success}60` : t.cardBorder,
-                backgroundColor: isSpeedOptimized ? t.canvasElevated : t.canvas,
-              }}>
-              <View style={s.masterRow}>
-                <IconContainer tone={isSpeedOptimized ? 'success' : 'cyan'} size={44}>
-                  <Zap size={22} color={isSpeedOptimized ? t.success : t.accentCyan} />
-                </IconContainer>
-                <View style={s.switchCopy}>
-                  <Text style={[s.masterTitle, { color: t.textPrimary }]}>Device Speed Booster</Text>
-                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
-                    Optimizes Android UI animations to 0.5x for snappy, instant app switching and window responses.
-                  </Text>
-                  <View style={s.statusPillRow}>
-                    <Pill
-                      label={isSpeedOptimized ? '0.5X ACTIVE' : currentScaleObj.short}
-                      tone={isSpeedOptimized ? 'success' : 'neutral'}
-                    />
-                  </View>
-                </View>
-
-                {granted ? (
-                  busy === 'speedOptimizer' ? (
-                    <ActivityIndicator color={t.accentCyan} />
-                  ) : (
-                    <Switch
-                      accessibilityLabel="Speed Optimizer Switch"
-                      value={isSpeedOptimized}
-                      onValueChange={toggleSpeedBooster}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
-                    />
-                  )
-                ) : (
-                  <Pill label={isSpeedOptimized ? '0.5X' : '1.0X'} tone={isSpeedOptimized ? 'success' : 'neutral'} />
-                )}
-              </View>
-
-              {/* Animation Scales Dropdown Selection */}
-              {granted && (
-                <View style={s.scalesSection}>
-                  <View style={s.scaleHeaderRow}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Gauge size={14} color={t.accentCyan} />
-                      <Text style={[s.scaleLabel, { color: t.textSecondary }]}>CUSTOMIZE DURATION SCALE</Text>
-                    </View>
-                  </View>
-
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => setScaleDropdownOpen(!scaleDropdownOpen)}
-                    style={[s.dropdownBtn, { backgroundColor: t.canvasElevated, borderColor: t.cardBorder }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                      <Gauge size={16} color={t.accentCyan} />
-                      <Text style={[s.dropdownBtnText, { color: t.textPrimary }]}>
-                        {currentScaleObj.label}
-                      </Text>
-                    </View>
-                    {scaleDropdownOpen ? (
-                      <ChevronUp size={16} color={t.textSecondary} />
-                    ) : (
-                      <ChevronDown size={16} color={t.textSecondary} />
-                    )}
-                  </Pressable>
-
-                  {scaleDropdownOpen && (
-                    <View style={[s.dropdownMenu, { backgroundColor: t.canvasElevated, borderColor: t.cardBorder }]}>
-                      {SCALE_OPTIONS.map(opt => {
-                        const isSelected = Math.abs(animationScales.window - opt.value) < 0.05;
-                        return (
-                          <Pressable
-                            key={opt.value}
-                            accessibilityRole="button"
-                            onPress={() => selectCustomScale(opt.value)}
-                            style={[
-                              s.dropdownItem,
-                              {
-                                backgroundColor: isSelected ? t.primaryGlow : 'transparent',
-                              },
-                            ]}>
-                            <Text
-                              style={[
-                                s.dropdownItemText,
-                                { color: isSelected ? t.textPrimary : t.textSecondary },
-                              ]}>
-                              {opt.label}
-                            </Text>
-                            {isSelected && <Check size={16} color={t.success} />}
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  )}
-                </View>
-              )}
-            </Card>
-          </Animated.View>
-
           {/* Pending Permission Notice */}
           {!granted && (
-            <Animated.View entering={FadeInDown.delay(90).duration(300)}>
+            <Animated.View entering={FadeInDown.delay(60).duration(300)}>
               <Card style={{ backgroundColor: t.warningSoft, borderColor: `${t.warning}40` }}>
                 <FeatureRow
                   tone="warning"
@@ -460,7 +421,7 @@ export default function Dashboard() {
           </View>
 
           {/* USB Debugging */}
-          <Animated.View entering={FadeInDown.delay(110).duration(300)}>
+          <Animated.View entering={FadeInDown.delay(90).duration(300)}>
             <Card>
               <View style={s.switchRow}>
                 <IconContainer tone={status.usbDebugging === 'enabled' ? 'success' : 'cyan'} size={44}>
@@ -492,7 +453,7 @@ export default function Dashboard() {
           </Animated.View>
 
           {/* Wireless Debugging with IP:Port Indicator */}
-          <Animated.View entering={FadeInDown.delay(140).duration(300)}>
+          <Animated.View entering={FadeInDown.delay(120).duration(300)}>
             <Card>
               <View style={s.switchRow}>
                 <IconContainer tone={status.wirelessDebugging === 'enabled' ? 'success' : 'cyan'} size={44}>
@@ -566,8 +527,77 @@ export default function Dashboard() {
             </Card>
           </Animated.View>
 
-          {/* Quick link card to Developer Settings */}
-          <Animated.View entering={FadeInDown.delay(170).duration(300)}>
+          {/* Extended Developer Switches Section */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENDED DEVELOPER SWITCHES</Text>
+          </View>
+
+          {/* Stay Awake While Charging */}
+          <Animated.View entering={FadeInDown.delay(140).duration(300)}>
+            <Card>
+              <View style={s.switchRow}>
+                <IconContainer tone={extraSettings.stayAwake === 'enabled' ? 'success' : 'cyan'} size={44}>
+                  <SunMedium size={22} color={extraSettings.stayAwake === 'enabled' ? t.success : t.accentCyan} />
+                </IconContainer>
+                <View style={s.switchCopy}>
+                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Stay Awake While Charging</Text>
+                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                    Screen stays on indefinitely while plugged into AC power or USB.
+                  </Text>
+                </View>
+                {granted ? (
+                  busy === 'stayAwake' ? (
+                    <ActivityIndicator color={t.accentCyan} />
+                  ) : (
+                    <Switch
+                      accessibilityLabel="Stay Awake switch"
+                      value={extraSettings.stayAwake === 'enabled'}
+                      onValueChange={() => toggleExtra('stayAwake')}
+                      trackColor={{ false: t.borderSubtle, true: t.success }}
+                      thumbColor="#FFFFFF"
+                    />
+                  )
+                ) : (
+                  <Pill label={extraSettings.stayAwake === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.stayAwake === 'enabled' ? 'success' : 'neutral'} />
+                )}
+              </View>
+            </Card>
+          </Animated.View>
+
+          {/* Show Visual Touch Taps */}
+          <Animated.View entering={FadeInDown.delay(160).duration(300)}>
+            <Card>
+              <View style={s.switchRow}>
+                <IconContainer tone={extraSettings.showTouches === 'enabled' ? 'success' : 'cyan'} size={44}>
+                  <Hand size={22} color={extraSettings.showTouches === 'enabled' ? t.success : t.accentCyan} />
+                </IconContainer>
+                <View style={s.switchCopy}>
+                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Show Visual Touch Taps</Text>
+                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                    Displays circular tap highlights wherever fingers touch the screen.
+                  </Text>
+                </View>
+                {granted ? (
+                  busy === 'showTouches' ? (
+                    <ActivityIndicator color={t.accentCyan} />
+                  ) : (
+                    <Switch
+                      accessibilityLabel="Show Touches switch"
+                      value={extraSettings.showTouches === 'enabled'}
+                      onValueChange={() => toggleExtra('showTouches')}
+                      trackColor={{ false: t.borderSubtle, true: t.success }}
+                      thumbColor="#FFFFFF"
+                    />
+                  )
+                ) : (
+                  <Pill label={extraSettings.showTouches === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.showTouches === 'enabled' ? 'success' : 'neutral'} />
+                )}
+              </View>
+            </Card>
+          </Animated.View>
+
+          {/* Quick Link to Developer Settings for Pointer Location & More */}
+          <Animated.View entering={FadeInDown.delay(175).duration(300)}>
             <Pressable
               accessibilityRole="button"
               onPress={() => router.push('/dev-settings')}
@@ -577,13 +607,92 @@ export default function Dashboard() {
                   <View style={{ gap: 3, flex: 1 }}>
                     <Text style={[s.switchTitle, { color: t.textPrimary }]}>More Developer Options</Text>
                     <Text style={[s.switchDesc, { color: t.textSecondary }]}>
-                      Stay awake, touch feedback, coordinate crosshair & privacy in Settings.
+                      Pointer tracker crosshairs, custom scales, and full Android settings.
                     </Text>
                   </View>
-                  <Pill label="CONFIGURE" tone="primary" />
+                  <Pill label="SETTINGS" tone="primary" />
                 </View>
               </Card>
             </Pressable>
+          </Animated.View>
+
+          {/* Section: Device Speed Booster (Condensed at Bottom Below Core Controls) */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>DEVICE SPEED BOOSTER</Text>
+          </View>
+
+          <Animated.View entering={FadeInDown.delay(190).duration(300)}>
+            <Card
+              style={{
+                borderColor: isSpeedOptimized ? `${t.success}60` : t.cardBorder,
+                backgroundColor: isSpeedOptimized ? t.canvasElevated : t.canvas,
+              }}>
+              <View style={s.masterRow}>
+                <IconContainer tone={isSpeedOptimized ? 'success' : 'cyan'} size={44}>
+                  <Zap size={22} color={isSpeedOptimized ? t.success : t.accentCyan} />
+                </IconContainer>
+                <View style={s.switchCopy}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[s.masterTitle, { color: t.textPrimary }]}>Animation Speed</Text>
+                    <Pill
+                      label={isSpeedOptimized ? '0.5X BOOST' : currentScaleObj.short}
+                      tone={isSpeedOptimized ? 'success' : 'neutral'}
+                    />
+                  </View>
+                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                    Sets UI animation scale to 0.5x for snappy, instant app responses.
+                  </Text>
+                </View>
+
+                {granted ? (
+                  busy === 'speedOptimizer' ? (
+                    <ActivityIndicator color={t.accentCyan} />
+                  ) : (
+                    <Switch
+                      accessibilityLabel="Speed Optimizer Switch"
+                      value={isSpeedOptimized}
+                      onValueChange={toggleSpeedBooster}
+                      trackColor={{ false: t.borderSubtle, true: t.success }}
+                      thumbColor="#FFFFFF"
+                    />
+                  )
+                ) : (
+                  <Pill label={isSpeedOptimized ? '0.5X' : '1.0X'} tone={isSpeedOptimized ? 'success' : 'neutral'} />
+                )}
+              </View>
+
+              {/* Compact Preset Chips */}
+              {granted && (
+                <View style={[s.scalesSection, { paddingTop: space.sm }]}>
+                  <View style={s.presetsRow}>
+                    {SCALE_OPTIONS.slice(0, 4).map(opt => {
+                      const isSelected = Math.abs(animationScales.window - opt.value) < 0.05;
+                      return (
+                        <Pressable
+                          key={opt.value}
+                          accessibilityRole="button"
+                          onPress={() => selectCustomScale(opt.value)}
+                          style={[
+                            s.presetChip,
+                            {
+                              backgroundColor: isSelected ? t.successSoft : t.canvasElevated,
+                              borderColor: isSelected ? t.success : t.borderSubtle,
+                            },
+                          ]}>
+                          <Text
+                            style={[
+                              s.presetChipText,
+                              { color: isSelected ? t.success : t.textSecondary, fontWeight: isSelected ? '700' : '400' },
+                            ]}>
+                            {opt.short}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              )}
+            </Card>
           </Animated.View>
 
           {/* In Development Mode Only: Debug Actions */}
@@ -624,7 +733,7 @@ export default function Dashboard() {
           </Animated.View>
         )}
       </SafeAreaView>
-    </View>
+    </ScreenBackground>
   );
 }
 
@@ -649,9 +758,20 @@ const s = StyleSheet.create({
     alignItems: 'center',
     gap: space.md,
   },
+  headerLogoContainer: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.35)',
+    backgroundColor: '#050D0A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerLogoImage: {
-    width: 60,
-    height: 42,
+    width: 38,
+    height: 38,
   },
   title: {
     fontFamily: fonts.heading,
@@ -685,6 +805,21 @@ const s = StyleSheet.create({
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
     paddingTop: space.md,
     gap: space.sm,
+  },
+  presetsRow: {
+    flexDirection: 'row',
+    gap: space.xs,
+    flexWrap: 'wrap',
+  },
+  presetChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  presetChipText: {
+    fontFamily: fonts.mono,
+    fontSize: 11.5,
   },
   scaleHeaderRow: {
     flexDirection: 'row',

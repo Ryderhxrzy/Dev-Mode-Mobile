@@ -9,19 +9,20 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { Button, Card, IconContainer, Overline, Pill } from '@/components/ui';
-import { fonts, space, useTheme } from '@/theme';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { fonts, radius, space, useTheme } from '@/theme';
 
 export default function SuccessScreen() {
   const t = useTheme();
 
   return (
-    <View style={s.screen}>
+    <ScreenBackground>
       <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-          {/* Prominent Transparent Logo Hero (No background box) */}
+          {/* Prominent App Logo Hero */}
           <Animated.View entering={ZoomIn.duration(450)} style={s.heroCenter}>
             <Image
-              source={require('@/assets/images/icon2.png')}
+              source={require('@/assets/images/icon.png')}
               style={s.appLogo}
               resizeMode="contain"
             />
@@ -105,7 +106,7 @@ export default function SuccessScreen() {
           />
         </Animated.View>
       </SafeAreaView>
-    </View>
+    </ScreenBackground>
   );
 }
 
@@ -125,8 +126,9 @@ const s = StyleSheet.create({
     paddingTop: space.sm,
   },
   appLogo: {
-    width: 180,
-    height: 120,
+    width: 96,
+    height: 96,
+    borderRadius: radius.xl,
   },
   header: {
     gap: space.xs,
