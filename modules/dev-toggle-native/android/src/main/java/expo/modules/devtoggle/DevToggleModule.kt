@@ -7,6 +7,7 @@ import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.provider.Settings
 import java.io.File
 import java.net.Inet4Address
@@ -66,18 +67,54 @@ class DevToggleModule : Module() {
     AsyncFunction("getStatus") {
       val endpoint = getWirelessDebuggingEndpoint()
       val isWirelessActive = endpoint != null || read(wirelessKey) == "enabled"
+      try { DevToggleNotificationManager.updateNotification(context()) } catch (_: Exception) {}
       mapOf(
         "developerOptions" to read(developerKey),
         "usbDebugging" to read(usbKey),
         "wirelessDebugging" to (if (isWirelessActive) "enabled" else read(wirelessKey)),
         "wirelessEndpoint" to endpoint,
         "writeSecureSettings" to permission(),
+        "notificationMode" to DevToggleNotificationManager.getNotificationMode(context()),
         "nativeAvailable" to true
       )
     }
 
     AsyncFunction("getWirelessEndpoint") {
       getWirelessDebuggingEndpoint()
+    }
+
+    AsyncFunction("getNotificationMode") {
+      DevToggleNotificationManager.getNotificationMode(context())
+    }
+
+    AsyncFunction("setNotificationMode") { mode: String ->
+      DevToggleNotificationManager.setNotificationMode(context(), mode)
+      mapOf(
+        "mode" to DevToggleNotificationManager.getNotificationMode(context()),
+        "success" to true
+      )
+    }
+
+    AsyncFunction("hasNotificationPermission") {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        context().checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+      } else {
+        true
+      }
+    }
+
+    AsyncFunction("requestNotificationPermission") {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val act = appContext.currentActivity
+        if (act != null) {
+          act.requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 9901)
+          true
+        } else {
+          false
+        }
+      } else {
+        true
+      }
     }
 
     AsyncFunction("getPermissionStatus") { permission() }
@@ -214,6 +251,7 @@ class DevToggleModule : Module() {
         val expected = if (enabled) "enabled" else "disabled"
         if (written && now == expected) {
           DevToggleWidgetProvider.updateAllWidgets(context())
+          try { DevToggleNotificationManager.updateNotification(context()) } catch (_: Exception) {}
         }
         mapOf(
           "changed" to (written && now == expected),
