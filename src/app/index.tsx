@@ -262,7 +262,7 @@ export default function Dashboard() {
     };
 
   return (
-    <View style={[s.screen, { backgroundColor: t.bg }]}>
+    <View style={s.screen}>
       <SafeAreaView style={s.screen} edges={['top']}>
         <ScrollView
           contentContainerStyle={s.content}
