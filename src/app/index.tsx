@@ -12,7 +12,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   ToastAndroid,
   View,
@@ -38,7 +37,7 @@ import DevToggle, {
   type DeviceStatus,
   type SettingName,
 } from '@/modules/dev-toggle-native';
-import { Button, Card, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
+import { Button, Card, CyberToggle, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { useOnboarding } from '@/state/onboarding';
 import { fonts, radius, space, useTheme } from '@/theme';
@@ -235,7 +234,7 @@ export default function Dashboard() {
 
     let cancelled = false;
     let attempts = 0;
-    const maxAttempts = 15;
+    const maxAttempts = 12;
 
     const poll = async () => {
       if (cancelled) return;
@@ -243,23 +242,22 @@ export default function Dashboard() {
         const ep = await DevToggle.getWirelessEndpoint();
         if (cancelled) return;
         if (ep) {
-          setStatus(prev => ({ ...prev, wirelessEndpoint: ep }));
-          if (ep.includes(':')) return; // Full IP:Port detected, finish polling
+          setStatus(prev => (prev.wirelessEndpoint !== ep ? { ...prev, wirelessEndpoint: ep } : prev));
         }
       } catch {}
 
       attempts++;
       if (attempts < maxAttempts && !cancelled) {
-        setTimeout(poll, 1200);
+        setTimeout(poll, attempts < 4 ? 700 : 1400);
       }
     };
 
-    const timer = setTimeout(poll, 600);
+    const timer = setTimeout(poll, 300);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [status.wirelessDebugging, status.wirelessEndpoint]);
+  }, [status.wirelessDebugging]);
 
   // Speed Booster: Direct toggle to 0.5x when turned ON, 1.0x when turned OFF
   const toggleSpeedBooster = async (enable: boolean) => {
@@ -358,13 +356,13 @@ export default function Dashboard() {
                 backgroundColor: devOptionsEnabled ? t.canvasElevated : t.canvas,
                 borderWidth: 1.5,
               }}>
-              <View style={s.masterRow}>
-                <IconContainer tone={devOptionsEnabled ? 'success' : 'cyan'} size={48}>
-                  <Cpu size={24} color={devOptionsEnabled ? t.success : t.accentCyan} />
+              <View style={s.switchRow}>
+                <IconContainer tone={devOptionsEnabled ? 'success' : 'cyan'} size={44}>
+                  <Cpu size={22} color={devOptionsEnabled ? t.success : t.accentCyan} />
                 </IconContainer>
                 <View style={s.switchCopy}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={[s.masterTitle, { color: t.textPrimary }]}>Developer Options</Text>
+                    <Text style={[s.switchTitle, { color: t.textPrimary }]}>Developer Options</Text>
                     <Pill
                       label={devOptionsEnabled ? 'ACTIVE' : 'OFF'}
                       tone={devOptionsEnabled ? 'success' : 'neutral'}
@@ -372,20 +370,19 @@ export default function Dashboard() {
                   </View>
                   <Text style={[s.switchDesc, { color: t.textSecondary }]}>
                     {devOptionsEnabled
-                      ? 'System Developer Mode is active. Hardware debug bridges unlocked.'
-                      : 'Developer Mode is currently disabled in Android system settings.'}
+                      ? 'System developer mode active'
+                      : 'Disabled in system settings'}
                   </Text>
                 </View>
                 {granted ? (
                   busy === 'developerOptions' ? (
                     <ActivityIndicator color={t.accentCyan} />
                   ) : (
-                    <Switch
+                    <CyberToggle
                       accessibilityLabel="Developer Options Master Switch"
                       value={devOptionsEnabled}
                       onValueChange={() => toggle('developerOptions')}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
+                      size="md"
                     />
                   )
                 ) : (
@@ -437,12 +434,11 @@ export default function Dashboard() {
                   busy === 'usbDebugging' ? (
                     <ActivityIndicator color={t.accentCyan} />
                   ) : (
-                    <Switch
+                    <CyberToggle
                       accessibilityLabel="USB Debugging switch"
                       value={status.usbDebugging === 'enabled'}
                       onValueChange={() => toggle('usbDebugging')}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
+                      size="md"
                     />
                   )
                 ) : (
@@ -512,12 +508,11 @@ export default function Dashboard() {
                   busy === 'wirelessDebugging' ? (
                     <ActivityIndicator color={t.accentCyan} />
                   ) : (
-                    <Switch
+                    <CyberToggle
                       accessibilityLabel="Wireless Debugging switch"
                       value={status.wirelessDebugging === 'enabled'}
                       onValueChange={() => toggle('wirelessDebugging')}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
+                      size="md"
                     />
                   )
                 ) : (
@@ -549,12 +544,11 @@ export default function Dashboard() {
                   busy === 'stayAwake' ? (
                     <ActivityIndicator color={t.accentCyan} />
                   ) : (
-                    <Switch
+                    <CyberToggle
                       accessibilityLabel="Stay Awake switch"
                       value={extraSettings.stayAwake === 'enabled'}
                       onValueChange={() => toggleExtra('stayAwake')}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
+                      size="md"
                     />
                   )
                 ) : (
@@ -581,12 +575,11 @@ export default function Dashboard() {
                   busy === 'showTouches' ? (
                     <ActivityIndicator color={t.accentCyan} />
                   ) : (
-                    <Switch
+                    <CyberToggle
                       accessibilityLabel="Show Touches switch"
                       value={extraSettings.showTouches === 'enabled'}
                       onValueChange={() => toggleExtra('showTouches')}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
+                      size="md"
                     />
                   )
                 ) : (
@@ -648,12 +641,12 @@ export default function Dashboard() {
                   busy === 'speedOptimizer' ? (
                     <ActivityIndicator color={t.accentCyan} />
                   ) : (
-                    <Switch
+                    <CyberToggle
                       accessibilityLabel="Speed Optimizer Switch"
                       value={isSpeedOptimized}
                       onValueChange={toggleSpeedBooster}
-                      trackColor={{ false: t.borderSubtle, true: t.success }}
-                      thumbColor="#FFFFFF"
+                      size="md"
+                      tone="cyan"
                     />
                   )
                 ) : (
