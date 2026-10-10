@@ -149,6 +149,9 @@ class WidgetActionActivity : Activity() {
                         Handler(Looper.getMainLooper()).postDelayed({
                             DevToggleWidgetProvider.updateAllWidgets(applicationContext)
                         }, 1200)
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            DevToggleWidgetProvider.updateAllWidgets(applicationContext)
+                        }, 2500)
                     }
                 } else {
                     showToast(this, "Permission Required: Run ADB grant command")
