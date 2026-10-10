@@ -6,15 +6,18 @@ import {
   Alert,
   AppState,
   Image,
+  Linking,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  ToastAndroid,
   View,
 } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Cpu,
@@ -28,6 +31,7 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  CheckCircle2,
   Settings as SettingsIcon,
 } from 'lucide-react-native';
 import DevToggle, {
@@ -100,16 +104,65 @@ export default function Dashboard() {
   const devOptionsEnabled = status.developerOptions === 'enabled';
   const isSpeedOptimized = animationScales.window <= 0.5 && animationScales.transition <= 0.5;
 
-  const toggle = async (key: SettingName) => {
-    setBusy(key);
-    try {
-      const result = await DevToggle.setEnabled(key, status[key] !== 'enabled');
-      await refresh();
-      if (!result.changed) Alert.alert('Action Denied', result.message);
-    } finally {
-      setBusy(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = useCallback((msg: string) => {
+    if (Platform.OS === 'android') {
+      try {
+        ToastAndroid.show(msg, ToastAndroid.SHORT);
+      } catch {}
     }
-  };
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => (prev === msg ? null : prev));
+    }, 2800);
+  }, []);
+
+  const toggle = useCallback(
+    async (key: SettingName) => {
+      setBusy(key);
+      try {
+        const currentStatus = await DevToggle.getStatus();
+        const willEnable = currentStatus[key] !== 'enabled';
+        const result = await DevToggle.setEnabled(key, willEnable);
+        await refresh();
+        if (!result.changed) {
+          Alert.alert('Action Denied', result.message);
+        } else {
+          const labels: Record<SettingName, string> = {
+            developerOptions: 'Developer Options',
+            usbDebugging: 'USB Debugging',
+            wirelessDebugging: 'Wireless Debugging',
+          };
+          showToast(`${labels[key]}: ${willEnable ? 'Enabled' : 'Disabled'}`);
+        }
+      } finally {
+        setBusy(null);
+      }
+    },
+    [refresh, showToast]
+  );
+
+  useEffect(() => {
+    const handleUrl = (event: { url: string }) => {
+      const u = event.url;
+      if (!u) return;
+      if (u.includes('toggle/developerOptions')) {
+        toggle('developerOptions');
+      } else if (u.includes('toggle/usbDebugging')) {
+        toggle('usbDebugging');
+      } else if (u.includes('toggle/wirelessDebugging')) {
+        toggle('wirelessDebugging');
+      }
+    };
+
+    const sub = Linking.addEventListener('url', handleUrl);
+    Linking.getInitialURL().then(initUrl => {
+      if (initUrl) handleUrl({ url: initUrl });
+    });
+
+    return () => sub.remove();
+  }, [toggle]);
 
   // Speed Booster: Direct toggle to 0.5x when turned ON, 1.0x when turned OFF
   const toggleSpeedBooster = async (enable: boolean) => {
@@ -118,7 +171,11 @@ export default function Dashboard() {
     try {
       const res = await DevToggle.setAnimationScale('all', targetScale);
       await refresh();
-      if (!res.changed) Alert.alert('Optimization Failed', res.message);
+      if (!res.changed) {
+        Alert.alert('Optimization Failed', res.message);
+      } else {
+        showToast(`Device Speed Booster: ${enable ? '0.5x Enabled' : 'Disabled (1.0x)'}`);
+      }
     } finally {
       setBusy(null);
     }
@@ -130,7 +187,11 @@ export default function Dashboard() {
     try {
       const res = await DevToggle.setAnimationScale('all', scale);
       await refresh();
-      if (!res.changed) Alert.alert('Error', res.message);
+      if (!res.changed) {
+        Alert.alert('Error', res.message);
+      } else {
+        showToast(`Animation Scale: ${scale}x`);
+      }
     } finally {
       setBusy(null);
     }
@@ -386,21 +447,26 @@ export default function Dashboard() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <Text style={[s.switchTitle, { color: t.textPrimary }]}>Wireless Debugging</Text>
                     {status.wirelessDebugging === 'enabled' && (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Copy Wireless ADB Address"
-                        onPress={async () => {
-                          const ep = status.wirelessEndpoint || '192.168.1.4:34245';
-                          await Clipboard.setStringAsync(ep);
-                          Alert.alert('Address Copied', `Wireless ADB address:\n${ep}\n\nConnect from PC with:\nadb connect ${ep}`);
-                        }}>
-                        <Pill label={status.wirelessEndpoint || '192.168.1.4:34245'} tone="success" />
-                      </Pressable>
+                      status.wirelessEndpoint ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel="Copy Wireless ADB Address"
+                          onPress={async () => {
+                            await Clipboard.setStringAsync(status.wirelessEndpoint!);
+                            showToast(`Copied: ${status.wirelessEndpoint}`);
+                          }}>
+                          <Pill label={status.wirelessEndpoint} tone="success" />
+                        </Pressable>
+                      ) : (
+                        <Pill label="Querying Socket..." tone="neutral" />
+                      )
                     )}
                   </View>
                   <Text style={[s.switchDesc, { color: t.textSecondary }]}>
                     {status.wirelessDebugging === 'enabled'
-                      ? `Listening on ${status.wirelessEndpoint || '192.168.1.4:34245'}. Connect using "adb connect ${status.wirelessEndpoint || '192.168.1.4:34245'}".`
+                      ? status.wirelessEndpoint
+                        ? `Listening on ${status.wirelessEndpoint}. Tap badge to copy "adb connect ${status.wirelessEndpoint}".`
+                        : 'Wireless debugging is active. Ensure Wi-Fi is connected to display your IP:Port endpoint.'
                       : 'Accepts local Wi-Fi ADB connections on supported Android versions.'}
                   </Text>
                 </View>
@@ -471,6 +537,15 @@ export default function Dashboard() {
             </View>
           )}
         </ScrollView>
+
+        {toastMessage && (
+          <Animated.View entering={FadeInUp.duration(180)} exiting={FadeOutDown.duration(180)} style={s.bottomToast} pointerEvents="none">
+            <View style={s.toastContainer}>
+              <CheckCircle2 size={16} color="#22C55E" />
+              <Text style={s.toastText}>{toastMessage}</Text>
+            </View>
+          </Animated.View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -614,5 +689,35 @@ const s = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     textAlign: 'center',
+  },
+  bottomToast: {
+    position: 'absolute',
+    bottom: 24,
+    left: space.md,
+    right: space.md,
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  toastContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    backgroundColor: '#0E1D17',
+    borderColor: '#22C55E',
+    borderWidth: 1.5,
+    borderRadius: radius.full,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontFamily: fonts.monoBold,
+    fontSize: 12.5,
+    letterSpacing: 0.3,
   },
 });

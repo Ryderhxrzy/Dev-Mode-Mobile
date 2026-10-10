@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="toggle_dev"
+        android:enabled="true"
+        android:icon="@drawable/white_icon"
+        android:shortcutShortLabel="@string/shortcut_dev"
+        android:shortcutLongLabel="@string/shortcut_dev_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.devmode.app"
+            android:targetClass="com.devmode.app.MainActivity"
+            android:data="devmode://toggle/developerOptions" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="toggle_usb"
+        android:enabled="true"
+        android:icon="@drawable/ic_widget_usb"
+        android:shortcutShortLabel="@string/shortcut_usb"
+        android:shortcutLongLabel="@string/shortcut_usb_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.devmode.app"
+            android:targetClass="com.devmode.app.MainActivity"
+            android:data="devmode://toggle/usbDebugging" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="toggle_wireless"
+        android:enabled="true"
+        android:icon="@drawable/ic_widget_wifi"
+        android:shortcutShortLabel="@string/shortcut_wireless"
+        android:shortcutLongLabel="@string/shortcut_wireless_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.devmode.app"
+            android:targetClass="com.devmode.app.MainActivity"
+            android:data="devmode://toggle/wirelessDebugging" />
+    </shortcut>
+</shortcuts>

@@ -62,10 +62,16 @@
 
 ## 📱 Home Screen Widget Setup
 
+Dev Mode offers both a comprehensive **3-in-1 quick bar** and individual **1x1 manual widgets**:
+
 1. Long-press any empty space on your Android home screen.
-2. Tap **Widgets** and scroll to **Dev Mode** (or search for *Dev Mode*).
-3. Drag the **Dev Mode Quick Toggle** widget onto your home screen.
-4. Tap any of the 3 tiles (**Dev Mode**, **USB**, **Wireless**) to toggle settings instantly with zero lag.
+2. Tap **Widgets** and scroll to **Dev Mode** (the picker displays the actual look of each widget!).
+3. Choose your preferred layout:
+   - **3-in-1 Quick Toggle (3x1)**: Access Developer Options, USB Debugging, and Wireless ADB side-by-side.
+   - **Dev Mode (1x1)**: Dedicated single button for Developer Options.
+   - **USB Debugging (1x1)**: Dedicated single button for USB ADB.
+   - **Wireless ADB (1x1)**: Dedicated single button for Wireless ADB.
+4. Tap any widget tile to toggle settings instantly with zero lag. All widgets automatically synchronize their ON/OFF states in real time.
 
 ---
 

@@ -1,4 +1,10 @@
 <resources>
   <string name="app_name">Dev Mode</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
+  <string name="shortcut_dev">Dev Mode</string>
+  <string name="shortcut_dev_long">Toggle Developer Options</string>
+  <string name="shortcut_usb">USB Debugging</string>
+  <string name="shortcut_usb_long">Toggle USB Debugging</string>
+  <string name="shortcut_wireless">Wireless ADB</string>
+  <string name="shortcut_wireless_long">Toggle Wireless Debugging</string>
 </resources>

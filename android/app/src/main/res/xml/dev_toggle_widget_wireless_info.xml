@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="50dp"
+    android:minHeight="50dp"
+    android:targetCellWidth="1"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/dev_toggle_single_wireless_widget"
+    android:previewLayout="@layout/dev_toggle_single_wireless_widget"
+    android:previewImage="@drawable/widget_preview_wireless_1x1"
+    android:resizeMode="none"
+    android:widgetCategory="home_screen">
+</appwidget-provider>

@@ -8,11 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.RemoteViews
 import android.widget.Toast
 
-class DevToggleWidgetProvider : AppWidgetProvider() {
+open class DevToggleWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_TOGGLE_DEV = "expo.modules.devtoggle.ACTION_TOGGLE_DEV"
@@ -23,14 +25,48 @@ class DevToggleWidgetProvider : AppWidgetProvider() {
         private const val USB_KEY = "adb_enabled"
         private const val WIRELESS_KEY = "adb_wifi_enabled"
 
+        fun showToast(context: Context, message: String) {
+            Handler(Looper.getMainLooper()).post {
+                try {
+                    Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()
+                } catch (_: Exception) {
+                    try {
+                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+
         fun updateAllWidgets(context: Context) {
             try {
                 val appWidgetManager = AppWidgetManager.getInstance(context)
-                val thisWidget = ComponentName(context, DevToggleWidgetProvider::class.java)
-                val appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
-                if (appWidgetIds.isNotEmpty()) {
-                    val views = buildRemoteViews(context)
-                    appWidgetManager.updateAppWidget(thisWidget, views)
+
+                // 1. 3x1 Widget
+                val comp3x1 = ComponentName(context, DevToggleWidgetProvider::class.java)
+                val ids3x1 = appWidgetManager.getAppWidgetIds(comp3x1)
+                if (ids3x1.isNotEmpty()) {
+                    appWidgetManager.updateAppWidget(comp3x1, buildRemoteViews(context))
+                }
+
+                // 2. Dev Mode 1x1 Widget
+                val compDev = ComponentName(context, DevToggleSingleDevWidgetProvider::class.java)
+                val idsDev = appWidgetManager.getAppWidgetIds(compDev)
+                if (idsDev.isNotEmpty()) {
+                    appWidgetManager.updateAppWidget(compDev, buildSingleDevRemoteViews(context))
+                }
+
+                // 3. USB 1x1 Widget
+                val compUsb = ComponentName(context, DevToggleSingleUsbWidgetProvider::class.java)
+                val idsUsb = appWidgetManager.getAppWidgetIds(compUsb)
+                if (idsUsb.isNotEmpty()) {
+                    appWidgetManager.updateAppWidget(compUsb, buildSingleUsbRemoteViews(context))
+                }
+
+                // 4. Wireless 1x1 Widget
+                val compWireless = ComponentName(context, DevToggleSingleWirelessWidgetProvider::class.java)
+                val idsWireless = appWidgetManager.getAppWidgetIds(compWireless)
+                if (idsWireless.isNotEmpty()) {
+                    appWidgetManager.updateAppWidget(compWireless, buildSingleWirelessRemoteViews(context))
                 }
             } catch (_: Exception) {}
         }
@@ -43,49 +79,154 @@ class DevToggleWidgetProvider : AppWidgetProvider() {
 
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_widget)
 
-            // Theme colors:
-            // Active: #15803D background, #FFFFFF text/icon
-            // Inactive: #0E1D17 background, #7A9988 text, #5C7A6B icon
             val colorActiveText = Color.parseColor("#FFFFFF")
+            val colorActiveStatus = Color.parseColor("#E2FBE8")
             val colorInactiveText = Color.parseColor("#7A9988")
+            val colorInactiveStatus = Color.parseColor("#5C7A6B")
             val colorInactiveIcon = Color.parseColor("#5C7A6B")
 
             // 1. Developer Options
+            val piDev = getPendingIntent(context, ACTION_TOGGLE_DEV, 101)
             views.setInt(
                 R.id.btn_dev,
                 "setBackgroundResource",
                 if (devOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_dev, if (devOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_dev_status, if (devOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
             views.setInt(R.id.iv_dev, "setColorFilter", if (devOn) colorActiveText else colorInactiveIcon)
-            views.setOnClickPendingIntent(R.id.btn_dev, getPendingIntent(context, ACTION_TOGGLE_DEV, 101))
+            views.setOnClickPendingIntent(R.id.btn_dev, piDev)
+            views.setOnClickPendingIntent(R.id.iv_dev, piDev)
+            views.setOnClickPendingIntent(R.id.tv_dev, piDev)
+            views.setOnClickPendingIntent(R.id.tv_dev_status, piDev)
 
             // 2. USB Debugging
+            val piUsb = getPendingIntent(context, ACTION_TOGGLE_USB, 102)
             views.setInt(
                 R.id.btn_usb,
                 "setBackgroundResource",
                 if (usbOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_usb, if (usbOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_usb_status, if (usbOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_usb_status, if (usbOn) colorActiveStatus else colorInactiveStatus)
             views.setInt(R.id.iv_usb, "setColorFilter", if (usbOn) colorActiveText else colorInactiveIcon)
-            views.setOnClickPendingIntent(R.id.btn_usb, getPendingIntent(context, ACTION_TOGGLE_USB, 102))
+            views.setOnClickPendingIntent(R.id.btn_usb, piUsb)
+            views.setOnClickPendingIntent(R.id.iv_usb, piUsb)
+            views.setOnClickPendingIntent(R.id.tv_usb, piUsb)
+            views.setOnClickPendingIntent(R.id.tv_usb_status, piUsb)
 
             // 3. Wireless Debugging
+            val piWifi = getPendingIntent(context, ACTION_TOGGLE_WIRELESS, 103)
             views.setInt(
                 R.id.btn_wireless,
                 "setBackgroundResource",
                 if (wirelessOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_wireless, if (wirelessOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_wireless_status, if (wirelessOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             views.setInt(R.id.iv_wireless, "setColorFilter", if (wirelessOn) colorActiveText else colorInactiveIcon)
-            views.setOnClickPendingIntent(R.id.btn_wireless, getPendingIntent(context, ACTION_TOGGLE_WIRELESS, 103))
+            views.setOnClickPendingIntent(R.id.btn_wireless, piWifi)
+            views.setOnClickPendingIntent(R.id.iv_wireless, piWifi)
+            views.setOnClickPendingIntent(R.id.tv_wireless, piWifi)
+            views.setOnClickPendingIntent(R.id.tv_wireless_status, piWifi)
 
             return views
         }
 
-        private fun getPendingIntent(context: Context, action: String, requestCode: Int): PendingIntent {
+        fun buildSingleDevRemoteViews(context: Context): RemoteViews {
+            val cr = context.contentResolver
+            val devOn = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
+            val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_dev_widget)
+
+            val colorActiveText = Color.parseColor("#FFFFFF")
+            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorInactiveText = Color.parseColor("#7A9988")
+            val colorInactiveStatus = Color.parseColor("#5C7A6B")
+            val colorInactiveIcon = Color.parseColor("#5C7A6B")
+
+            val pi = getPendingIntent(context, ACTION_TOGGLE_DEV, 201)
+            views.setInt(
+                R.id.btn_single_dev,
+                "setBackgroundResource",
+                if (devOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
+            )
+            views.setTextColor(R.id.tv_single_dev_label, if (devOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_single_dev_status, if (devOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_single_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
+            views.setInt(R.id.iv_single_dev, "setColorFilter", if (devOn) colorActiveText else colorInactiveIcon)
+            views.setOnClickPendingIntent(R.id.btn_single_dev, pi)
+            views.setOnClickPendingIntent(R.id.iv_single_dev, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_dev_label, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_dev_status, pi)
+
+            return views
+        }
+
+        fun buildSingleUsbRemoteViews(context: Context): RemoteViews {
+            val cr = context.contentResolver
+            val usbOn = try { Settings.Global.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false }
+            val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_usb_widget)
+
+            val colorActiveText = Color.parseColor("#FFFFFF")
+            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorInactiveText = Color.parseColor("#7A9988")
+            val colorInactiveStatus = Color.parseColor("#5C7A6B")
+            val colorInactiveIcon = Color.parseColor("#5C7A6B")
+
+            val pi = getPendingIntent(context, ACTION_TOGGLE_USB, 202)
+            views.setInt(
+                R.id.btn_single_usb,
+                "setBackgroundResource",
+                if (usbOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
+            )
+            views.setTextColor(R.id.tv_single_usb_label, if (usbOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_single_usb_status, if (usbOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_single_usb_status, if (usbOn) colorActiveStatus else colorInactiveStatus)
+            views.setInt(R.id.iv_single_usb, "setColorFilter", if (usbOn) colorActiveText else colorInactiveIcon)
+            views.setOnClickPendingIntent(R.id.btn_single_usb, pi)
+            views.setOnClickPendingIntent(R.id.iv_single_usb, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_usb_label, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_usb_status, pi)
+
+            return views
+        }
+
+        fun buildSingleWirelessRemoteViews(context: Context): RemoteViews {
+            val cr = context.contentResolver
+            val wirelessOn = try { Settings.Global.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false }
+            val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_wireless_widget)
+
+            val colorActiveText = Color.parseColor("#FFFFFF")
+            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorInactiveText = Color.parseColor("#7A9988")
+            val colorInactiveStatus = Color.parseColor("#5C7A6B")
+            val colorInactiveIcon = Color.parseColor("#5C7A6B")
+
+            val pi = getPendingIntent(context, ACTION_TOGGLE_WIRELESS, 203)
+            views.setInt(
+                R.id.btn_single_wireless,
+                "setBackgroundResource",
+                if (wirelessOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
+            )
+            views.setTextColor(R.id.tv_single_wireless_label, if (wirelessOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_single_wireless_status, if (wirelessOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_single_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
+            views.setInt(R.id.iv_single_wireless, "setColorFilter", if (wirelessOn) colorActiveText else colorInactiveIcon)
+            views.setOnClickPendingIntent(R.id.btn_single_wireless, pi)
+            views.setOnClickPendingIntent(R.id.iv_single_wireless, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_wireless_label, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_wireless_status, pi)
+
+            return views
+        }
+
+        fun getPendingIntent(context: Context, action: String, requestCode: Int): PendingIntent {
             val intent = Intent(context, DevToggleWidgetProvider::class.java).apply {
                 this.action = action
+                setPackage(context.packageName)
             }
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -104,39 +245,48 @@ class DevToggleWidgetProvider : AppWidgetProvider() {
             ACTION_TOGGLE_DEV -> {
                 val current = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
                 val next = if (current) 0 else 1
-                try {
-                    val success = Settings.Global.putInt(cr, DEV_KEY, next)
-                    if (success) {
-                        Toast.makeText(context, if (next == 1) "Developer Options: ON" else "Developer Options: OFF", Toast.LENGTH_SHORT).show()
-                    }
+                val success = try {
+                    Settings.Global.putInt(cr, DEV_KEY, next)
                 } catch (_: Exception) {
-                    Toast.makeText(context, "Permission Required: Run ADB grant command", Toast.LENGTH_SHORT).show()
+                    false
+                }
+
+                if (success) {
+                    showToast(context, if (next == 1) "Developer Options: Enabled" else "Developer Options: Disabled")
+                } else {
+                    showToast(context, "Permission Required: Run ADB grant command")
                 }
                 updateAllWidgets(context)
             }
             ACTION_TOGGLE_USB -> {
                 val current = try { Settings.Global.getInt(cr, USB_KEY, 0) == 1 } catch (_: Exception) { false }
                 val next = if (current) 0 else 1
-                try {
-                    val success = Settings.Global.putInt(cr, USB_KEY, next)
-                    if (success) {
-                        Toast.makeText(context, if (next == 1) "USB Debugging: ON" else "USB Debugging: OFF", Toast.LENGTH_SHORT).show()
-                    }
+                val success = try {
+                    Settings.Global.putInt(cr, USB_KEY, next)
                 } catch (_: Exception) {
-                    Toast.makeText(context, "Permission Required: Run ADB grant command", Toast.LENGTH_SHORT).show()
+                    false
+                }
+
+                if (success) {
+                    showToast(context, if (next == 1) "USB Debugging: Enabled" else "USB Debugging: Disabled")
+                } else {
+                    showToast(context, "Permission Required: Run ADB grant command")
                 }
                 updateAllWidgets(context)
             }
             ACTION_TOGGLE_WIRELESS -> {
                 val current = try { Settings.Global.getInt(cr, WIRELESS_KEY, 0) == 1 } catch (_: Exception) { false }
                 val next = if (current) 0 else 1
-                try {
-                    val success = Settings.Global.putInt(cr, WIRELESS_KEY, next)
-                    if (success) {
-                        Toast.makeText(context, if (next == 1) "Wireless Debugging: ON" else "Wireless Debugging: OFF", Toast.LENGTH_SHORT).show()
-                    }
+                val success = try {
+                    Settings.Global.putInt(cr, WIRELESS_KEY, next)
                 } catch (_: Exception) {
-                    Toast.makeText(context, "Permission Required: Run ADB grant command", Toast.LENGTH_SHORT).show()
+                    false
+                }
+
+                if (success) {
+                    showToast(context, if (next == 1) "Wireless Debugging: Enabled" else "Wireless Debugging: Disabled")
+                } else {
+                    showToast(context, "Permission Required: Run ADB grant command")
                 }
                 updateAllWidgets(context)
             }
@@ -151,3 +301,29 @@ class DevToggleWidgetProvider : AppWidgetProvider() {
     }
 }
 
+class DevToggleSingleDevWidgetProvider : DevToggleWidgetProvider() {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val views = buildSingleDevRemoteViews(context)
+        for (appWidgetId in appWidgetIds) {
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}
+
+class DevToggleSingleUsbWidgetProvider : DevToggleWidgetProvider() {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val views = buildSingleUsbRemoteViews(context)
+        for (appWidgetId in appWidgetIds) {
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}
+
+class DevToggleSingleWirelessWidgetProvider : DevToggleWidgetProvider() {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        val views = buildSingleWirelessRemoteViews(context)
+        for (appWidgetId in appWidgetIds) {
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+}

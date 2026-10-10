@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/btn_single_wireless"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_btn_inactive"
+    android:padding="8dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/iv_single_wireless"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@drawable/ic_widget_wifi"
+        android:contentDescription="Wireless Debugging"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/tv_single_wireless_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="WIRELESS"
+        android:textColor="#7A9988"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/tv_single_wireless_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OFF"
+        android:textColor="#5C7A6B"
+        android:textSize="9.5sp"
+        android:textStyle="bold"
+        android:maxLines="1" />
+</LinearLayout>

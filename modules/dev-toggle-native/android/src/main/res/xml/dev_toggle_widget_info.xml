@@ -6,7 +6,8 @@
     android:targetCellHeight="1"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/dev_toggle_widget"
+    android:previewLayout="@layout/dev_toggle_widget"
+    android:previewImage="@drawable/widget_preview_3x1"
     android:resizeMode="horizontal"
     android:widgetCategory="home_screen">
 </appwidget-provider>
-

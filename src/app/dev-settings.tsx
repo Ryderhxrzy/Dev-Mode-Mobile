@@ -3,11 +3,13 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  ToastAndroid,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -120,7 +122,18 @@ export default function DevSettings() {
     try {
       const res = await DevToggle.setExtraSetting(key, willEnable);
       await loadData();
-      if (!res.changed) Alert.alert('Action Denied', res.message);
+      if (!res.changed) {
+        Alert.alert('Action Denied', res.message);
+      } else {
+        const labels: Record<ExtraSettingName, string> = {
+          stayAwake: 'Keep Screen Awake',
+          showTouches: 'Show Screen Touches',
+          pointerLocation: 'Show Pointer Location',
+        };
+        if (Platform.OS === 'android') {
+          ToastAndroid.show(`${labels[key]}: ${willEnable ? 'Enabled' : 'Disabled'}`, ToastAndroid.SHORT);
+        }
+      }
     } finally {
       setBusy(null);
     }
@@ -132,7 +145,13 @@ export default function DevSettings() {
     try {
       const res = await DevToggle.setAnimationScale('all', scale);
       await loadData();
-      if (!res.changed) Alert.alert('Error', res.message);
+      if (!res.changed) {
+        Alert.alert('Error', res.message);
+      } else {
+        if (Platform.OS === 'android') {
+          ToastAndroid.show(`Animation Scale: ${scale}x`, ToastAndroid.SHORT);
+        }
+      }
     } finally {
       setBusy(null);
     }
@@ -352,11 +371,11 @@ export default function DevSettings() {
               </IconContainer>
               <View style={s.rowCopy}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>3-in-1 Quick Toggle Widget</Text>
-                  <Pill label="NEW" tone="success" />
+                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>Home Screen Widgets</Text>
+                  <Pill label="3x1 & 1x1 READY" tone="success" />
                 </View>
                 <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                  Long press on your Android home screen &gt; select Widgets &gt; add &quot;Dev Mode Quick Toggle&quot; to toggle Developer Options, USB Debugging, and Wireless ADB with zero delay.
+                  Long press on your home screen &gt; Widgets &gt; choose either the full 3-in-1 multi-bar or individual 1x1 single buttons (Dev Mode, USB, Wireless) for instant 1-tap toggling.
                 </Text>
               </View>
             </View>

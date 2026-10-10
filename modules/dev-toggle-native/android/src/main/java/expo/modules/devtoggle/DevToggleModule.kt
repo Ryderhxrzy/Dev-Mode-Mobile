@@ -1,10 +1,16 @@
 package expo.modules.devtoggle
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.wifi.WifiManager
 import android.provider.Settings
+import java.io.File
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.util.Collections
+import java.util.Locale
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -47,39 +53,149 @@ class DevToggleModule : Module() {
   private fun prefs() = context().getSharedPreferences("devtoggle_local_prefs", android.content.Context.MODE_PRIVATE)
 
   private fun getLocalIpAddress(): String? {
+    // 1. ConnectivityManager (Active network IPv4)
     try {
-      val interfaces = NetworkInterface.getNetworkInterfaces()
-      while (interfaces.hasMoreElements()) {
-        val intf = interfaces.nextElement()
+      val cm = context().getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+      val activeNet = cm?.activeNetwork
+      if (activeNet != null) {
+        val lp = cm.getLinkProperties(activeNet)
+        val ip = lp?.linkAddresses?.firstOrNull { it.address is Inet4Address && !it.address.isLoopbackAddress }?.address?.hostAddress
+        if (!ip.isNullOrEmpty() && ip != "0.0.0.0") return ip
+      }
+    } catch (_: Exception) {}
+
+    // 2. WifiManager (Legacy & Wi-Fi specific)
+    try {
+      val wifiManager = context().applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+      val ipInt = wifiManager?.connectionInfo?.ipAddress ?: 0
+      if (ipInt != 0) {
+        val ip = String.format(
+          Locale.US,
+          "%d.%d.%d.%d",
+          ipInt and 0xff,
+          ipInt shr 8 and 0xff,
+          ipInt shr 16 and 0xff,
+          ipInt shr 24 and 0xff
+        )
+        if (ip != "0.0.0.0") return ip
+      }
+    } catch (_: Exception) {}
+
+    // 3. NetworkInterface prioritization (wlan / wifi / eth / any IPv4)
+    try {
+      val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+      // Check wlan/wifi first
+      for (intf in interfaces.filter { it.name.startsWith("wlan", ignoreCase = true) || it.name.startsWith("wifi", ignoreCase = true) }) {
+        for (addr in Collections.list(intf.inetAddresses)) {
+          if (!addr.isLoopbackAddress && addr is Inet4Address && !addr.isLinkLocalAddress) {
+            val host = addr.hostAddress
+            if (!host.isNullOrEmpty() && host != "0.0.0.0") return host
+          }
+        }
+      }
+      // Check eth
+      for (intf in interfaces.filter { it.name.startsWith("eth", ignoreCase = true) }) {
+        for (addr in Collections.list(intf.inetAddresses)) {
+          if (!addr.isLoopbackAddress && addr is Inet4Address && !addr.isLinkLocalAddress) {
+            val host = addr.hostAddress
+            if (!host.isNullOrEmpty() && host != "0.0.0.0") return host
+          }
+        }
+      }
+      // Fallback to any non-loopback IPv4
+      for (intf in interfaces) {
         if (!intf.isLoopback && intf.isUp) {
-          val addrs = intf.inetAddresses
-          while (addrs.hasMoreElements()) {
-            val addr = addrs.nextElement()
-            if (!addr.isLoopbackAddress && addr is Inet4Address) {
-              return addr.hostAddress
+          for (addr in Collections.list(intf.inetAddresses)) {
+            if (!addr.isLoopbackAddress && addr is Inet4Address && !addr.isLinkLocalAddress) {
+              val host = addr.hostAddress
+              if (!host.isNullOrEmpty() && host != "0.0.0.0") return host
             }
           }
         }
       }
     } catch (_: Exception) {}
+
+    // 4. getprop dhcp.wlan0.ipaddress
+    try {
+      val process = Runtime.getRuntime().exec(arrayOf("getprop", "dhcp.wlan0.ipaddress"))
+      val line = process.inputStream.bufferedReader().readLine()?.trim()
+      if (!line.isNullOrEmpty() && line != "0.0.0.0") return line
+    } catch (_: Exception) {}
+
     return null
   }
 
   private fun getAdbPort(): Int {
-    try {
-      val p = Settings.Global.getInt(context().contentResolver, "adb_wifi_port")
-      if (p > 0) return p
-    } catch (_: Exception) {}
-
+    // 1. Standard SystemProperties via reflection (TLS & TCP dynamic ports)
     try {
       val propClass = Class.forName("android.os.SystemProperties")
-      val getIntMethod = propClass.getMethod("getInt", String::class.java, Int::class.javaPrimitiveType)
-      val p = getIntMethod.invoke(null, "service.adb.tcp.port", -1) as Int
-      if (p > 0) return p
+      val getMethod = propClass.getMethod("get", String::class.java, String::class.java)
+      val tlsPort = (getMethod.invoke(null, "service.adb.tls.port", "") as? String)?.trim()?.toIntOrNull()
+      if (tlsPort != null && tlsPort > 0) return tlsPort
+
+      val tcpPort = (getMethod.invoke(null, "service.adb.tcp.port", "") as? String)?.trim()?.toIntOrNull()
+      if (tcpPort != null && tcpPort > 0) return tcpPort
     } catch (_: Exception) {}
 
+    // 2. getprop binary command
+    for (propName in listOf("service.adb.tls.port", "service.adb.tcp.port")) {
+      try {
+        val process = Runtime.getRuntime().exec(arrayOf("getprop", propName))
+        val line = process.inputStream.bufferedReader().readLine()?.trim()
+        val p = line?.toIntOrNull()
+        if (p != null && p > 0) return p
+      } catch (_: Exception) {}
+    }
+
+    // 3. Settings Global & Secure
+    val cr = context().contentResolver
+    for (k in listOf("adb_wifi_port", "adb_port")) {
+      try {
+        val p = Settings.Global.getInt(cr, k, -1)
+        if (p > 0) return p
+      } catch (_: Exception) {}
+      try {
+        val p = Settings.Secure.getInt(cr, k, -1)
+        if (p > 0) return p
+      } catch (_: Exception) {}
+    }
+
+    // 4. Fast multi-threaded localhost socket probe (scans dynamic wireless range 30000..50000)
     try {
-      val p = Settings.Global.getInt(context().contentResolver, "adb_port")
+      val foundPort = java.util.concurrent.atomic.AtomicInteger(-1)
+      val threadCount = 32
+      val executor = java.util.concurrent.Executors.newFixedThreadPool(threadCount)
+      val ranges = listOf(35000..45000, 30000..34999, 45001..50000)
+
+      for (range in ranges) {
+        if (foundPort.get() > 0) break
+        val count = range.last - range.first + 1
+        val chunkSize = (count + threadCount - 1) / threadCount
+        val tasks = (0 until threadCount).map { i ->
+          val start = range.first + i * chunkSize
+          val end = minOf(range.last, start + chunkSize - 1)
+          java.util.concurrent.Callable {
+            for (p in start..end) {
+              if (foundPort.get() > 0) break
+              var s: java.net.Socket? = null
+              try {
+                s = java.net.Socket()
+                s.connect(java.net.InetSocketAddress("127.0.0.1", p), 15)
+                foundPort.compareAndSet(-1, p)
+                break
+              } catch (_: Exception) {
+              } finally {
+                try { s?.close() } catch (_: Exception) {}
+              }
+            }
+          }
+        }
+        try {
+          executor.invokeAll(tasks, 350, java.util.concurrent.TimeUnit.MILLISECONDS)
+        } catch (_: Exception) {}
+      }
+      executor.shutdown()
+      val p = foundPort.get()
       if (p > 0) return p
     } catch (_: Exception) {}
 
@@ -87,27 +203,29 @@ class DevToggleModule : Module() {
   }
 
   private fun getWirelessDebuggingEndpoint(): String? {
-    val isEnabled = read(wirelessKey) == "enabled"
+    val port = getAdbPort()
+    val isEnabled = (read(wirelessKey) == "enabled") ||
+        (try { Settings.Secure.getInt(context().contentResolver, "adb_wifi_enabled", 0) == 1 } catch (_: Exception) { false }) ||
+        (try { Settings.Global.getInt(context().contentResolver, "adb_wifi_enabled", 0) == 1 } catch (_: Exception) { false }) ||
+        (port > 0)
+
     if (!isEnabled) return null
 
-    val ip = getLocalIpAddress()
-    val port = getAdbPort()
-    return when {
-      ip != null && port > 0 -> "$ip:$port"
-      ip != null -> "$ip:5555"
-      else -> null
-    }
+    val ip = getLocalIpAddress() ?: return null
+    return if (port > 0) "$ip:$port" else null
   }
 
   override fun definition() = ModuleDefinition {
     Name("DevToggle")
 
     AsyncFunction("getStatus") {
+      val endpoint = getWirelessDebuggingEndpoint()
+      val isWirelessActive = endpoint != null || read(wirelessKey) == "enabled"
       mapOf(
         "developerOptions" to read(developerKey),
         "usbDebugging" to read(usbKey),
-        "wirelessDebugging" to read(wirelessKey),
-        "wirelessEndpoint" to getWirelessDebuggingEndpoint(),
+        "wirelessDebugging" to (if (isWirelessActive) "enabled" else read(wirelessKey)),
+        "wirelessEndpoint" to endpoint,
         "writeSecureSettings" to permission(),
         "nativeAvailable" to true
       )
