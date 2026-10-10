@@ -17,10 +17,14 @@ class DevToggleModule : Module() {
   private fun read(key: String): String = try { if (Settings.Global.getInt(context().contentResolver, key) == 1) "enabled" else "disabled" } catch (_: Exception) { "unknown" }
   private fun permission(): String = try { if (context().checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED) "granted" else "denied" } catch (_: Exception) { "unknown" }
   private fun key(setting: String) = when (setting) { "developerOptions" -> developerKey; "usbDebugging" -> usbKey; "wirelessDebugging" -> wirelessKey; else -> throw CodedException("ERR_SETTING", "Unsupported setting.", null) }
+  // Private, app-only storage. Never leaves the device and is wiped on uninstall.
+  private fun prefs() = context().getSharedPreferences("devtoggle_local_prefs", android.content.Context.MODE_PRIVATE)
   override fun definition() = ModuleDefinition {
     Name("DevToggle")
     AsyncFunction("getStatus") { mapOf("developerOptions" to read(developerKey), "usbDebugging" to read(usbKey), "wirelessDebugging" to read(wirelessKey), "writeSecureSettings" to permission(), "nativeAvailable" to true) }
     AsyncFunction("getPermissionStatus") { permission() }
+    AsyncFunction("getOnboardingComplete") { try { prefs().getBoolean("onboarding_complete", false) } catch (_: Exception) { false } }
+    AsyncFunction("setOnboardingComplete") { complete: Boolean -> try { prefs().edit().putBoolean("onboarding_complete", complete).commit() } catch (_: Exception) { false } }
     AsyncFunction("openSettings") { setting: String ->
       val action = if (setting == "wirelessDebugging") "android.settings.WIRELESS_DEBUGGING_SETTINGS" else Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS
       try { context().startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); mapOf("opened" to true, "message" to "Opened Android Settings.") }

@@ -1,23 +1,213 @@
-import { useCallback, useEffect, useState } from 'react';
-import { AppState, Alert, Pressable, ScrollView, StyleSheet, Text, View, useColorScheme } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import DevToggle, { type DeviceStatus, type SettingName } from '@/modules/dev-toggle-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, AppState, Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import DevToggle, { UNAVAILABLE_STATUS, type DeviceStatus, type SettingName, type SettingState } from '@/modules/dev-toggle-native';
+import { Button, Card, FeatureRow, IconBadge, Overline, Pill, type Tone } from '@/components/ui';
+import { useOnboarding } from '@/state/onboarding';
+import { radius, space, useTheme } from '@/theme';
 
-const SETTINGS: Array<{key: SettingName; title: string; description: string}> = [
-  {key:'developerOptions',title:'Developer Options',description:'Controls access to Android developer settings.'},
-  {key:'usbDebugging',title:'USB Debugging',description:'Lets an authorized computer use ADB over USB.'},
-  {key:'wirelessDebugging',title:'Wireless Debugging',description:'Lets ADB connect over your local network on supported devices.'},
+const SETTINGS: { key: SettingName; icon: string; title: string; description: string }[] = [
+  { key: 'developerOptions', icon: '⚙️', title: 'Developer options', description: 'Access to Android developer settings.' },
+  { key: 'usbDebugging', icon: '🔌', title: 'USB debugging', description: 'Lets an authorized computer use ADB over USB.' },
+  { key: 'wirelessDebugging', icon: '📶', title: 'Wireless debugging', description: 'ADB over your local Wi-Fi on supported devices.' },
 ];
-const EMPTY: DeviceStatus={developerOptions:'unknown',usbDebugging:'unknown',wirelessDebugging:'unknown',writeSecureSettings:'unknown',nativeAvailable:false};
+
+const STATE_UI: Record<SettingState, { label: string; tone: Tone }> = {
+  enabled: { label: 'On', tone: 'success' },
+  disabled: { label: 'Off', tone: 'neutral' },
+  unknown: { label: 'Unknown', tone: 'warning' },
+};
+
 export default function Dashboard() {
- const dark=useColorScheme()==='dark'; const [status,setStatus]=useState<DeviceStatus>(EMPTY); const [loading,setLoading]=useState(true);
- const refresh=useCallback(async()=>{setLoading(true);try{setStatus(await DevToggle.getStatus());}finally{setLoading(false);}},[]);
- useEffect(()=>{refresh();const sub=AppState.addEventListener('change',x=>{if(x==='active')refresh();});return()=>sub.remove();},[refresh]);
- const open=async(key:SettingName)=>{const result=await DevToggle.openSettings(key);if(!result.opened)Alert.alert('Open settings',result.message);};
- const toggle=async(key:SettingName)=>{const result=await DevToggle.setEnabled(key,status[key]!=='enabled');await refresh();if(!result.changed)Alert.alert('Could not change setting',result.message);};
- const c={bg:dark?'#0B1220':'#F5F7FB',card:dark?'#162033':'#FFFFFF',text:dark?'#F8FAFC':'#10213A',muted:dark?'#AEBBCD':'#5E6B7D'};
- return <View style={[s.screen,{backgroundColor:c.bg}]}><SafeAreaView style={s.safe} edges={['top']}><ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}><View style={s.hero}><Text style={s.overline}>ANDROID UTILITY</Text><Text style={[s.title,{color:c.text}]}>Dev Toggle</Text><Text style={[s.subtitle,{color:c.muted}]}>Quick access to Android settings for building, testing, and connecting.</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Refresh setting statuses" onPress={refresh} style={[s.refresh,{backgroundColor:dark?'#22314A':'#E8F1FF'}]}><Text style={s.blue}>{loading?'Checking status…':'↻  Refresh status'}</Text></Pressable>{SETTINGS.map(item=><View key={item.key} style={[s.card,{backgroundColor:c.card}]}><View style={s.cardTop}><View style={s.copy}><Text style={[s.cardTitle,{color:c.text}]}>{item.title}</Text><Text style={[s.description,{color:c.muted}]}>{item.description}</Text></View><Badge value={status[item.key]} /></View>{status[item.key]==='unknown'&&<Text style={[s.notice,{color:c.muted}]}>Android could not reliably report this setting here. Use Settings to confirm it.</Text>}<View style={s.actions}>{status.writeSecureSettings==='granted'&&<Pressable accessibilityRole="button" onPress={()=>toggle(item.key)} style={s.primary}><Text style={s.primaryText}>{status[item.key]==='enabled'?'Turn off in app':'Turn on in app'}</Text></Pressable>}<Pressable accessibilityRole="button" onPress={()=>open(item.key)} style={status.writeSecureSettings==='granted'?s.secondary:s.primary}><Text style={status.writeSecureSettings==='granted'?s.blue:s.primaryText}>Open Settings</Text></Pressable></View></View>)}<View style={[s.permission,{backgroundColor:status.writeSecureSettings==='granted'?(dark?'#103528':'#E9F8F0'):(dark?'#30291B':'#FFF7E5') }]}><Text style={[s.cardTitle,{color:c.text}]}>Advanced permission: {status.writeSecureSettings==='granted'?'Granted':status.writeSecureSettings==='denied'?'Not granted':'Unable to verify'}</Text><Text style={[s.description,{color:c.muted}]}>After the verified ADB permission is granted, the first button changes the Android setting directly in this app and rereads its result. Settings remains a manual fallback.</Text><Pressable onPress={()=>router.push('/setup')}><Text style={[s.blue,{marginTop:12}]}>Open ADB setup guide →</Text></Pressable></View>{!status.nativeAvailable&&<Text style={[s.note,{color:c.muted}]}>Native status checks require this app’s Android development or production build. Expo Go cannot include this module.</Text>}</ScrollView></SafeAreaView></View>;
+  const t = useTheme();
+  const { reset } = useOnboarding();
+  const [status, setStatus] = useState<DeviceStatus>(UNAVAILABLE_STATUS);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<SettingName | null>(null);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      setStatus(await DevToggle.getStatus());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    DevToggle.getStatus()
+      .then(next => active && setStatus(next))
+      .finally(() => active && setLoading(false));
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') refresh();
+    });
+    return () => {
+      active = false;
+      sub.remove();
+    };
+  }, [refresh]);
+
+  const granted = status.writeSecureSettings === 'granted';
+  const enabledCount = SETTINGS.filter(x => status[x.key] === 'enabled').length;
+
+  const open = async (key: SettingName) => {
+    const result = await DevToggle.openSettings(key);
+    if (!result.opened) Alert.alert('Open settings', result.message);
+  };
+
+  const toggle = async (key: SettingName) => {
+    setBusy(key);
+    try {
+      const result = await DevToggle.setEnabled(key, status[key] !== 'enabled');
+      await refresh();
+      if (!result.changed) Alert.alert('Could not change setting', result.message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const replayIntro = () =>
+    Alert.alert('Replay introduction?', 'You will see the welcome, privacy and setup screens again.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Replay', onPress: () => reset() },
+    ]);
+
+  return (
+    <View style={[s.screen, { backgroundColor: t.bg }]}>
+      <SafeAreaView style={s.screen} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={s.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} colors={[t.primary]} tintColor={t.primary} />}>
+          <Animated.View entering={FadeInDown.duration(350)} style={s.header}>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Overline>ANDROID UTILITY</Overline>
+              <Text style={[s.title, { color: t.text }]}>Dev Toggle</Text>
+            </View>
+            <Pill label="On-device only" tone="success" />
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(60).duration(350)}>
+            <View style={[s.summary, { backgroundColor: t.primary }]}>
+              <View style={s.summaryGlow} />
+              <Text style={s.summaryLabel}>ACTIVE SETTINGS</Text>
+              <Text style={s.summaryValue}>
+                {enabledCount}
+                <Text style={s.summaryTotal}> / {SETTINGS.length}</Text>
+              </Text>
+              <Text style={s.summaryText}>
+                {granted ? 'Direct control enabled — toggle below.' : 'View-only mode. Finish ADB setup to toggle from here.'}
+              </Text>
+            </View>
+          </Animated.View>
+
+          {!granted && (
+            <Animated.View entering={FadeInDown.delay(100).duration(350)}>
+              <Card style={{ backgroundColor: t.warningSoft, borderColor: 'transparent' }}>
+                <FeatureRow
+                  tone="warning"
+                  icon="🔑"
+                  title="One step left"
+                  body="Grant WRITE_SECURE_SETTINGS with ADB to switch these settings directly in the app."
+                />
+                <Button label="Start ADB setup" onPress={() => router.push('/setup')} />
+              </Card>
+            </Animated.View>
+          )}
+
+          <Text style={[s.section, { color: t.subtle }]}>SETTINGS</Text>
+          {SETTINGS.map((item, i) => {
+            const state = status[item.key];
+            const ui = STATE_UI[state];
+            return (
+              <Animated.View key={item.key} entering={FadeInDown.delay(140 + i * 60).duration(350)}>
+                <Card>
+                  <View style={s.row}>
+                    <IconBadge icon={item.icon} tone={state === 'enabled' ? 'success' : 'primary'} />
+                    <View style={s.rowCopy}>
+                      <Text style={[s.cardTitle, { color: t.text }]}>{item.title}</Text>
+                      <Text style={[s.description, { color: t.muted }]}>{item.description}</Text>
+                    </View>
+                    {granted ? (
+                      busy === item.key ? (
+                        <ActivityIndicator color={t.primary} />
+                      ) : (
+                        <Switch
+                          accessibilityLabel={`${item.title} ${state === 'enabled' ? 'on' : 'off'}`}
+                          value={state === 'enabled'}
+                          onValueChange={() => toggle(item.key)}
+                          trackColor={{ false: t.border, true: t.success }}
+                          thumbColor="#FFFFFF"
+                        />
+                      )
+                    ) : (
+                      <Pill label={ui.label} tone={ui.tone} />
+                    )}
+                  </View>
+                  {state === 'unknown' && status.nativeAvailable && (
+                    <Text style={[s.notice, { color: t.muted }]}>
+                      Android couldn’t report this setting. Open Settings to confirm.
+                    </Text>
+                  )}
+                  <Pressable accessibilityRole="button" onPress={() => open(item.key)} hitSlop={8}>
+                    <Text style={[s.link, { color: t.primary }]}>Open in Android Settings →</Text>
+                  </Pressable>
+                </Card>
+              </Animated.View>
+            );
+          })}
+
+          <Text style={[s.section, { color: t.subtle }]}>PRIVACY & SECURITY</Text>
+          <Card>
+            <FeatureRow tone="success" icon="📱" title="Everything stays on this phone" body="No cloud, no account, nothing uploaded." />
+            <FeatureRow tone="success" icon="🚫" title="No third-party access" body="No analytics, ads, trackers or third-party SDKs." />
+            <FeatureRow
+              tone={granted ? 'success' : 'neutral'}
+              icon="🔐"
+              title={`ADB permission: ${granted ? 'granted' : status.writeSecureSettings === 'denied' ? 'not granted' : 'unverified'}`}
+              body="Only lets Dev Toggle change system settings. You can revoke it anytime."
+            />
+            <View style={s.actions}>
+              <Button variant="secondary" label="ADB setup" onPress={() => router.push('/setup')} style={{ flex: 1 }} />
+              <Button variant="ghost" label="Replay intro" onPress={replayIntro} style={{ flex: 1 }} />
+            </View>
+          </Card>
+
+          {!status.nativeAvailable && !loading && (
+            <View style={[s.note, { backgroundColor: t.surfaceAlt, borderRadius: radius.md }]}>
+              <Text style={[s.noteText, { color: t.muted }]}>
+                Live status needs this app’s Android development or production build. Expo Go can’t include the native module.
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
 }
-function Badge({value}:{value:DeviceStatus[SettingName]}){const color=value==='enabled'?'#159A63':value==='disabled'?'#D05B31':'#65758B';return <View style={[s.badge,{backgroundColor:`${color}20`}]}><View style={[s.dot,{backgroundColor:color}]}/><Text style={{color,fontWeight:'800',fontSize:12}}>{value==='enabled'?'Enabled':value==='disabled'?'Disabled':'Unknown'}</Text></View>}
-const s=StyleSheet.create({screen:{flex:1},safe:{flex:1},content:{padding:20,paddingBottom:40,gap:16},hero:{gap:7,paddingTop:16},overline:{color:'#1877F2',fontSize:12,fontWeight:'900',letterSpacing:1.2},title:{fontSize:34,fontWeight:'800'},subtitle:{fontSize:16,lineHeight:23},refresh:{borderRadius:12,padding:14,alignItems:'center'},blue:{color:'#1877F2',fontWeight:'800'},card:{borderRadius:20,padding:18,gap:16,elevation:2,shadowColor:'#0F172A',shadowOpacity:.06,shadowRadius:10,shadowOffset:{width:0,height:3}},cardTop:{flexDirection:'row',justifyContent:'space-between',gap:12},copy:{flex:1,gap:6},cardTitle:{fontSize:18,fontWeight:'800'},description:{fontSize:14,lineHeight:20},badge:{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',paddingHorizontal:10,paddingVertical:7,borderRadius:20,gap:6},dot:{width:7,height:7,borderRadius:4},notice:{fontSize:13,lineHeight:18},actions:{flexDirection:'row',gap:10,flexWrap:'wrap'},primary:{backgroundColor:'#1877F2',paddingVertical:12,paddingHorizontal:15,borderRadius:11},primaryText:{color:'#FFF',fontWeight:'800'},secondary:{borderWidth:1,borderColor:'#1877F2',paddingVertical:11,paddingHorizontal:15,borderRadius:11},permission:{borderRadius:18,padding:18},note:{fontSize:12,lineHeight:18,textAlign:'center'}});
+
+const s = StyleSheet.create({
+  screen: { flex: 1 },
+  content: { padding: space.xl, paddingBottom: 48, gap: space.lg },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingTop: space.md },
+  title: { fontSize: 32, fontWeight: '900', letterSpacing: -0.6 },
+  summary: { borderRadius: radius.xl, padding: space.xl, gap: 4, overflow: 'hidden' },
+  summaryGlow: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: '#FFFFFF1F', top: -110, right: -60 },
+  summaryLabel: { color: '#FFFFFFB3', fontSize: 11, fontWeight: '900', letterSpacing: 1.4 },
+  summaryValue: { color: '#FFFFFF', fontSize: 44, fontWeight: '900', letterSpacing: -1 },
+  summaryTotal: { fontSize: 22, color: '#FFFFFFA6', fontWeight: '800' },
+  summaryText: { color: '#FFFFFFE0', fontSize: 14, lineHeight: 20 },
+  section: { fontSize: 12, fontWeight: '900', letterSpacing: 1.3, marginTop: space.sm },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  rowCopy: { flex: 1, gap: 3 },
+  cardTitle: { fontSize: 16, fontWeight: '800' },
+  description: { fontSize: 13, lineHeight: 18 },
+  notice: { fontSize: 12.5, lineHeight: 18 },
+  link: { fontSize: 13.5, fontWeight: '800' },
+  actions: { flexDirection: 'row', gap: space.sm },
+  note: { padding: space.lg },
+  noteText: { fontSize: 12.5, lineHeight: 18, textAlign: 'center' },
+});
