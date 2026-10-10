@@ -4,13 +4,12 @@ import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ShieldCheck,
-  CheckCircle2,
   Zap,
   Sliders,
   Sparkles,
 } from 'lucide-react-native';
-import { Button, Card, FeatureRow, Overline, Pill } from '@/components/ui';
-import { fonts, radius, space, useTheme } from '@/theme';
+import { Button, Card, IconContainer, Overline, Pill } from '@/components/ui';
+import { fonts, space, useTheme } from '@/theme';
 
 export default function SuccessScreen() {
   const t = useTheme();
@@ -19,57 +18,78 @@ export default function SuccessScreen() {
     <View style={[s.screen, { backgroundColor: t.bg }]}>
       <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-          {/* Animated Glowing Success Badge */}
+          {/* Prominent Transparent Logo Hero (No background box) */}
           <Animated.View entering={ZoomIn.duration(450)} style={s.heroCenter}>
-            <View style={[s.glowRing, { backgroundColor: t.primaryGlow }]} />
-            <View style={[s.iconBox, { borderColor: `${t.success}60`, backgroundColor: t.canvasElevated }]}>
-              <Image
-                source={require('@/assets/images/icon2.png')}
-                style={s.appLogo}
-                resizeMode="contain"
-              />
-              <View style={[s.checkBadge, { backgroundColor: t.success }]}>
-                <CheckCircle2 size={20} color="#052E16" strokeWidth={2.5} />
-              </View>
+            <Image
+              source={require('@/assets/images/icon2.png')}
+              style={s.appLogo}
+              resizeMode="contain"
+            />
+            <View style={{ marginTop: space.sm }}>
+              <Pill label="SYSTEM PERMISSION ACTIVE" tone="success" />
             </View>
           </Animated.View>
 
-          {/* Welcome Message */}
+          {/* Welcome Header */}
           <Animated.View entering={FadeInDown.delay(100).duration(350)} style={s.header}>
             <Overline>HARDWARE ACCESS UNLOCKED</Overline>
             <Text style={[s.title, { color: t.textPrimary }]}>Welcome to Dev Mode</Text>
             <Text style={[s.subtitle, { color: t.textSecondary }]}>
-              ADB permission has been verified successfully. Your device is now fully unlocked for direct system toggles and performance tuning.
+              Your device is fully configured and primed for high-performance developer workflows. All settings take effect instantly.
             </Text>
           </Animated.View>
 
-          {/* Active Features Summary */}
-          <Animated.View entering={FadeInDown.delay(180).duration(350)}>
-            <Card style={{ borderColor: `${t.success}50` }}>
-              <View style={s.cardHead}>
-                <Pill label="SYSTEM STATUS: OPTIMIZED" tone="success" />
+          {/* Unlocked Capabilities Grid/Cards */}
+          <Animated.View entering={FadeInDown.delay(180).duration(350)} style={s.featuresList}>
+            {/* Feature 1: Animation Booster */}
+            <Card style={s.featureCard}>
+              <View style={s.featureHead}>
+                <IconContainer tone="success" size={40}>
+                  <Zap size={20} color={t.success} />
+                </IconContainer>
+                <View style={s.featureTitleCol}>
+                  <Text style={[s.featureTag, { color: t.primaryLight }]}>PERFORMANCE</Text>
+                  <Text style={[s.featureTitle, { color: t.textPrimary }]}>Animation Speed Booster</Text>
+                </View>
+                <Pill label="0.5X READY" tone="success" />
               </View>
+              <Text style={[s.featureBody, { color: t.textSecondary }]}>
+                Window, transition, and animator scales optimized to 0.5x for snappy, instantaneous UI responsiveness.
+              </Text>
+            </Card>
 
-              <FeatureRow
-                tone="success"
-                icon={<Zap size={20} color={t.success} />}
-                title="Animation Speed Booster Ready"
-                body="Enjoy instantaneous transitions with default 0.5x animation scales or customizable speeds."
-              />
+            {/* Feature 2: Hardware Toggles */}
+            <Card style={s.featureCard}>
+              <View style={s.featureHead}>
+                <IconContainer tone="success" size={40}>
+                  <Sliders size={20} color={t.success} />
+                </IconContainer>
+                <View style={s.featureTitleCol}>
+                  <Text style={[s.featureTag, { color: t.primaryLight }]}>CONTROLS</Text>
+                  <Text style={[s.featureTitle, { color: t.textPrimary }]}>Direct Hardware Toggles</Text>
+                </View>
+                <Pill label="UNLOCKED" tone="success" />
+              </View>
+              <Text style={[s.featureBody, { color: t.textSecondary }]}>
+                One-tap switches for Developer Options, USB Debugging, Wireless ADB, Stay Awake, and touch inspect.
+              </Text>
+            </Card>
 
-              <FeatureRow
-                tone="success"
-                icon={<Sliders size={20} color={t.success} />}
-                title="Instant Developer Toggles"
-                body="Switch USB Debugging, Wireless ADB, and Stay Awake without digging into deep system menus."
-              />
-
-              <FeatureRow
-                tone="success"
-                icon={<ShieldCheck size={20} color={t.success} />}
-                title="100% Offline & Private"
-                body="All modifications stay directly on this phone. Zero analytics, no third parties, no telemetry."
-              />
+            {/* Feature 3: Privacy Guarantee */}
+            <Card style={s.featureCard}>
+              <View style={s.featureHead}>
+                <IconContainer tone="success" size={40}>
+                  <ShieldCheck size={20} color={t.success} />
+                </IconContainer>
+                <View style={s.featureTitleCol}>
+                  <Text style={[s.featureTag, { color: t.primaryLight }]}>SECURITY</Text>
+                  <Text style={[s.featureTitle, { color: t.textPrimary }]}>100% Offline & Local</Text>
+                </View>
+                <Pill label="PRIVATE" tone="success" />
+              </View>
+              <Text style={[s.featureBody, { color: t.textSecondary }]}>
+                All toggle states and preferences remain strictly on this device. Zero analytics, telemetry, or remote servers.
+              </Text>
             </Card>
           </Animated.View>
         </ScrollView>
@@ -77,7 +97,7 @@ export default function SuccessScreen() {
         {/* Enter Dashboard Button */}
         <Animated.View entering={FadeInDown.delay(260).duration(350)} style={[s.footer, { borderColor: t.cardBorder }]}>
           <Button
-            variant="cyan"
+            variant="primary"
             label="Launch Dashboard"
             icon={<Sparkles size={18} color="#FFFFFF" />}
             onPress={() => router.replace('/')}
@@ -93,41 +113,20 @@ const s = StyleSheet.create({
   screen: { flex: 1 },
   content: {
     paddingHorizontal: space.lg,
-    paddingTop: space.xl,
-    paddingBottom: 28,
-    gap: space.xl,
+    paddingTop: space.lg,
+    paddingBottom: 24,
+    gap: space.lg,
     alignItems: 'center',
     width: '100%',
   },
   heroCenter: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: space.md,
-  },
-  glowRing: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-  },
-  iconBox: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
+    paddingTop: space.sm,
   },
   appLogo: {
-    width: 68,
-    height: 68,
-  },
-  checkBadge: {
-    position: 'absolute',
-    bottom: -6,
-    right: -6,
-    borderRadius: radius.full,
-    padding: 3,
+    width: 180,
+    height: 120,
   },
   header: {
     gap: space.xs,
@@ -137,19 +136,47 @@ const s = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.heading,
-    fontSize: 28,
-    letterSpacing: -0.5,
+    fontSize: 27,
+    letterSpacing: -0.4,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: fonts.body,
-    fontSize: 14.5,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: 'center',
+    paddingHorizontal: space.xs,
   },
-  cardHead: {
-    alignItems: 'flex-start',
-    marginBottom: space.xs,
+  featuresList: {
+    width: '100%',
+    gap: space.md,
+  },
+  featureCard: {
+    gap: space.sm,
+    padding: space.md,
+  },
+  featureHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  featureTitleCol: {
+    flex: 1,
+    gap: 2,
+  },
+  featureTag: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  featureTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 15,
+  },
+  featureBody: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 18.5,
   },
   footer: {
     paddingHorizontal: space.lg,
@@ -162,4 +189,3 @@ const s = StyleSheet.create({
     width: '100%',
   },
 });
-
