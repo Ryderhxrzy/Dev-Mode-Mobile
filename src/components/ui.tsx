@@ -216,6 +216,120 @@ export function FeatureRow({
   );
 }
 
+export interface CyberToggleProps {
+  value: boolean;
+  onValueChange: (val: boolean) => void;
+  disabled?: boolean;
+  size?: 'md' | 'lg';
+  tone?: 'success' | 'cyan';
+  accessibilityLabel?: string;
+}
+
+export function CyberToggle({
+  value,
+  onValueChange,
+  disabled = false,
+  size = 'md',
+  tone = 'success',
+  accessibilityLabel,
+}: CyberToggleProps) {
+  const t = useTheme();
+  const isLg = size === 'lg';
+
+  const trackWidth = isLg ? 62 : 52;
+  const trackHeight = isLg ? 34 : 28;
+  const thumbSize = isLg ? 26 : 22;
+  const travel = trackWidth - thumbSize - 6;
+
+  const activeColor = tone === 'cyan' ? t.accentCyan : t.success;
+
+  return (
+    <Pressable
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ checked: value, disabled }}
+      disabled={disabled}
+      onPress={() => onValueChange(!value)}
+      style={({ pressed }) => [
+        {
+          opacity: disabled ? 0.4 : pressed ? 0.85 : 1,
+        },
+      ]}>
+      <View
+        style={[
+          s.cyberTrack,
+          {
+            width: trackWidth,
+            height: trackHeight,
+            borderRadius: trackHeight / 2,
+            backgroundColor: value ? `${activeColor}24` : 'rgba(255, 255, 255, 0.06)',
+            borderColor: value ? activeColor : 'rgba(255, 255, 255, 0.16)',
+            shadowColor: value ? activeColor : 'transparent',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: value ? 0.5 : 0,
+            shadowRadius: 8,
+            elevation: value ? 4 : 0,
+          },
+        ]}>
+        {/* Micro text indicator inside track */}
+        <View style={s.cyberTrackInner}>
+          {value ? (
+            <Text
+              style={[
+                s.cyberLabelOn,
+                {
+                  color: activeColor,
+                  left: isLg ? 8 : 7,
+                  fontSize: isLg ? 10 : 8.5,
+                },
+              ]}>
+              ON
+            </Text>
+          ) : (
+            <Text
+              style={[
+                s.cyberLabelOff,
+                {
+                  color: t.textMuted,
+                  right: isLg ? 8 : 7,
+                  fontSize: isLg ? 9.5 : 8,
+                },
+              ]}>
+              OFF
+            </Text>
+          )}
+        </View>
+
+        {/* Sliding Thumb */}
+        <View
+          style={[
+            s.cyberThumb,
+            {
+              width: thumbSize,
+              height: thumbSize,
+              borderRadius: thumbSize / 2,
+              transform: [{ translateX: value ? travel : 0 }],
+              backgroundColor: value ? '#FFFFFF' : '#475569',
+              borderColor: value ? activeColor : 'rgba(255, 255, 255, 0.2)',
+            },
+          ]}>
+          <View
+            style={[
+              s.cyberThumbDot,
+              {
+                width: isLg ? 8 : 6,
+                height: isLg ? 8 : 6,
+                borderRadius: isLg ? 4 : 3,
+                backgroundColor: value ? activeColor : '#1E293B',
+              },
+            ]}
+          />
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
   button: {
     minHeight: 52,
@@ -321,4 +435,37 @@ const s = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
+  cyberTrack: {
+    borderWidth: 1.5,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+    position: 'relative',
+  },
+  cyberTrackInner: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+  },
+  cyberLabelOn: {
+    position: 'absolute',
+    fontFamily: fonts.monoBold,
+    letterSpacing: 0.5,
+    fontWeight: '800',
+  },
+  cyberLabelOff: {
+    position: 'absolute',
+    fontFamily: fonts.monoBold,
+    letterSpacing: 0.5,
+    fontWeight: '700',
+  },
+  cyberThumb: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  cyberThumbDot: {},
 });
