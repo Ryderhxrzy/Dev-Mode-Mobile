@@ -86,7 +86,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
-            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorActiveStatus = Color.parseColor("#FFFFFF")
             val colorInactiveText = Color.parseColor("#7A9988")
             val colorInactiveStatus = Color.parseColor("#5C7A6B")
             val colorInactiveIcon = Color.parseColor("#5C7A6B")
@@ -100,6 +100,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             )
             views.setTextColor(R.id.tv_dev, if (devOn) colorActiveText else colorInactiveText)
             views.setTextViewText(R.id.tv_dev_status, if (devOn) "ON" else "OFF")
+            views.setTextColor(R.id.tv_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
             val devIconRes = if (devOn) R.drawable.white_icon else R.drawable.widget_icon_off
             views.setImageViewResource(R.id.iv_dev, devIconRes)
             views.setInt(R.id.iv_dev, "setImageAlpha", 255)
@@ -132,7 +133,18 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (wirelessOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_wireless, if (wirelessOn) colorActiveText else colorInactiveText)
-            views.setTextViewText(R.id.tv_wireless_status, if (wirelessOn) "ON" else "OFF")
+            if (wirelessOn) {
+                val ep = AdbEndpointHelper.getEndpoint(context)
+                if (ep != null && ep.contains(":")) {
+                    views.setTextViewText(R.id.tv_wireless_status, ":${ep.substringAfter(":")}")
+                } else if (ep != null) {
+                    views.setTextViewText(R.id.tv_wireless_status, "ON")
+                } else {
+                    views.setTextViewText(R.id.tv_wireless_status, "NO WI-FI")
+                }
+            } else {
+                views.setTextViewText(R.id.tv_wireless_status, "OFF")
+            }
             views.setTextColor(R.id.tv_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             views.setInt(R.id.iv_wireless, "setColorFilter", if (wirelessOn) colorActiveText else colorInactiveIcon)
             views.setOnClickPendingIntent(R.id.btn_wireless, piWifi)
@@ -149,7 +161,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_dev_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
-            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorActiveStatus = Color.parseColor("#FFFFFF")
             val colorInactiveText = Color.parseColor("#7A9988")
             val colorInactiveStatus = Color.parseColor("#5C7A6B")
 
@@ -179,7 +191,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_usb_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
-            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorActiveStatus = Color.parseColor("#FFFFFF")
             val colorInactiveText = Color.parseColor("#7A9988")
             val colorInactiveStatus = Color.parseColor("#5C7A6B")
             val colorInactiveIcon = Color.parseColor("#5C7A6B")
@@ -208,7 +220,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_wireless_widget)
 
             val colorActiveText = Color.parseColor("#FFFFFF")
-            val colorActiveStatus = Color.parseColor("#E2FBE8")
+            val colorActiveStatus = Color.parseColor("#FFFFFF")
             val colorInactiveText = Color.parseColor("#7A9988")
             val colorInactiveStatus = Color.parseColor("#5C7A6B")
             val colorInactiveIcon = Color.parseColor("#5C7A6B")
@@ -222,11 +234,27 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_single_wireless_label, if (wirelessOn) colorActiveText else colorInactiveText)
             views.setTextViewText(R.id.tv_single_wireless_status, if (wirelessOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_single_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
+            if (wirelessOn) {
+                val ep = AdbEndpointHelper.getEndpoint(context)
+                if (ep != null && ep.contains(":")) {
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, ep)
+                    views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
+                } else if (ep != null) {
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "$ep (Resolving)")
+                    views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
+                } else {
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "No Wi-Fi Connection")
+                    views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
+                }
+            } else {
+                views.setTextViewText(R.id.tv_single_wireless_endpoint, "")
+            }
             views.setInt(R.id.iv_single_wireless, "setColorFilter", if (wirelessOn) colorActiveText else colorInactiveIcon)
             views.setOnClickPendingIntent(R.id.btn_single_wireless, pi)
             views.setOnClickPendingIntent(R.id.iv_single_wireless, pi)
             views.setOnClickPendingIntent(R.id.tv_single_wireless_label, pi)
             views.setOnClickPendingIntent(R.id.tv_single_wireless_status, pi)
+            views.setOnClickPendingIntent(R.id.tv_single_wireless_endpoint, pi)
 
             return views
         }
