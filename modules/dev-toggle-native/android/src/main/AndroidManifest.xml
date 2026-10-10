@@ -65,5 +65,15 @@
         android:name="android.appwidget.provider"
         android:resource="@xml/dev_toggle_widget_wireless_info" />
     </receiver>
+
+    <!-- Transparent activity to process widget clicks and display toast notifications reliably -->
+    <activity
+      android:name="expo.modules.devtoggle.WidgetActionActivity"
+      android:theme="@android:style/Theme.Translucent.NoTitleBar"
+      android:excludeFromRecents="true"
+      android:noHistory="true"
+      android:taskAffinity=""
+      android:launchMode="singleInstance"
+      android:exported="true" />
   </application>
 </manifest>
