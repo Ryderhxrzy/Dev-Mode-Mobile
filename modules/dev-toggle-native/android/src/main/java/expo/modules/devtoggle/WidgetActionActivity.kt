@@ -145,6 +145,11 @@ class WidgetActionActivity : Activity() {
 
                 if (success) {
                     showToast(this, if (next == 1) "Wireless Debugging: Enabled" else "Wireless Debugging: Disabled")
+                    if (next == 1) {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            DevToggleWidgetProvider.updateAllWidgets(applicationContext)
+                        }, 1200)
+                    }
                 } else {
                     showToast(this, "Permission Required: Run ADB grant command")
                 }
