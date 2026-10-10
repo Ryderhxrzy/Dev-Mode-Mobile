@@ -232,6 +232,9 @@ class DevToggleModule : Module() {
         val written = Settings.Global.putInt(context().contentResolver, settingKey, if (enabled) 1 else 0)
         val now = read(settingKey)
         val expected = if (enabled) "enabled" else "disabled"
+        if (written && now == expected) {
+          DevToggleWidgetProvider.updateAllWidgets(context())
+        }
         mapOf(
           "changed" to (written && now == expected),
           "message" to if (written && now == expected) "Android reported the updated state." else "Android blocked or did not apply this change."
