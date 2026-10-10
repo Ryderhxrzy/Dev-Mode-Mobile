@@ -4,9 +4,9 @@ const palette = {
   dark: {
     // Android Robot Emerald / Neon Terminal Aesthetic (matching new-icon.png)
     bg: '#050D0A',           // Deepest terminal bio-black / dark forest obsidian
-    canvas: '#0B1713',       // Matrix dark green card canvas
-    canvasElevated: '#11221C',
-    cardBorder: 'rgba(34, 197, 94, 0.20)', // Bio-green border
+    canvas: 'rgba(11, 23, 19, 0.86)',       // Matrix dark green card canvas with subtle glassmorphism
+    canvasElevated: 'rgba(17, 34, 28, 0.90)',
+    cardBorder: 'rgba(34, 197, 94, 0.25)', // Bio-green border
     borderSubtle: 'rgba(255, 255, 255, 0.08)',
     
     // Main Brand Greens (Sampled from icon2.png)
