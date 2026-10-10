@@ -183,6 +183,38 @@ export default function Dashboard() {
     return () => sub.remove();
   }, [toggle]);
 
+  // Auto-resolve wireless endpoint when wireless debugging is active
+  useEffect(() => {
+    if (status.wirelessDebugging !== 'enabled') return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 15;
+
+    const poll = async () => {
+      if (cancelled) return;
+      try {
+        const ep = await DevToggle.getWirelessEndpoint();
+        if (cancelled) return;
+        if (ep) {
+          setStatus(prev => ({ ...prev, wirelessEndpoint: ep }));
+          if (ep.includes(':')) return; // Full IP:Port detected, finish polling
+        }
+      } catch {}
+
+      attempts++;
+      if (attempts < maxAttempts && !cancelled) {
+        setTimeout(poll, 1200);
+      }
+    };
+
+    const timer = setTimeout(poll, 600);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [status.wirelessDebugging, status.wirelessEndpoint]);
+
   // Speed Booster: Direct toggle to 0.5x when turned ON, 1.0x when turned OFF
   const toggleSpeedBooster = async (enable: boolean) => {
     setBusy('speedOptimizer');
@@ -471,25 +503,47 @@ export default function Dashboard() {
                     <Text style={[s.switchTitle, { color: t.textPrimary }]}>Wireless Debugging</Text>
                     {status.wirelessDebugging === 'enabled' && (
                       status.wirelessEndpoint ? (
+                        status.wirelessEndpoint.includes(':') ? (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Copy Wireless ADB Address"
+                            onPress={async () => {
+                              await Clipboard.setStringAsync(status.wirelessEndpoint!);
+                              showToast(`Copied: ${status.wirelessEndpoint}`);
+                            }}>
+                            <Pill label={status.wirelessEndpoint} tone="success" />
+                          </Pressable>
+                        ) : (
+                          <Pressable
+                            accessibilityRole="button"
+                            accessibilityLabel="Open Wireless Debugging Settings"
+                            onPress={async () => {
+                              showToast('Opening Wireless Debugging Settings to view port...');
+                              await DevToggle.openSettings('wirelessDebugging');
+                            }}>
+                            <Pill label={`${status.wirelessEndpoint} (Resolving...)`} tone="cyan" />
+                          </Pressable>
+                        )
+                      ) : (
                         <Pressable
                           accessibilityRole="button"
-                          accessibilityLabel="Copy Wireless ADB Address"
+                          accessibilityLabel="Open Wireless Debugging Settings"
                           onPress={async () => {
-                            await Clipboard.setStringAsync(status.wirelessEndpoint!);
-                            showToast(`Copied: ${status.wirelessEndpoint}`);
+                            showToast('Opening Wireless Debugging Settings...');
+                            await DevToggle.openSettings('wirelessDebugging');
                           }}>
-                          <Pill label={status.wirelessEndpoint} tone="success" />
+                          <Pill label="Querying Socket..." tone="neutral" />
                         </Pressable>
-                      ) : (
-                        <Pill label="Querying Socket..." tone="neutral" />
                       )
                     )}
                   </View>
                   <Text style={[s.switchDesc, { color: t.textSecondary }]}>
                     {status.wirelessDebugging === 'enabled'
-                      ? status.wirelessEndpoint
+                      ? status.wirelessEndpoint?.includes(':')
                         ? `Listening on ${status.wirelessEndpoint}. Tap badge to copy "adb connect ${status.wirelessEndpoint}".`
-                        : 'Wireless debugging is active. Ensure Wi-Fi is connected to display your IP:Port endpoint.'
+                        : status.wirelessEndpoint
+                          ? `Device IP is ${status.wirelessEndpoint}. Tap badge to open Wireless Debugging settings & view Port.`
+                          : 'Wireless debugging is active. Ensure Wi-Fi is connected to display your IP:Port endpoint.'
                       : 'Accepts local Wi-Fi ADB connections on supported Android versions.'}
                   </Text>
                 </View>
