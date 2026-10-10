@@ -136,9 +136,9 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             if (wirelessOn) {
                 val ep = AdbEndpointHelper.getEndpoint(context)
                 if (ep != null && ep.contains(":")) {
-                    views.setTextViewText(R.id.tv_wireless_status, ":${ep.substringAfter(":")}")
+                    views.setTextViewText(R.id.tv_wireless_status, ep)
                 } else if (ep != null) {
-                    views.setTextViewText(R.id.tv_wireless_status, "ON")
+                    views.setTextViewText(R.id.tv_wireless_status, "$ep (Resolving)")
                 } else {
                     views.setTextViewText(R.id.tv_wireless_status, "NO WI-FI")
                 }
@@ -342,6 +342,14 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
 
                 if (success) {
                     showToast(context, if (next == 1) "Wireless Debugging: Enabled" else "Wireless Debugging: Disabled")
+                    if (next == 1) {
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            updateAllWidgets(context.applicationContext)
+                        }, 1200)
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            updateAllWidgets(context.applicationContext)
+                        }, 2500)
+                    }
                 } else {
                     showToast(context, "Permission Required: Run ADB grant command")
                 }
