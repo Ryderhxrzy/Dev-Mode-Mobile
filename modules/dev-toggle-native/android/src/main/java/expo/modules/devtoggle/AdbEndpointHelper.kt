@@ -1,26 +1,58 @@
 package expo.modules.devtoggle
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.provider.Settings
 import java.net.Inet4Address
-import java.net.InetSocketAddress
 import java.net.NetworkInterface
-import java.net.Socket
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
 object AdbEndpointHelper {
+    private const val PREFS_NAME = "devtoggle_local_prefs"
+    private const val KEY_PERSISTED_PORT = "adb_persisted_port"
+    private const val KEY_PERSISTED_IP = "adb_persisted_ip"
+    private const val KEY_PERSISTED_ENDPOINT = "adb_persisted_endpoint"
+
     @Volatile var cachedPort: Int = -1
     @Volatile var cachedIp: String? = null
     private val isDiscovering = AtomicBoolean(false)
     private val isResolving = AtomicBoolean(false)
     private var nsdManager: NsdManager? = null
     private var discoveryListener: NsdManager.DiscoveryListener? = null
+
+    private fun getPrefs(context: Context): SharedPreferences =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    fun getPersistedPort(context: Context): Int =
+        getPrefs(context).getInt(KEY_PERSISTED_PORT, -1)
+
+    fun savePersistedEndpoint(context: Context, ip: String, port: Int) {
+        if (port > 0 && ip.isNotBlank()) {
+            cachedPort = port
+            cachedIp = ip
+            getPrefs(context).edit()
+                .putInt(KEY_PERSISTED_PORT, port)
+                .putString(KEY_PERSISTED_IP, ip)
+                .putString(KEY_PERSISTED_ENDPOINT, "$ip:$port")
+                .apply()
+        }
+    }
+
+    fun clearPersistedEndpoint(context: Context) {
+        cachedPort = -1
+        cachedIp = null
+        getPrefs(context).edit()
+            .remove(KEY_PERSISTED_PORT)
+            .remove(KEY_PERSISTED_IP)
+            .remove(KEY_PERSISTED_ENDPOINT)
+            .apply()
+    }
 
     fun getLocalIpAddress(context: Context): String? {
         // 1. ConnectivityManager (Active network IPv4)
@@ -44,7 +76,7 @@ object AdbEndpointHelper {
             }
         } catch (_: Exception) {}
 
-        // 3. NetworkInterface prioritization
+        // 3. NetworkInterface prioritization (wlan0, wifi0, etc.)
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (intf in interfaces.filter { it.name.startsWith("wlan", true) || it.name.startsWith("wifi", true) }) {
@@ -74,7 +106,7 @@ object AdbEndpointHelper {
             if (!line.isNullOrEmpty() && line != "0.0.0.0") return line
         } catch (_: Exception) {}
 
-        // 5. Outbound UDP routing interface (instant, 0 network packets, highly reliable on Android)
+        // 5. Outbound UDP routing interface (instant, 0 packets sent)
         try {
             java.net.DatagramSocket().use { socket ->
                 socket.connect(java.net.InetAddress.getByName("8.8.8.8"), 53)
@@ -88,17 +120,23 @@ object AdbEndpointHelper {
         return null
     }
 
-    private fun isPortOpen(host: String, port: Int, timeoutMs: Int = 80): Boolean {
-        var s: Socket? = null
-        return try {
-            s = Socket()
-            s.connect(InetSocketAddress(host, port), timeoutMs)
-            true
-        } catch (_: Exception) {
-            false
-        } finally {
-            try { s?.close() } catch (_: Exception) {}
-        }
+    private fun readSystemProperty(key: String): String? {
+        // Reflection on android.os.SystemProperties
+        try {
+            val propClass = Class.forName("android.os.SystemProperties")
+            val getMethod = propClass.getMethod("get", String::class.java, String::class.java)
+            val value = (getMethod.invoke(null, key, "") as? String)?.trim()
+            if (!value.isNullOrBlank()) return value
+        } catch (_: Exception) {}
+
+        // Fallback to getprop command
+        try {
+            val process = Runtime.getRuntime().exec(arrayOf("getprop", key))
+            val line = process.inputStream.bufferedReader().readLine()?.trim()
+            if (!line.isNullOrBlank()) return line
+        } catch (_: Exception) {}
+
+        return null
     }
 
     fun startDiscovery(context: Context) {
@@ -114,7 +152,11 @@ object AdbEndpointHelper {
 
                 override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                     val type = serviceInfo.serviceType ?: ""
-                    if (type.contains("adb", true) || serviceInfo.serviceName.contains("adb", true)) {
+                    val name = serviceInfo.serviceName ?: ""
+                    // Skip pairing advertisements
+                    if (type.contains("pairing", true) || name.contains("pairing", true)) return
+
+                    if (type.contains("adb", true) || name.contains("adb", true)) {
                         if (isResolving.compareAndSet(false, true)) {
                             try {
                                 nsd.resolveService(serviceInfo, object : NsdManager.ResolveListener {
@@ -127,9 +169,16 @@ object AdbEndpointHelper {
                                             if (resolved.port > 0) {
                                                 cachedPort = resolved.port
                                                 val h = resolved.host?.hostAddress
-                                                if (!h.isNullOrEmpty() && h != "0.0.0.0") {
-                                                    cachedIp = h
+                                                val currentIp = if (!h.isNullOrEmpty() && h != "0.0.0.0") h else getLocalIpAddress(context)
+                                                if (!currentIp.isNullOrBlank()) {
+                                                    cachedIp = currentIp
+                                                    savePersistedEndpoint(context, currentIp, resolved.port)
                                                 }
+                                                // Real-time update to widgets and notifications as soon as resolved
+                                                try {
+                                                    DevToggleWidgetProvider.updateAllWidgets(context)
+                                                    DevToggleNotificationManager.updateNotification(context)
+                                                } catch (_: Exception) {}
                                             }
                                         } finally {
                                             isResolving.set(false)
@@ -165,73 +214,56 @@ object AdbEndpointHelper {
     }
 
     fun getPort(context: Context): Int {
-        // 0. Cached port check
-        if (cachedPort > 0) {
-            if (isPortOpen("127.0.0.1", cachedPort, 80)) return cachedPort
-            val ip = getLocalIpAddress(context)
-            if (ip != null && isPortOpen(ip, cachedPort, 80)) return cachedPort
-        }
-
-        // 1. Direct standard port 5555
-        if (isPortOpen("127.0.0.1", 5555, 60)) {
-            cachedPort = 5555
-            return 5555
-        }
-
-        // 2. SystemProperties
-        try {
-            val propClass = Class.forName("android.os.SystemProperties")
-            val getMethod = propClass.getMethod("get", String::class.java, String::class.java)
-            val tlsPort = (getMethod.invoke(null, "service.adb.tls.port", "") as? String)?.trim()?.toIntOrNull()
-            if (tlsPort != null && tlsPort > 0) {
-                cachedPort = tlsPort
-                return tlsPort
+        // 1. Direct System Property: service.adb.tls.port (Set directly by adbd upon starting TLS)
+        for (prop in listOf("service.adb.tls.port", "service.adb.tcp.port")) {
+            val pStr = readSystemProperty(prop)
+            val p = pStr?.toIntOrNull()
+            if (p != null && p > 0 && p <= 65535) {
+                cachedPort = p
+                return p
             }
-
-            val tcpPort = (getMethod.invoke(null, "service.adb.tcp.port", "") as? String)?.trim()?.toIntOrNull()
-            if (tcpPort != null && tcpPort > 0) {
-                cachedPort = tcpPort
-                return tcpPort
-            }
-        } catch (_: Exception) {}
-
-        // 3. getprop binary command
-        for (propName in listOf("service.adb.tls.port", "service.adb.tcp.port")) {
-            try {
-                val process = Runtime.getRuntime().exec(arrayOf("getprop", propName))
-                val line = process.inputStream.bufferedReader().readLine()?.trim()
-                val p = line?.toIntOrNull()
-                if (p != null && p > 0) {
-                    cachedPort = p
-                    return p
-                }
-            } catch (_: Exception) {}
         }
 
-        // 4. Settings Global & Secure
+        // 2. In-memory cached port if valid
+        if (cachedPort in 1..65535) {
+            return cachedPort
+        }
+
+        // 3. Settings Global & Secure: adb_wifi_port / adb_port
         val cr = context.contentResolver
         for (k in listOf("adb_wifi_port", "adb_port")) {
-            try {
-                val p = Settings.Global.getInt(cr, k, -1)
-                if (p > 0) { cachedPort = p; return p }
-            } catch (_: Exception) {}
-            try {
-                val p = Settings.Secure.getInt(cr, k, -1)
-                if (p > 0) { cachedPort = p; return p }
-            } catch (_: Exception) {}
-        }
-
-        // 5. Trigger mDNS discovery
-        startDiscovery(context)
-        if (cachedPort <= 0) {
-            var waited = 0
-            while (waited < 350 && cachedPort <= 0) {
-                try { Thread.sleep(50) } catch (_: Exception) {}
-                waited += 50
+            val p1 = try { Settings.Global.getInt(cr, k, -1) } catch (_: Exception) { -1 }
+            if (p1 in 1..65535) {
+                cachedPort = p1
+                return p1
+            }
+            val p2 = try { Settings.Secure.getInt(cr, k, -1) } catch (_: Exception) { -1 }
+            if (p2 in 1..65535) {
+                cachedPort = p2
+                return p2
             }
         }
 
-        return cachedPort
+        // 4. Persisted Port in SharedPreferences (retains active session port across app close/widget updates)
+        val persisted = getPersistedPort(context)
+        if (persisted in 1..65535) {
+            cachedPort = persisted
+            return persisted
+        }
+
+        // 5. Trigger mDNS discovery in background
+        startDiscovery(context)
+        var waited = 0
+        while (waited < 500 && cachedPort <= 0) {
+            try { Thread.sleep(50) } catch (_: Exception) {}
+            waited += 50
+        }
+
+        if (cachedPort in 1..65535) {
+            return cachedPort
+        }
+
+        return -1
     }
 
     fun getEndpoint(context: Context): String? {
@@ -241,30 +273,42 @@ object AdbEndpointHelper {
 
         if (!isEnabled) {
             stopDiscovery()
-            cachedPort = -1
-            cachedIp = null
+            clearPersistedEndpoint(context)
             return null
         }
 
-        startDiscovery(context)
-        val port = getPort(context)
         val rawIp = if (!cachedIp.isNullOrBlank() && !cachedIp!!.startsWith(":") && cachedIp != "0.0.0.0") {
             cachedIp
         } else {
             getLocalIpAddress(context)
         }
-
         val ip = if (!rawIp.isNullOrBlank() && !rawIp.startsWith(":") && rawIp != "0.0.0.0") rawIp else null
 
-        return if (ip != null && port > 0) {
-            "$ip:$port"
-        } else if (ip != null) {
-            ip
-        } else if (port > 0) {
-            "Port: $port"
-        } else {
-            null
+        val port = getPort(context)
+
+        // 1. Both IP and Port are active
+        if (ip != null && port in 1..65535) {
+            savePersistedEndpoint(context, ip, port)
+            return "$ip:$port"
         }
+
+        // 2. Persisted session fallback
+        val persistedPort = getPersistedPort(context)
+        if (ip != null && persistedPort in 1..65535) {
+            return "$ip:$persistedPort"
+        }
+
+        val persistedEp = getPrefs(context).getString(KEY_PERSISTED_ENDPOINT, null)
+        if (!persistedEp.isNullOrBlank() && persistedEp.contains(":") && !persistedEp.startsWith(":")) {
+            return persistedEp
+        }
+
+        // 3. IP is active but port is still discovering
+        if (ip != null) {
+            startDiscovery(context)
+            return "$ip (Resolving...)"
+        }
+
+        return null
     }
 }
-
