@@ -1,3 +1,35 @@
 {
-  "expo":{"name":"Dev Toggle","slug":"developer-option-toggle","version":"1.0.0","orientation":"portrait","icon":"./assets/images/icon.png","scheme":"devtoggle","userInterfaceStyle":"automatic","android":{"package":"com.devtoggle.app","adaptiveIcon":{"backgroundColor":"#E6F4FE","foregroundImage":"./assets/images/android-icon-foreground.png","backgroundImage":"./assets/images/android-icon-background.png","monochromeImage":"./assets/images/android-icon-monochrome.png"}},"plugins":["expo-router",["expo-splash-screen",{"backgroundColor":"#1877F2","image":"./assets/images/splash-icon.png","imageWidth":76}]],"experiments":{"typedRoutes":true,"reactCompiler":true}}
+  "expo": {
+    "name": "Dev Mode",
+    "slug": "dev-mode",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon2.png",
+    "scheme": "devmode",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "com.devmode.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/images/icon2.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/icon2.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/images/icon2.png",
+          "imageWidth": 120
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
 }
