@@ -92,6 +92,10 @@ class WidgetActionActivity : Activity() {
                 }
 
                 if (success) {
+                    if (next == 0) {
+                        try { Settings.Global.putInt(cr, USB_KEY, 0) } catch (_: Exception) {}
+                        try { Settings.Global.putInt(cr, WIRELESS_KEY, 0) } catch (_: Exception) {}
+                    }
                     showToast(this, if (next == 1) "Developer Options: Enabled" else "Developer Options: Disabled")
                 } else {
                     showToast(this, "Permission Required: Run ADB grant command")
