@@ -53,7 +53,7 @@ export default function Onboarding() {
   };
 
   return (
-    <View style={[s.screen, { backgroundColor: t.bg }]}>
+    <View style={s.screen}>
       <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
         {/* Header Indicator */}
         <View style={s.header}>
@@ -100,7 +100,7 @@ export default function Onboarding() {
         </ScrollView>
 
         {/* Footer Navigation */}
-        <View style={[s.footer, { borderColor: t.cardBorder, backgroundColor: t.bg }]}>
+        <View style={[s.footer, { borderColor: t.cardBorder, backgroundColor: 'rgba(5, 13, 10, 0.85)' }]}>
           {page > 0 && (
             <Button
               variant="ghost"
