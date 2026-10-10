@@ -1,6 +1,6 @@
-# Dev Toggle
+# Dev Mode
 
-Android utility for quick access to Developer Options, USB Debugging, and Wireless Debugging. The launcher name is **Dev Toggle**; the planned Google Play listing title is **Dev-Option: Toggle**. The Android application ID is `com.devtoggle.app`.
+Android utility for quick access to Developer Options, USB Debugging, and Wireless Debugging. The launcher name is **Dev Mode**. The Android application ID is `com.devmode.app`.
 
 ## What it can actually do
 
@@ -22,7 +22,7 @@ The app never treats a button tap as success. It does not use root, hidden APIs,
 4. Run:
 
    ```text
-   adb shell pm grant com.devtoggle.app android.permission.WRITE_SECURE_SETTINGS
+   adb shell pm grant com.devmode.app android.permission.WRITE_SECURE_SETTINGS
    ```
 
 5. Return to the app and choose **Check Permission**. The Android-native check determines the displayed result.
