@@ -148,12 +148,12 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_wireless, if (wirelessOn) colorActiveText else colorInactiveText)
             if (wirelessOn) {
                 val ep = AdbEndpointHelper.getEndpoint(context)
-                if (ep != null && ep.contains(":") && !ep.startsWith(":")) {
+                if (ep != null && ep.contains(":") && !ep.startsWith(":") && !ep.contains("Resolving")) {
                     views.setTextViewText(R.id.tv_wireless_status, ep)
-                } else if (ep != null) {
-                    views.setTextViewText(R.id.tv_wireless_status, ep)
+                } else if (ep != null && ep.contains("Resolving")) {
+                    views.setTextViewText(R.id.tv_wireless_status, "CONNECTING...")
                 } else {
-                    views.setTextViewText(R.id.tv_wireless_status, "CONNECT WI-FI")
+                    views.setTextViewText(R.id.tv_wireless_status, "ON")
                 }
             } else {
                 views.setTextViewText(R.id.tv_wireless_status, "OFF")
@@ -249,12 +249,12 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_single_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             if (wirelessOn) {
                 val ep = AdbEndpointHelper.getEndpoint(context)
-                if (ep != null && ep.contains(":") && !ep.startsWith(":")) {
+                if (ep != null && ep.contains(":") && !ep.startsWith(":") && !ep.contains("Resolving")) {
                     views.setTextViewText(R.id.tv_single_wireless_endpoint, ep)
-                } else if (ep != null) {
-                    views.setTextViewText(R.id.tv_single_wireless_endpoint, ep)
+                } else if (ep != null && ep.contains("Resolving")) {
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "CONNECTING...")
                 } else {
-                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "Connect Wi-Fi to view IP")
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "ACTIVE")
                 }
                 views.setTextColor(R.id.tv_single_wireless_endpoint, Color.parseColor("#FFFFFF"))
             } else {
@@ -356,9 +356,11 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                     if (next == 1) {
                         Handler(Looper.getMainLooper()).postDelayed({
                             updateAllWidgets(context.applicationContext)
+                            DevToggleNotificationManager.updateNotification(context.applicationContext)
                         }, 1200)
                         Handler(Looper.getMainLooper()).postDelayed({
                             updateAllWidgets(context.applicationContext)
+                            DevToggleNotificationManager.updateNotification(context.applicationContext)
                         }, 2500)
                     }
                 } else {
@@ -367,6 +369,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 updateAllWidgets(context)
             }
         }
+        DevToggleNotificationManager.updateNotification(context)
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
