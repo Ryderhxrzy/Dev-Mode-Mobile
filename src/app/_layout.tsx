@@ -94,6 +94,27 @@ function RootStack() {
             }}
           />
           <Stack.Screen
+            name="notification-settings"
+            options={{
+              title: 'Notification Settings',
+              headerBackTitle: 'Settings',
+            }}
+          />
+          <Stack.Screen
+            name="security-settings"
+            options={{
+              title: 'Security & Privacy',
+              headerBackTitle: 'Settings',
+            }}
+          />
+          <Stack.Screen
+            name="widget-settings"
+            options={{
+              title: 'Home Screen Widgets',
+              headerBackTitle: 'Settings',
+            }}
+          />
+          <Stack.Screen
             name="success"
             options={{
               headerShown: false,
