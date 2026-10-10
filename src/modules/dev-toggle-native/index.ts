@@ -8,6 +8,7 @@ export type PermissionStatus = 'granted' | 'denied' | 'unknown';
 export type DeviceStatus = Record<SettingName, SettingState> & {
   writeSecureSettings: PermissionStatus;
   nativeAvailable: boolean;
+  wirelessEndpoint?: string | null;
 };
 
 export type AnimationScales = {
@@ -29,6 +30,7 @@ type NativeModule = {
   setAnimationScale(type: string, scale: number): Promise<Result>;
   getExtraSettings(): Promise<Record<ExtraSettingName, SettingState>>;
   setExtraSetting(setting: ExtraSettingName, enabled: boolean): Promise<Result>;
+  getWirelessEndpoint?(): Promise<string | null>;
 };
 
 const native = requireOptionalNativeModule<NativeModule>('DevToggle');
@@ -38,6 +40,7 @@ export const UNAVAILABLE_STATUS: DeviceStatus = {
   developerOptions: 'unknown',
   usbDebugging: 'unknown',
   wirelessDebugging: 'unknown',
+  wirelessEndpoint: null,
   writeSecureSettings: 'unknown',
   nativeAvailable: false,
 };
