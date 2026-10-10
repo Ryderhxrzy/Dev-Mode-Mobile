@@ -9,6 +9,10 @@
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.devmode.app",
+      "notification": {
+        "icon": "./assets/images/notification_icon.png",
+        "color": "#22C55E"
+      },
       "adaptiveIcon": {
         "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
