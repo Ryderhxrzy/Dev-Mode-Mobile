@@ -124,10 +124,19 @@ export default function Dashboard() {
       try {
         const currentStatus = await DevToggle.getStatus();
         const willEnable = currentStatus[key] !== 'enabled';
+
+        if ((key === 'usbDebugging' || key === 'wirelessDebugging') && willEnable) {
+          if (currentStatus.developerOptions !== 'enabled') {
+            const label = key === 'usbDebugging' ? 'USB Debugging' : 'Wireless Debugging';
+            showToast(`Developer Mode must be ON to enable ${label}`);
+            return;
+          }
+        }
+
         const result = await DevToggle.setEnabled(key, willEnable);
         await refresh();
         if (!result.changed) {
-          Alert.alert('Action Denied', result.message);
+          showToast(result.message || 'Action Denied');
         } else {
           const labels: Record<SettingName, string> = {
             developerOptions: 'Developer Options',
@@ -254,8 +263,8 @@ export default function Dashboard() {
                 backgroundColor: devOptionsEnabled ? t.canvasElevated : t.canvas,
               }}>
               <View style={s.masterRow}>
-                <IconContainer tone={devOptionsEnabled ? 'success' : 'neutral'} size={48}>
-                  <Cpu size={24} color={devOptionsEnabled ? t.success : t.textMuted} />
+                <IconContainer tone={devOptionsEnabled ? 'success' : 'cyan'} size={44}>
+                  <Cpu size={22} color={devOptionsEnabled ? t.success : t.accentCyan} />
                 </IconContainer>
                 <View style={s.switchCopy}>
                   <Text style={[s.masterTitle, { color: t.textPrimary }]}>Developer Options</Text>
@@ -284,10 +293,14 @@ export default function Dashboard() {
 
           {/* Speed & Animation Scales Optimizer Card */}
           <Animated.View entering={FadeInDown.delay(60).duration(300)}>
-            <Card style={{ borderColor: isSpeedOptimized ? `${t.neonGlow}50` : t.cardBorder }}>
+            <Card
+              style={{
+                borderColor: isSpeedOptimized ? `${t.success}60` : t.cardBorder,
+                backgroundColor: isSpeedOptimized ? t.canvasElevated : t.canvas,
+              }}>
               <View style={s.masterRow}>
-                <IconContainer tone={isSpeedOptimized ? 'cyan' : 'neutral'} size={48}>
-                  <Zap size={24} color={isSpeedOptimized ? t.neonGlow : t.textMuted} />
+                <IconContainer tone={isSpeedOptimized ? 'success' : 'cyan'} size={44}>
+                  <Zap size={22} color={isSpeedOptimized ? t.success : t.accentCyan} />
                 </IconContainer>
                 <View style={s.switchCopy}>
                   <Text style={[s.masterTitle, { color: t.textPrimary }]}>Device Speed Booster</Text>
@@ -409,7 +422,7 @@ export default function Dashboard() {
             <Card>
               <View style={s.switchRow}>
                 <IconContainer tone={status.usbDebugging === 'enabled' ? 'success' : 'cyan'} size={44}>
-                  <Usb size={22} color={status.usbDebugging === 'enabled' ? t.success : t.primaryLight} />
+                  <Usb size={22} color={status.usbDebugging === 'enabled' ? t.success : t.accentCyan} />
                 </IconContainer>
                 <View style={s.switchCopy}>
                   <Text style={[s.switchTitle, { color: t.textPrimary }]}>USB Debugging</Text>
