@@ -358,6 +358,13 @@ class DevToggleModule : Module() {
       }
       try {
         val written = Settings.Global.putInt(context().contentResolver, settingKey, if (enabled) 1 else 0)
+
+        // When disabling Developer Options, automatically turn off USB and Wireless Debugging
+        if (setting == "developerOptions" && !enabled) {
+          try { Settings.Global.putInt(context().contentResolver, usbKey, 0) } catch (_: Exception) {}
+          try { Settings.Global.putInt(context().contentResolver, wirelessKey, 0) } catch (_: Exception) {}
+        }
+
         val now = read(settingKey)
         val expected = if (enabled) "enabled" else "disabled"
         if (written && now == expected) {
