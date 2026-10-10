@@ -79,3 +79,6 @@ example
 *.lock
 *.lck
 !package-lock.json
+
+# Local documentation & pending roadmaps
+REMOTE_ACCESS_PLAN.md
