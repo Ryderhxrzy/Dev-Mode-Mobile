@@ -87,4 +87,6 @@ export default {
     native?.setExtraSetting
       ? native.setExtraSetting(setting, enabled)
       : { changed: false, message: NEEDS_BUILD },
+  getWirelessEndpoint: async (): Promise<string | null> =>
+    native?.getWirelessEndpoint ? native.getWirelessEndpoint() : null,
 };
