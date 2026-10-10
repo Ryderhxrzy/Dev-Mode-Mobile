@@ -5,10 +5,13 @@ export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation';
 export type SettingState = 'enabled' | 'disabled' | 'unknown';
 export type PermissionStatus = 'granted' | 'denied' | 'unknown';
 
+export type NotificationMode = 'always' | 'when_dev_active' | 'disabled';
+
 export type DeviceStatus = Record<SettingName, SettingState> & {
   writeSecureSettings: PermissionStatus;
   nativeAvailable: boolean;
   wirelessEndpoint?: string | null;
+  notificationMode?: NotificationMode;
 };
 
 export type AnimationScales = {
@@ -31,6 +34,10 @@ type NativeModule = {
   getExtraSettings(): Promise<Record<ExtraSettingName, SettingState>>;
   setExtraSetting(setting: ExtraSettingName, enabled: boolean): Promise<Result>;
   getWirelessEndpoint?(): Promise<string | null>;
+  getNotificationMode?(): Promise<NotificationMode>;
+  setNotificationMode?(mode: NotificationMode): Promise<{ mode: NotificationMode; success: boolean }>;
+  hasNotificationPermission?(): Promise<boolean>;
+  requestNotificationPermission?(): Promise<boolean>;
 };
 
 const native = requireOptionalNativeModule<NativeModule>('DevToggle');
@@ -89,4 +96,14 @@ export default {
       : { changed: false, message: NEEDS_BUILD },
   getWirelessEndpoint: async (): Promise<string | null> =>
     native?.getWirelessEndpoint ? native.getWirelessEndpoint() : null,
+  getNotificationMode: async (): Promise<NotificationMode> =>
+    native?.getNotificationMode ? native.getNotificationMode() : 'disabled',
+  setNotificationMode: async (
+    mode: NotificationMode
+  ): Promise<{ mode: NotificationMode; success: boolean }> =>
+    native?.setNotificationMode ? native.setNotificationMode(mode) : { mode, success: true },
+  hasNotificationPermission: async (): Promise<boolean> =>
+    native?.hasNotificationPermission ? native.hasNotificationPermission() : true,
+  requestNotificationPermission: async (): Promise<boolean> =>
+    native?.requestNotificationPermission ? native.requestNotificationPermission() : true,
 };
