@@ -101,7 +101,8 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_dev, if (devOn) colorActiveText else colorInactiveText)
             views.setTextViewText(R.id.tv_dev_status, if (devOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
-            views.setInt(R.id.iv_dev, "setColorFilter", if (devOn) colorActiveText else colorInactiveIcon)
+            views.setImageViewResource(R.id.iv_dev, R.drawable.white_icon)
+            views.setInt(R.id.iv_dev, "setImageAlpha", if (devOn) 255 else 120)
             views.setOnClickPendingIntent(R.id.btn_dev, piDev)
             views.setOnClickPendingIntent(R.id.iv_dev, piDev)
             views.setOnClickPendingIntent(R.id.tv_dev, piDev)
@@ -151,7 +152,6 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val colorActiveStatus = Color.parseColor("#E2FBE8")
             val colorInactiveText = Color.parseColor("#7A9988")
             val colorInactiveStatus = Color.parseColor("#5C7A6B")
-            val colorInactiveIcon = Color.parseColor("#5C7A6B")
 
             val pi = getPendingIntent(context, ACTION_TOGGLE_DEV, 201)
             views.setInt(
@@ -162,7 +162,8 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_single_dev_label, if (devOn) colorActiveText else colorInactiveText)
             views.setTextViewText(R.id.tv_single_dev_status, if (devOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_single_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
-            views.setInt(R.id.iv_single_dev, "setColorFilter", if (devOn) colorActiveText else colorInactiveIcon)
+            views.setImageViewResource(R.id.iv_single_dev, R.drawable.white_icon)
+            views.setInt(R.id.iv_single_dev, "setImageAlpha", if (devOn) 255 else 120)
             views.setOnClickPendingIntent(R.id.btn_single_dev, pi)
             views.setOnClickPendingIntent(R.id.iv_single_dev, pi)
             views.setOnClickPendingIntent(R.id.tv_single_dev_label, pi)
@@ -259,6 +260,10 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 }
 
                 if (success) {
+                    if (next == 0) {
+                        try { Settings.Global.putInt(cr, USB_KEY, 0) } catch (_: Exception) {}
+                        try { Settings.Global.putInt(cr, WIRELESS_KEY, 0) } catch (_: Exception) {}
+                    }
                     showToast(context, if (next == 1) "Developer Options: Enabled" else "Developer Options: Disabled")
                 } else {
                     showToast(context, "Permission Required: Run ADB grant command")
