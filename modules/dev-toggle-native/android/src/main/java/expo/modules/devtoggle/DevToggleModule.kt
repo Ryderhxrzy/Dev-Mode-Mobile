@@ -3,6 +3,8 @@ package expo.modules.devtoggle
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -44,6 +46,59 @@ class DevToggleModule : Module() {
 
   private fun prefs() = context().getSharedPreferences("devtoggle_local_prefs", android.content.Context.MODE_PRIVATE)
 
+  private fun getLocalIpAddress(): String? {
+    try {
+      val interfaces = NetworkInterface.getNetworkInterfaces()
+      while (interfaces.hasMoreElements()) {
+        val intf = interfaces.nextElement()
+        if (!intf.isLoopback && intf.isUp) {
+          val addrs = intf.inetAddresses
+          while (addrs.hasMoreElements()) {
+            val addr = addrs.nextElement()
+            if (!addr.isLoopbackAddress && addr is Inet4Address) {
+              return addr.hostAddress
+            }
+          }
+        }
+      }
+    } catch (_: Exception) {}
+    return null
+  }
+
+  private fun getAdbPort(): Int {
+    try {
+      val p = Settings.Global.getInt(context().contentResolver, "adb_wifi_port")
+      if (p > 0) return p
+    } catch (_: Exception) {}
+
+    try {
+      val propClass = Class.forName("android.os.SystemProperties")
+      val getIntMethod = propClass.getMethod("getInt", String::class.java, Int::class.javaPrimitiveType)
+      val p = getIntMethod.invoke(null, "service.adb.tcp.port", -1) as Int
+      if (p > 0) return p
+    } catch (_: Exception) {}
+
+    try {
+      val p = Settings.Global.getInt(context().contentResolver, "adb_port")
+      if (p > 0) return p
+    } catch (_: Exception) {}
+
+    return -1
+  }
+
+  private fun getWirelessDebuggingEndpoint(): String? {
+    val isEnabled = read(wirelessKey) == "enabled"
+    if (!isEnabled) return null
+
+    val ip = getLocalIpAddress()
+    val port = getAdbPort()
+    return when {
+      ip != null && port > 0 -> "$ip:$port"
+      ip != null -> "$ip:5555"
+      else -> null
+    }
+  }
+
   override fun definition() = ModuleDefinition {
     Name("DevToggle")
 
@@ -52,9 +107,14 @@ class DevToggleModule : Module() {
         "developerOptions" to read(developerKey),
         "usbDebugging" to read(usbKey),
         "wirelessDebugging" to read(wirelessKey),
+        "wirelessEndpoint" to getWirelessDebuggingEndpoint(),
         "writeSecureSettings" to permission(),
         "nativeAvailable" to true
       )
+    }
+
+    AsyncFunction("getWirelessEndpoint") {
+      getWirelessDebuggingEndpoint()
     }
 
     AsyncFunction("getPermissionStatus") { permission() }
