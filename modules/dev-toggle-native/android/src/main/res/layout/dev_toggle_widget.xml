@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_bg"
+    android:padding="6dp"
+    android:gravity="center">
+
+    <!-- 1. Developer Options Button -->
+    <LinearLayout
+        android:id="@+id/btn_dev"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_inactive"
+        android:padding="6dp"
+        android:layout_marginEnd="4dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/iv_dev"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_widget_dev"
+            android:contentDescription="Developer Options"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_dev"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DEV MODE"
+            android:textColor="#7A9988"
+            android:textSize="10.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <!-- 2. USB Debugging Button -->
+    <LinearLayout
+        android:id="@+id/btn_usb"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_inactive"
+        android:padding="6dp"
+        android:layout_marginEnd="4dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/iv_usb"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_widget_usb"
+            android:contentDescription="USB Debugging"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_usb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="USB DEBUG"
+            android:textColor="#7A9988"
+            android:textSize="10.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <!-- 3. Wireless Debugging Button -->
+    <LinearLayout
+        android:id="@+id/btn_wireless"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_inactive"
+        android:padding="6dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/iv_wireless"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_widget_wifi"
+            android:contentDescription="Wireless Debugging"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_wireless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WIRELESS"
+            android:textColor="#7A9988"
+            android:textSize="10.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+</LinearLayout>
+

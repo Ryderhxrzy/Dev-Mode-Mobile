@@ -23,6 +23,7 @@ import {
   EyeOff,
   Lock,
   Trash2,
+  Layers,
 } from 'lucide-react-native';
 import DevToggle, {
   type AnimationScales,
@@ -337,6 +338,28 @@ export default function DevSettings() {
               title={`Hardware Authorization: ${permission ? 'Verified Active' : 'Not Granted'}`}
               body="Restricted exclusively to secure developer options."
             />
+          </Card>
+
+          {/* Section: Home Screen Widget */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>HOME SCREEN WIDGET</Text>
+          </View>
+
+          <Card style={{ backgroundColor: t.canvasElevated, borderColor: `${t.success}40` }}>
+            <View style={s.row}>
+              <IconContainer tone="success" size={44}>
+                <Layers size={22} color={t.success} />
+              </IconContainer>
+              <View style={s.rowCopy}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>3-in-1 Quick Toggle Widget</Text>
+                  <Pill label="NEW" tone="success" />
+                </View>
+                <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                  Long press on your Android home screen &gt; select Widgets &gt; add &quot;Dev Mode Quick Toggle&quot; to toggle Developer Options, USB Debugging, and Wireless ADB with zero delay.
+                </Text>
+              </View>
+            </View>
           </Card>
 
           {/* Section: Instant Cleanup */}
