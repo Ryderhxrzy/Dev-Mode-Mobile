@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,7 +8,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   ToastAndroid,
   View,
@@ -20,19 +20,20 @@ import {
   Gauge,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Check,
   ShieldCheck,
-  EyeOff,
-  Lock,
   Trash2,
   Layers,
+  BellRing,
 } from 'lucide-react-native';
 import DevToggle, {
   type AnimationScales,
   type ExtraSettingName,
+  type NotificationMode,
   type SettingState,
 } from '@/modules/dev-toggle-native';
-import { Button, Card, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
+import { Button, Card, CyberToggle, IconContainer, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { fonts, radius, space, useTheme } from '@/theme';
 import { SCALE_OPTIONS } from '@/app/index';
@@ -79,17 +80,20 @@ export default function DevSettings() {
     showTouches: 'unknown',
     pointerLocation: 'unknown',
   });
+  const [notifMode, setNotifMode] = useState<NotificationMode>('disabled');
 
   const loadData = useCallback(async () => {
     try {
-      const [perm, data, sc] = await Promise.all([
+      const [perm, data, sc, nm] = await Promise.all([
         DevToggle.getPermissionStatus(),
         DevToggle.getExtraSettings(),
         DevToggle.getAnimationScales(),
+        DevToggle.getNotificationMode(),
       ]);
       setPermission(perm === 'granted');
       setSettings(data);
       setAnimationScales(sc);
+      setNotifMode(nm);
     } catch {
       // Ignored
     }
@@ -101,11 +105,13 @@ export default function DevSettings() {
       DevToggle.getPermissionStatus(),
       DevToggle.getExtraSettings(),
       DevToggle.getAnimationScales(),
-    ]).then(([perm, data, sc]) => {
+      DevToggle.getNotificationMode(),
+    ]).then(([perm, data, sc, nm]) => {
       if (active) {
         setPermission(perm === 'granted');
         setSettings(data);
         setAnimationScales(sc);
+        setNotifMode(nm);
       }
     });
     const sub = AppState.addEventListener('change', state => {
@@ -250,12 +256,11 @@ export default function DevSettings() {
                       busy === item.key ? (
                         <ActivityIndicator color={t.accentCyan} />
                       ) : (
-                        <Switch
+                        <CyberToggle
                           accessibilityLabel={`${item.title} switch`}
                           value={isEnabled}
                           onValueChange={() => toggleExtra(item.key)}
-                          trackColor={{ false: t.borderSubtle, true: t.success }}
-                          thumbColor="#FFFFFF"
+                          size="md"
                         />
                       )
                     ) : (
@@ -334,53 +339,102 @@ export default function DevSettings() {
             )}
           </Card>
 
-          {/* Section: Security & Privacy Guarantee (Moved from Home) */}
+          {/* Section: System Extensions & Tools */}
           <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>SECURITY & PRIVACY</Text>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENSIONS & SYSTEM TOOLS</Text>
           </View>
 
-          <Card>
-            <FeatureRow
-              tone="success"
-              icon={<ShieldCheck size={20} color={t.success} />}
-              title="Device-Exclusive Data"
-              body="No third-party access. All toggle preferences and metrics remain 100% on this smartphone."
-            />
-            <FeatureRow
-              tone="success"
-              icon={<EyeOff size={20} color={t.success} />}
-              title="Zero Telemetry & Offline"
-              body="No ads, background analytics, tracking SDKs, or online servers required."
-            />
-            <FeatureRow
-              tone={permission ? 'success' : 'neutral'}
-              icon={<Lock size={20} color={permission ? t.success : t.textMuted} />}
-              title={`Hardware Authorization: ${permission ? 'Verified Active' : 'Not Granted'}`}
-              body="Restricted exclusively to secure developer options."
-            />
-          </Card>
-
-          {/* Section: Home Screen Widget */}
-          <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>HOME SCREEN WIDGET</Text>
-          </View>
-
-          <Card style={{ backgroundColor: t.canvasElevated, borderColor: `${t.success}40` }}>
-            <View style={s.row}>
-              <IconContainer tone="success" size={44}>
-                <Layers size={22} color={t.success} />
-              </IconContainer>
-              <View style={s.rowCopy}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>Home Screen Widgets</Text>
-                  <Pill label="3x1 & 1x1 READY" tone="success" />
+          <View style={s.list}>
+            {/* 1. Status Bar Notification Navigation Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Status Bar Notification Controls"
+              onPress={() => router.push('/notification-settings')}>
+              <Card style={{ borderColor: `${t.accentCyan}30` }}>
+                <View style={s.row}>
+                  <IconContainer tone="success" size={44}>
+                    <BellRing size={22} color={t.success} />
+                  </IconContainer>
+                  <View style={s.rowCopy}>
+                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Status Bar Notification</Text>
+                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                      Persistent quick controls in your Android notification shade
+                    </Text>
+                  </View>
+                  <View style={s.navAction}>
+                    <Pill
+                      label={
+                        notifMode === 'always'
+                          ? 'ALWAYS ON'
+                          : notifMode === 'when_dev_active'
+                          ? 'AUTO DEV'
+                          : 'OFF'
+                      }
+                      tone={
+                        notifMode === 'always'
+                          ? 'success'
+                          : notifMode === 'when_dev_active'
+                          ? 'cyan'
+                          : 'neutral'
+                      }
+                    />
+                    <ChevronRight size={18} color={t.accentCyan} />
+                  </View>
                 </View>
-                <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                  Long press on your home screen &gt; Widgets &gt; choose either the full 3-in-1 multi-bar or individual 1x1 single buttons (Dev Mode, USB, Wireless) for instant 1-tap toggling.
-                </Text>
-              </View>
-            </View>
-          </Card>
+              </Card>
+            </Pressable>
+
+            {/* 2. Security & Privacy Navigation Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Security & Privacy Information"
+              onPress={() => router.push('/security-settings')}>
+              <Card style={{ borderColor: `${t.accentCyan}30` }}>
+                <View style={s.row}>
+                  <IconContainer tone="cyan" size={44}>
+                    <ShieldCheck size={22} color={t.accentCyan} />
+                  </IconContainer>
+                  <View style={s.rowCopy}>
+                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Security & Privacy</Text>
+                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                      Zero telemetry, 100% offline local device storage & permissions
+                    </Text>
+                  </View>
+                  <View style={s.navAction}>
+                    <Pill
+                      label={permission ? 'VERIFIED' : 'PENDING'}
+                      tone={permission ? 'success' : 'neutral'}
+                    />
+                    <ChevronRight size={18} color={t.accentCyan} />
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
+
+            {/* 3. Home Screen Widgets Navigation Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Home Screen Widgets Setup"
+              onPress={() => router.push('/widget-settings')}>
+              <Card style={{ borderColor: `${t.accentCyan}30` }}>
+                <View style={s.row}>
+                  <IconContainer tone="success" size={44}>
+                    <Layers size={22} color={t.success} />
+                  </IconContainer>
+                  <View style={s.rowCopy}>
+                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Home Screen Widgets</Text>
+                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                      Setup 3x1 multi-control bar and 1x1 toggle widgets
+                    </Text>
+                  </View>
+                  <View style={s.navAction}>
+                    <Pill label="3x1 & 1x1" tone="success" />
+                    <ChevronRight size={18} color={t.accentCyan} />
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
+          </View>
 
           {/* Section: Instant Cleanup */}
           <View style={s.sectionHeader}>
@@ -496,5 +550,10 @@ const s = StyleSheet.create({
   dropdownItemText: {
     fontFamily: fonts.body,
     fontSize: 13.5,
+  },
+  navAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
