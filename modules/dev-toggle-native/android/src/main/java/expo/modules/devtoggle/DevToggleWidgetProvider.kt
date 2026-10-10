@@ -26,14 +26,20 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
         private const val WIRELESS_KEY = "adb_wifi_enabled"
 
         fun showToast(context: Context, message: String) {
-            Handler(Looper.getMainLooper()).post {
+            val show = {
                 try {
-                    Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 } catch (_: Exception) {
                     try {
-                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()
                     } catch (_: Exception) {}
                 }
+            }
+
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                show()
+            } else {
+                Handler(Looper.getMainLooper()).post { show() }
             }
         }
 
