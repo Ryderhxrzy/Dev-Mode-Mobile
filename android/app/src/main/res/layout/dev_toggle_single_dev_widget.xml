@@ -12,7 +12,7 @@
         android:id="@+id/iv_single_dev"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        android:src="@drawable/white_icon"
+        android:src="@drawable/widget_icon_off"
         android:contentDescription="Developer Options"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
