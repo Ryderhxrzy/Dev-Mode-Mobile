@@ -1,19 +1,25 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Layers,
-  LayoutGrid,
-  Sparkles,
-  Cpu,
-  Usb,
-  Wifi,
+  Maximize2,
+  X,
 } from 'lucide-react-native';
-import { Card, IconContainer, Overline, Pill } from '@/components/ui';
+import { Card, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { fonts, radius, space, useTheme } from '@/theme';
 
 export default function WidgetSettings() {
   const t = useTheme();
+  const [showPromoModal, setShowPromoModal] = useState(false);
 
   return (
     <ScreenBackground>
@@ -28,86 +34,42 @@ export default function WidgetSettings() {
             </Text>
           </View>
 
-          {/* Section: Widget Options */}
-          <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>AVAILABLE WIDGET FORMATS</Text>
-          </View>
-
-          {/* 3x1 Multi-Toggle Widget */}
-          <Card style={{ borderColor: `${t.success}60`, backgroundColor: t.canvasElevated }}>
-            <View style={s.row}>
-              <IconContainer tone="success" size={44}>
-                <Layers size={22} color={t.success} />
-              </IconContainer>
-              <View style={s.rowCopy}>
-                <View style={s.badgeTitleRow}>
-                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>3x1 Multi-Control Bar</Text>
-                  <Pill label="MULTI 3x1" tone="success" />
-                </View>
-                <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                  All-in-one horizontal widget with Developer Options, USB ADB, and Wireless Debugging with live IP:Port display.
-                </Text>
-              </View>
-            </View>
-
-            {/* Widget Preview Mockup */}
-            <View style={s.widgetPreviewBox}>
-              <View style={s.widgetPreviewHeader}>
-                <Sparkles size={13} color={t.success} />
-                <Text style={[s.widgetPreviewTitle, { color: t.textMuted }]}>3x1 WIDGET PREVIEW</Text>
-              </View>
-              <View style={s.previewWidgetRow}>
-                <View style={s.previewWidgetBtn}>
-                  <Cpu size={16} color="#4ADE80" />
-                  <Text style={s.previewWidgetBtnText}>DEV MODE</Text>
-                  <Text style={s.previewWidgetBtnStatus}>ON</Text>
-                </View>
-                <View style={s.previewWidgetBtn}>
-                  <Usb size={16} color="#4ADE80" />
-                  <Text style={s.previewWidgetBtnText}>USB ADB</Text>
-                  <Text style={s.previewWidgetBtnStatus}>ON</Text>
-                </View>
-                <View style={s.previewWidgetBtn}>
-                  <Wifi size={16} color="#4ADE80" />
-                  <Text style={s.previewWidgetBtnText}>WIRELESS</Text>
-                  <Text style={s.previewWidgetBtnStatus}>:40083</Text>
+          {/* In-App Widget Promotion Banner (Clickable) */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Expand Widget Preview"
+            onPress={() => setShowPromoModal(true)}
+            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
+            <Card
+              style={{
+                borderColor: `${t.success}60`,
+                backgroundColor: '#071610',
+                padding: 0,
+                overflow: 'hidden',
+                borderWidth: 1.5,
+              }}>
+              <View style={s.promoImageWrapper}>
+                <Image
+                  source={require('@/assets/images/promotion/in_app_widget_promotion.png')}
+                  style={s.promoBannerImage}
+                  resizeMode="cover"
+                />
+                <View style={s.promoBadgeOverlay}>
+                  <Maximize2 size={12} color="#4ADE80" />
+                  <Text style={s.promoBadgeText}>TAP TO EXPAND</Text>
                 </View>
               </View>
-            </View>
-          </Card>
-
-          {/* 1x1 Individual Widgets */}
-          <Card>
-            <View style={s.row}>
-              <IconContainer tone="cyan" size={44}>
-                <LayoutGrid size={22} color={t.accentCyan} />
-              </IconContainer>
-              <View style={s.rowCopy}>
-                <View style={s.badgeTitleRow}>
-                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>1x1 Single Buttons</Text>
-                  <Pill label="3 VARIANTS" tone="cyan" />
+              <View style={s.promoDetailsBar}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[s.promoTitle, { color: t.textPrimary }]}>Launcher Desktop Experience</Text>
+                  <Text style={[s.promoDesc, { color: t.textSecondary }]}>
+                    Interactive cybernetic widgets directly on your home screen. Tap banner to expand.
+                  </Text>
                 </View>
-                <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                  Place individual square widgets for Dev Mode, USB ADB, or Wireless ADB anywhere on your home screen grid.
-                </Text>
+                <Pill label="PREVIEW" tone="success" />
               </View>
-            </View>
-
-            <View style={s.singleGrid}>
-              <View style={s.singleCard}>
-                <Cpu size={18} color={t.accentCyan} />
-                <Text style={[s.singleCardText, { color: t.textPrimary }]}>Dev Mode 1x1</Text>
-              </View>
-              <View style={s.singleCard}>
-                <Usb size={18} color={t.accentCyan} />
-                <Text style={[s.singleCardText, { color: t.textPrimary }]}>USB ADB 1x1</Text>
-              </View>
-              <View style={s.singleCard}>
-                <Wifi size={18} color={t.accentCyan} />
-                <Text style={[s.singleCardText, { color: t.textPrimary }]}>Wireless 1x1</Text>
-              </View>
-            </View>
-          </Card>
+            </Card>
+          </Pressable>
 
           {/* Setup Guide */}
           <View style={s.sectionHeader}>
@@ -154,6 +116,48 @@ export default function WidgetSettings() {
             </View>
           </Card>
         </ScrollView>
+
+        {/* Fullscreen Promotion Image Modal */}
+        <Modal
+          visible={showPromoModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowPromoModal(false)}>
+          <View style={s.modalBackdrop}>
+            <SafeAreaView style={s.modalContainer} edges={['top', 'bottom']}>
+              <View style={s.modalHeader}>
+                <View style={{ gap: 2, flex: 1 }}>
+                  <Overline>PROMOTION PREVIEW</Overline>
+                  <Text style={[s.modalTitle, { color: '#FFFFFF' }]}>Home Screen Widgets</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close Preview"
+                  onPress={() => setShowPromoModal(false)}
+                  style={s.modalCloseBtn}>
+                  <X size={20} color="#FFFFFF" />
+                </Pressable>
+              </View>
+
+              <View style={s.modalImageContainer}>
+                <Image
+                  source={require('@/assets/images/promotion/in_app_widget_promotion.png')}
+                  style={s.modalImage}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View style={s.modalFooter}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setShowPromoModal(false)}
+                  style={s.modalDismissBtn}>
+                  <Text style={s.modalDismissBtnText}>CLOSE PREVIEW</Text>
+                </Pressable>
+              </View>
+            </SafeAreaView>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -178,6 +182,54 @@ const s = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 14,
     lineHeight: 21,
+  },
+  promoImageWrapper: {
+    position: 'relative',
+    width: '100%',
+    aspectRatio: 1.5,
+    backgroundColor: '#040C08',
+  },
+  promoBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  promoBadgeOverlay: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.78)',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.5)',
+  },
+  promoBadgeText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    color: '#4ADE80',
+    letterSpacing: 0.5,
+  },
+  promoDetailsBar: {
+    padding: space.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  promoTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 14,
+  },
+  promoDesc: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 16,
   },
   sectionHeader: { marginTop: space.xs },
   sectionTitle: {
@@ -307,6 +359,61 @@ const s = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     lineHeight: 18,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.94)',
+  },
+  modalContainer: {
+    flex: 1,
+    paddingHorizontal: space.lg,
+    justifyContent: 'space-between',
+    paddingVertical: space.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: space.md,
+  },
+  modalTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 18,
+  },
+  modalCloseBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalImageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  modalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modalFooter: {
+    gap: space.sm,
+    paddingTop: space.md,
+  },
+  modalDismissBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    backgroundColor: '#15803D',
+  },
+  modalDismissBtnText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 12,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
 });
 

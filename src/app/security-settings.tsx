@@ -1,5 +1,6 @@
+import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ShieldCheck,
@@ -8,21 +9,35 @@ import {
   ServerOff,
   KeyRound,
   CheckCircle2,
+  Copy,
+  Check,
 } from 'lucide-react-native';
 import DevToggle from '@/modules/dev-toggle-native';
 import { Card, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
-import { fonts, space, useTheme } from '@/theme';
+import { fonts, radius, space, useTheme } from '@/theme';
+
+const REVOKE_COMMAND = 'adb shell pm revoke com.devmode.app android.permission.WRITE_SECURE_SETTINGS';
 
 export default function SecuritySettings() {
   const t = useTheme();
   const [permission, setPermission] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
     DevToggle.getPermissionStatus().then(perm => {
       setPermission(perm === 'granted');
     });
   }, []);
+
+  const handleCopyRevoke = async () => {
+    await Clipboard.setStringAsync(REVOKE_COMMAND);
+    setCopied(true);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Revoke command copied to clipboard!', ToastAndroid.SHORT);
+    }
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   return (
     <ScreenBackground>
@@ -38,8 +53,12 @@ export default function SecuritySettings() {
           </View>
 
           {/* Authorization Status */}
-          <View style={s.sectionHeader}>
+          <View style={s.sectionHeaderRow}>
             <Text style={[s.sectionTitle, { color: t.textMuted }]}>PERMISSION INTEGRITY STATUS</Text>
+            <Pill
+              label={permission ? 'GRANTED' : 'NOT AUTHORIZED'}
+              tone={permission ? 'success' : 'warning'}
+            />
           </View>
 
           <Card
@@ -52,10 +71,10 @@ export default function SecuritySettings() {
                 <Lock size={22} color={permission ? t.success : t.warning} />
               </IconContainer>
               <View style={s.rowCopy}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <Text style={[s.rowTitle, { color: t.textPrimary }]}>WRITE_SECURE_SETTINGS</Text>
                   <Pill
-                    label={permission ? 'GRANTED' : 'NOT AUTHORIZED'}
+                    label={permission ? 'GRANTED' : 'PENDING'}
                     tone={permission ? 'success' : 'warning'}
                   />
                 </View>
@@ -106,14 +125,36 @@ export default function SecuritySettings() {
           </View>
 
           <Card>
-            <View style={{ gap: space.sm }}>
+            <View style={{ gap: space.md }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={16} color={t.success} />
                 <Text style={[s.infoTitle, { color: t.textPrimary }]}>Always In Your Full Control</Text>
               </View>
               <Text style={[s.infoDesc, { color: t.textSecondary }]}>
-                You can revoke WRITE_SECURE_SETTINGS at any time via computer using `adb shell pm revoke com.jhayr.developertoggle android.permission.WRITE_SECURE_SETTINGS`, or simply by uninstalling the application.
+                You retain complete authority. You can revoke WRITE_SECURE_SETTINGS at any time from your computer using ADB, or simply by uninstalling the application.
               </Text>
+
+              {/* Copyable Terminal Command Block */}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Copy ADB Revoke Command"
+                onPress={handleCopyRevoke}
+                style={({ pressed }) => [s.codeCard, { opacity: pressed ? 0.85 : 1 }]}>
+                <View style={s.codeHeader}>
+                  <Text style={[s.codeLabel, { color: t.textMuted }]}>ADB REVOKE COMMAND</Text>
+                  <View style={s.codeActionRow}>
+                    {copied ? (
+                      <Check size={14} color="#4ADE80" />
+                    ) : (
+                      <Copy size={14} color={t.accentCyan} />
+                    )}
+                    <Text style={[s.codeActionText, { color: copied ? '#4ADE80' : t.accentCyan }]}>
+                      {copied ? 'COPIED' : 'TAP TO COPY'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={s.codeText}>{REVOKE_COMMAND}</Text>
+              </Pressable>
             </View>
           </Card>
         </ScrollView>
@@ -143,6 +184,12 @@ const s = StyleSheet.create({
     lineHeight: 21,
   },
   sectionHeader: { marginTop: space.xs },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: space.xs,
+  },
   sectionTitle: {
     fontFamily: fonts.monoBold,
     fontSize: 11,
@@ -173,6 +220,44 @@ const s = StyleSheet.create({
   infoDesc: {
     fontFamily: fonts.body,
     fontSize: 13,
+    lineHeight: 18,
+  },
+  codeCard: {
+    backgroundColor: '#040E0A',
+    borderRadius: radius.md,
+    borderWidth: 1.2,
+    borderColor: 'rgba(34, 197, 94, 0.35)',
+    padding: space.md,
+    gap: space.xs,
+  },
+  codeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  codeLabel: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    letterSpacing: 1,
+  },
+  codeActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.sm,
+  },
+  codeActionText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10.5,
+    letterSpacing: 0.5,
+  },
+  codeText: {
+    fontFamily: fonts.mono,
+    fontSize: 12,
+    color: '#4ADE80',
     lineHeight: 18,
   },
 });

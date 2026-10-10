@@ -3,7 +3,7 @@
     <shortcut
         android:shortcutId="toggle_dev"
         android:enabled="true"
-        android:icon="@drawable/white_icon"
+        android:icon="@drawable/ic_widget_dev"
         android:shortcutShortLabel="@string/shortcut_dev"
         android:shortcutLongLabel="@string/shortcut_dev_long">
         <intent

@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Alert,
   AppState,
+  Image,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -17,15 +19,11 @@ import {
   BellRing,
   BellOff,
   CheckCircle2,
-  Cpu,
-  Usb,
-  Wifi,
-  Sparkles,
+  Maximize2,
+  X,
 } from 'lucide-react-native';
 import DevToggle, {
-  type DeviceStatus,
   type NotificationMode,
-  UNAVAILABLE_STATUS,
 } from '@/modules/dev-toggle-native';
 import { Card, IconContainer, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
@@ -34,29 +32,21 @@ import { fonts, radius, space, useTheme } from '@/theme';
 export default function NotificationSettings() {
   const t = useTheme();
   const [notifMode, setNotifMode] = useState<NotificationMode>('disabled');
-  const [deviceStatus, setDeviceStatus] = useState<DeviceStatus>(UNAVAILABLE_STATUS);
   const [updating, setUpdating] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [nm, st] = await Promise.all([
-        DevToggle.getNotificationMode(),
-        DevToggle.getStatus(),
-      ]);
+      const nm = await DevToggle.getNotificationMode();
       setNotifMode(nm);
-      setDeviceStatus(st);
     } catch {}
   }, []);
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      DevToggle.getNotificationMode(),
-      DevToggle.getStatus(),
-    ]).then(([nm, st]) => {
+    DevToggle.getNotificationMode().then(nm => {
       if (active) {
         setNotifMode(nm);
-        setDeviceStatus(st);
       }
     }).catch(() => {});
 
@@ -96,10 +86,6 @@ export default function NotificationSettings() {
     }
   };
 
-  const devOn = deviceStatus.developerOptions === 'enabled';
-  const usbOn = deviceStatus.usbDebugging === 'enabled';
-  const wirelessOn = deviceStatus.wirelessDebugging === 'enabled';
-
   return (
     <ScreenBackground>
       <SafeAreaView style={s.screen} edges={['bottom']}>
@@ -112,6 +98,43 @@ export default function NotificationSettings() {
               Keep developer tools accessible directly from your Android status bar and lock screen with custom cybernetic toggle chips.
             </Text>
           </View>
+
+          {/* In-App Push Notification Promotion Banner (Clickable) */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Expand Push Notification Preview"
+            onPress={() => setShowPromoModal(true)}
+            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}>
+            <Card
+              style={{
+                borderColor: `${t.success}60`,
+                backgroundColor: '#071610',
+                padding: 0,
+                overflow: 'hidden',
+                borderWidth: 1.5,
+              }}>
+              <View style={s.promoImageWrapper}>
+                <Image
+                  source={require('@/assets/images/promotion/in_app_push_notif_promotion.png')}
+                  style={s.promoBannerImage}
+                  resizeMode="cover"
+                />
+                <View style={s.promoBadgeOverlay}>
+                  <Maximize2 size={12} color="#4ADE80" />
+                  <Text style={s.promoBadgeText}>TAP TO EXPAND</Text>
+                </View>
+              </View>
+              <View style={s.promoDetailsBar}>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={[s.promoTitle, { color: t.textPrimary }]}>Live Status Bar Notification</Text>
+                  <Text style={[s.promoDesc, { color: t.textSecondary }]}>
+                    Interactive toggle notification shade. Tap banner to view full preview.
+                  </Text>
+                </View>
+                <Pill label="PREVIEW" tone="success" />
+              </View>
+            </Card>
+          </Pressable>
 
           {/* Mode Selection */}
           <View style={s.sectionHeader}>
@@ -213,84 +236,63 @@ export default function NotificationSettings() {
               <Text style={[s.loadingText, { color: t.accentCyan }]}>Updating notification mode...</Text>
             </View>
           )}
-
-          {/* Interactive Custom Notification Preview */}
-          <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>ENGAGING NOTIFICATION PREVIEW</Text>
-          </View>
-
-          <Card style={{ backgroundColor: '#071610', borderColor: `${t.success}50`, borderWidth: 1.5 }}>
-            <View style={s.previewHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Sparkles size={16} color={t.success} />
-                <Text style={[s.previewHeaderTitle, { color: t.textPrimary }]}>DEV MODE QUICK CONTROLS</Text>
-              </View>
-              <Pill label={devOn ? 'ACTIVE' : 'STANDBY'} tone={devOn ? 'success' : 'neutral'} />
-            </View>
-
-            <Text style={[s.previewSub, { color: t.textSecondary }]}>
-              Interactive Android Notification Shade Bar
-            </Text>
-
-            {/* Simulated Custom RemoteViews Notification Chips */}
-            <View style={s.previewChipsRow}>
-              {/* Chip 1: Dev Mode */}
-              <View
-                style={[
-                  s.previewChip,
-                  {
-                    backgroundColor: devOn ? '#15803D' : '#0E1D17',
-                    borderColor: devOn ? '#4ADE80' : '#1A3328',
-                  },
-                ]}>
-                <Cpu size={14} color={devOn ? '#FFFFFF' : '#7A9988'} />
-                <Text style={[s.previewChipLabel, { color: devOn ? '#FFFFFF' : '#7A9988' }]}>DEV</Text>
-                <Text style={[s.previewChipStatus, { color: devOn ? '#FFFFFF' : '#5C7A6B' }]}>
-                  {devOn ? 'ON' : 'OFF'}
-                </Text>
-              </View>
-
-              {/* Chip 2: USB ADB */}
-              <View
-                style={[
-                  s.previewChip,
-                  {
-                    backgroundColor: usbOn ? '#15803D' : '#0E1D17',
-                    borderColor: usbOn ? '#4ADE80' : '#1A3328',
-                  },
-                ]}>
-                <Usb size={14} color={usbOn ? '#FFFFFF' : '#7A9988'} />
-                <Text style={[s.previewChipLabel, { color: usbOn ? '#FFFFFF' : '#7A9988' }]}>USB</Text>
-                <Text style={[s.previewChipStatus, { color: usbOn ? '#FFFFFF' : '#5C7A6B' }]}>
-                  {usbOn ? 'ON' : 'OFF'}
-                </Text>
-              </View>
-
-              {/* Chip 3: Wireless ADB */}
-              <View
-                style={[
-                  s.previewChip,
-                  {
-                    backgroundColor: wirelessOn ? '#15803D' : '#0E1D17',
-                    borderColor: wirelessOn ? '#4ADE80' : '#1A3328',
-                  },
-                ]}>
-                <Wifi size={14} color={wirelessOn ? '#FFFFFF' : '#7A9988'} />
-                <Text style={[s.previewChipLabel, { color: wirelessOn ? '#FFFFFF' : '#7A9988' }]}>WIFI</Text>
-                <Text style={[s.previewChipStatus, { color: wirelessOn ? '#FFFFFF' : '#5C7A6B' }]}>
-                  {wirelessOn ? (deviceStatus.wirelessEndpoint ? deviceStatus.wirelessEndpoint : 'ON') : 'OFF'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={s.previewFooter}>
-              <CheckCircle2 size={13} color={t.accentCyan} />
-              <Text style={[s.previewFooterText, { color: t.textMuted }]}>
-                Tapping chips directly toggles system state and updates live.
-              </Text>
-            </View>
-          </Card>
         </ScrollView>
+
+        {/* Fullscreen Promotion Image Modal */}
+        <Modal
+          visible={showPromoModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowPromoModal(false)}>
+          <View style={s.modalBackdrop}>
+            <SafeAreaView style={s.modalContainer} edges={['top', 'bottom']}>
+              <View style={s.modalHeader}>
+                <View style={{ gap: 2, flex: 1 }}>
+                  <Overline>PROMOTION PREVIEW</Overline>
+                  <Text style={[s.modalTitle, { color: '#FFFFFF' }]}>Status Bar Quick Controls</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close Preview"
+                  onPress={() => setShowPromoModal(false)}
+                  style={s.modalCloseBtn}>
+                  <X size={20} color="#FFFFFF" />
+                </Pressable>
+              </View>
+
+              <View style={s.modalImageContainer}>
+                <Image
+                  source={require('@/assets/images/promotion/in_app_push_notif_promotion.png')}
+                  style={s.modalImage}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <View style={s.modalFooter}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setShowPromoModal(false);
+                    if (notifMode === 'disabled') {
+                      void handleSelectMode('always');
+                    }
+                  }}
+                  style={[s.modalActionBtn, { backgroundColor: '#15803D' }]}>
+                  <CheckCircle2 size={16} color="#FFFFFF" />
+                  <Text style={s.modalActionBtnText}>
+                    {notifMode === 'disabled' ? 'ENABLE PERSISTENT NOTIFICATION' : 'NOTIFICATION IS ACTIVE'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setShowPromoModal(false)}
+                  style={s.modalDismissBtn}>
+                  <Text style={s.modalDismissBtnText}>CLOSE PREVIEW</Text>
+                </Pressable>
+              </View>
+            </SafeAreaView>
+          </View>
+        </Modal>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -315,6 +317,54 @@ const s = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 14,
     lineHeight: 21,
+  },
+  promoImageWrapper: {
+    position: 'relative',
+    width: '100%',
+    aspectRatio: 2,
+    backgroundColor: '#040C08',
+  },
+  promoBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  promoBadgeOverlay: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.78)',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 222, 128, 0.5)',
+  },
+  promoBadgeText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    color: '#4ADE80',
+    letterSpacing: 0.5,
+  },
+  promoDetailsBar: {
+    padding: space.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  promoTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 14,
+  },
+  promoDesc: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 16,
   },
   sectionHeader: { marginTop: space.xs },
   sectionTitle: {
@@ -405,6 +455,72 @@ const s = StyleSheet.create({
   previewFooterText: {
     fontFamily: fonts.mono,
     fontSize: 11,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.94)',
+  },
+  modalContainer: {
+    flex: 1,
+    paddingHorizontal: space.lg,
+    justifyContent: 'space-between',
+    paddingVertical: space.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: space.md,
+  },
+  modalTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 18,
+  },
+  modalCloseBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalImageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  modalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modalFooter: {
+    gap: space.sm,
+    paddingTop: space.md,
+  },
+  modalActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+  },
+  modalActionBtnText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 12,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  modalDismissBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  modalDismissBtnText: {
+    fontFamily: fonts.mono,
+    fontSize: 12,
+    color: '#A3A3A3',
   },
 });
 

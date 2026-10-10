@@ -230,6 +230,103 @@ export default function DevSettings() {
             </Text>
           </View>
 
+          {/* Section: System Extensions & Tools (Positioned at the Top) */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENSIONS & SYSTEM TOOLS</Text>
+          </View>
+
+          <View style={s.list}>
+            {/* 1. Status Bar Notification Navigation Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Status Bar Notification Controls"
+              onPress={() => router.push('/notification-settings')}>
+              <Card style={{ borderColor: `${t.accentCyan}30` }}>
+                <View style={s.row}>
+                  <IconContainer tone="success" size={44}>
+                    <BellRing size={22} color={t.success} />
+                  </IconContainer>
+                  <View style={s.rowCopy}>
+                    <View style={s.badgeTitleRow}>
+                      <Text style={[s.rowTitle, { color: t.textPrimary }]}>Status Bar Notification</Text>
+                      <Pill
+                        label={
+                          notifMode === 'always'
+                            ? 'ALWAYS ON'
+                            : notifMode === 'when_dev_active'
+                            ? 'AUTO DEV'
+                            : 'OFF'
+                        }
+                        tone={
+                          notifMode === 'always'
+                            ? 'success'
+                            : notifMode === 'when_dev_active'
+                            ? 'cyan'
+                            : 'neutral'
+                        }
+                      />
+                    </View>
+                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                      Persistent quick controls in your Android notification shade
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={t.accentCyan} />
+                </View>
+              </Card>
+            </Pressable>
+
+            {/* 2. Security & Privacy Navigation Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Security & Privacy Information"
+              onPress={() => router.push('/security-settings')}>
+              <Card style={{ borderColor: `${t.accentCyan}30` }}>
+                <View style={s.row}>
+                  <IconContainer tone="cyan" size={44}>
+                    <ShieldCheck size={22} color={t.accentCyan} />
+                  </IconContainer>
+                  <View style={s.rowCopy}>
+                    <View style={s.badgeTitleRow}>
+                      <Text style={[s.rowTitle, { color: t.textPrimary }]}>Security & Privacy</Text>
+                      <Pill
+                        label={permission ? 'VERIFIED' : 'PENDING'}
+                        tone={permission ? 'success' : 'neutral'}
+                      />
+                    </View>
+                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                      Zero telemetry, 100% offline local device storage & permissions
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={t.accentCyan} />
+                </View>
+              </Card>
+            </Pressable>
+
+            {/* 3. Home Screen Widgets Navigation Button */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open Home Screen Widgets Setup"
+              onPress={() => router.push('/widget-settings')}>
+              <Card style={{ borderColor: `${t.accentCyan}30` }}>
+                <View style={s.row}>
+                  <IconContainer tone="success" size={44}>
+                    <Layers size={22} color={t.success} />
+                  </IconContainer>
+                  <View style={s.rowCopy}>
+                    <View style={s.badgeTitleRow}>
+                      <Text style={[s.rowTitle, { color: t.textPrimary }]}>Home Screen Widgets</Text>
+                      <Pill label="3x1 & 1x1" tone="success" />
+                    </View>
+                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                      Setup 3x1 multi-control bar and 1x1 toggle widgets
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={t.accentCyan} />
+                </View>
+              </Card>
+            </Pressable>
+          </View>
+
           {/* Section: Extended Developer Toggles */}
           <View style={s.sectionHeader}>
             <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENDED DEVELOPER SWITCHES</Text>
@@ -339,103 +436,6 @@ export default function DevSettings() {
             )}
           </Card>
 
-          {/* Section: System Extensions & Tools */}
-          <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENSIONS & SYSTEM TOOLS</Text>
-          </View>
-
-          <View style={s.list}>
-            {/* 1. Status Bar Notification Navigation Button */}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open Status Bar Notification Controls"
-              onPress={() => router.push('/notification-settings')}>
-              <Card style={{ borderColor: `${t.accentCyan}30` }}>
-                <View style={s.row}>
-                  <IconContainer tone="success" size={44}>
-                    <BellRing size={22} color={t.success} />
-                  </IconContainer>
-                  <View style={s.rowCopy}>
-                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Status Bar Notification</Text>
-                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                      Persistent quick controls in your Android notification shade
-                    </Text>
-                  </View>
-                  <View style={s.navAction}>
-                    <Pill
-                      label={
-                        notifMode === 'always'
-                          ? 'ALWAYS ON'
-                          : notifMode === 'when_dev_active'
-                          ? 'AUTO DEV'
-                          : 'OFF'
-                      }
-                      tone={
-                        notifMode === 'always'
-                          ? 'success'
-                          : notifMode === 'when_dev_active'
-                          ? 'cyan'
-                          : 'neutral'
-                      }
-                    />
-                    <ChevronRight size={18} color={t.accentCyan} />
-                  </View>
-                </View>
-              </Card>
-            </Pressable>
-
-            {/* 2. Security & Privacy Navigation Button */}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open Security & Privacy Information"
-              onPress={() => router.push('/security-settings')}>
-              <Card style={{ borderColor: `${t.accentCyan}30` }}>
-                <View style={s.row}>
-                  <IconContainer tone="cyan" size={44}>
-                    <ShieldCheck size={22} color={t.accentCyan} />
-                  </IconContainer>
-                  <View style={s.rowCopy}>
-                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Security & Privacy</Text>
-                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                      Zero telemetry, 100% offline local device storage & permissions
-                    </Text>
-                  </View>
-                  <View style={s.navAction}>
-                    <Pill
-                      label={permission ? 'VERIFIED' : 'PENDING'}
-                      tone={permission ? 'success' : 'neutral'}
-                    />
-                    <ChevronRight size={18} color={t.accentCyan} />
-                  </View>
-                </View>
-              </Card>
-            </Pressable>
-
-            {/* 3. Home Screen Widgets Navigation Button */}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open Home Screen Widgets Setup"
-              onPress={() => router.push('/widget-settings')}>
-              <Card style={{ borderColor: `${t.accentCyan}30` }}>
-                <View style={s.row}>
-                  <IconContainer tone="success" size={44}>
-                    <Layers size={22} color={t.success} />
-                  </IconContainer>
-                  <View style={s.rowCopy}>
-                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Home Screen Widgets</Text>
-                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
-                      Setup 3x1 multi-control bar and 1x1 toggle widgets
-                    </Text>
-                  </View>
-                  <View style={s.navAction}>
-                    <Pill label="3x1 & 1x1" tone="success" />
-                    <ChevronRight size={18} color={t.accentCyan} />
-                  </View>
-                </View>
-              </Card>
-            </Pressable>
-          </View>
-
           {/* Section: Instant Cleanup */}
           <View style={s.sectionHeader}>
             <Text style={[s.sectionTitle, { color: t.textMuted }]}>MAINTENANCE & RESET</Text>
@@ -503,7 +503,13 @@ const s = StyleSheet.create({
   },
   rowCopy: {
     flex: 1,
-    gap: 3,
+    gap: 4,
+  },
+  badgeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   rowTitle: {
     fontFamily: fonts.heading,

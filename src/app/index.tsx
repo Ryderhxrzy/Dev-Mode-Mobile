@@ -37,7 +37,7 @@ import DevToggle, {
   type DeviceStatus,
   type SettingName,
 } from '@/modules/dev-toggle-native';
-import { Button, Card, CyberToggle, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
+import { Button, Card, CyberToggle, FeatureRow, IconContainer, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { useOnboarding } from '@/state/onboarding';
 import { fonts, radius, space, useTheme } from '@/theme';
@@ -334,10 +334,7 @@ export default function Dashboard() {
                   resizeMode="contain"
                 />
               </View>
-              <View style={{ gap: 2 }}>
-                <Overline>DEVICE CONTROL</Overline>
-                <Text style={[s.title, { color: t.textPrimary }]}>Dev Mode</Text>
-              </View>
+              <Text style={[s.title, { color: t.textPrimary }]}>Dev Mode</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -361,13 +358,7 @@ export default function Dashboard() {
                   <Cpu size={22} color={devOptionsEnabled ? t.success : t.accentCyan} />
                 </IconContainer>
                 <View style={s.switchCopy}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={[s.switchTitle, { color: t.textPrimary }]}>Developer Options</Text>
-                    <Pill
-                      label={devOptionsEnabled ? 'ACTIVE' : 'OFF'}
-                      tone={devOptionsEnabled ? 'success' : 'neutral'}
-                    />
-                  </View>
+                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Developer Options</Text>
                   <Text style={[s.switchDesc, { color: t.textSecondary }]}>
                     {devOptionsEnabled
                       ? 'System developer mode active'
@@ -522,99 +513,12 @@ export default function Dashboard() {
             </Card>
           </Animated.View>
 
-          {/* Extended Developer Switches Section */}
-          <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENDED DEVELOPER SWITCHES</Text>
-          </View>
-
-          {/* Stay Awake While Charging */}
-          <Animated.View entering={FadeInDown.delay(140).duration(300)}>
-            <Card>
-              <View style={s.switchRow}>
-                <IconContainer tone={extraSettings.stayAwake === 'enabled' ? 'success' : 'cyan'} size={44}>
-                  <SunMedium size={22} color={extraSettings.stayAwake === 'enabled' ? t.success : t.accentCyan} />
-                </IconContainer>
-                <View style={s.switchCopy}>
-                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Stay Awake While Charging</Text>
-                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
-                    Screen stays on indefinitely while plugged into AC power or USB.
-                  </Text>
-                </View>
-                {granted ? (
-                  busy === 'stayAwake' ? (
-                    <ActivityIndicator color={t.accentCyan} />
-                  ) : (
-                    <CyberToggle
-                      accessibilityLabel="Stay Awake switch"
-                      value={extraSettings.stayAwake === 'enabled'}
-                      onValueChange={() => toggleExtra('stayAwake')}
-                      size="md"
-                    />
-                  )
-                ) : (
-                  <Pill label={extraSettings.stayAwake === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.stayAwake === 'enabled' ? 'success' : 'neutral'} />
-                )}
-              </View>
-            </Card>
-          </Animated.View>
-
-          {/* Show Visual Touch Taps */}
-          <Animated.View entering={FadeInDown.delay(160).duration(300)}>
-            <Card>
-              <View style={s.switchRow}>
-                <IconContainer tone={extraSettings.showTouches === 'enabled' ? 'success' : 'cyan'} size={44}>
-                  <Hand size={22} color={extraSettings.showTouches === 'enabled' ? t.success : t.accentCyan} />
-                </IconContainer>
-                <View style={s.switchCopy}>
-                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Show Visual Touch Taps</Text>
-                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
-                    Displays circular tap highlights wherever fingers touch the screen.
-                  </Text>
-                </View>
-                {granted ? (
-                  busy === 'showTouches' ? (
-                    <ActivityIndicator color={t.accentCyan} />
-                  ) : (
-                    <CyberToggle
-                      accessibilityLabel="Show Touches switch"
-                      value={extraSettings.showTouches === 'enabled'}
-                      onValueChange={() => toggleExtra('showTouches')}
-                      size="md"
-                    />
-                  )
-                ) : (
-                  <Pill label={extraSettings.showTouches === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.showTouches === 'enabled' ? 'success' : 'neutral'} />
-                )}
-              </View>
-            </Card>
-          </Animated.View>
-
-          {/* Quick Link to Developer Settings for Pointer Location & More */}
-          <Animated.View entering={FadeInDown.delay(175).duration(300)}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.push('/dev-settings')}
-              style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
-              <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ gap: 3, flex: 1 }}>
-                    <Text style={[s.switchTitle, { color: t.textPrimary }]}>More Developer Options</Text>
-                    <Text style={[s.switchDesc, { color: t.textSecondary }]}>
-                      Pointer tracker crosshairs, custom scales, and full Android settings.
-                    </Text>
-                  </View>
-                  <Pill label="SETTINGS" tone="primary" />
-                </View>
-              </Card>
-            </Pressable>
-          </Animated.View>
-
-          {/* Section: Device Speed Booster (Condensed at Bottom Below Core Controls) */}
+          {/* Section: Device Speed Booster (Positioned Directly Below Core Controls) */}
           <View style={s.sectionHeader}>
             <Text style={[s.sectionTitle, { color: t.textMuted }]}>DEVICE SPEED BOOSTER</Text>
           </View>
 
-          <Animated.View entering={FadeInDown.delay(190).duration(300)}>
+          <Animated.View entering={FadeInDown.delay(140).duration(300)}>
             <Card
               style={{
                 borderColor: isSpeedOptimized ? `${t.success}60` : t.cardBorder,
@@ -686,6 +590,93 @@ export default function Dashboard() {
                 </View>
               )}
             </Card>
+          </Animated.View>
+
+          {/* Extended Developer Switches Section */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>EXTENDED DEVELOPER SWITCHES</Text>
+          </View>
+
+          {/* Stay Awake While Charging */}
+          <Animated.View entering={FadeInDown.delay(160).duration(300)}>
+            <Card>
+              <View style={s.switchRow}>
+                <IconContainer tone={extraSettings.stayAwake === 'enabled' ? 'success' : 'cyan'} size={44}>
+                  <SunMedium size={22} color={extraSettings.stayAwake === 'enabled' ? t.success : t.accentCyan} />
+                </IconContainer>
+                <View style={s.switchCopy}>
+                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Stay Awake While Charging</Text>
+                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                    Screen stays on indefinitely while plugged into AC power or USB.
+                  </Text>
+                </View>
+                {granted ? (
+                  busy === 'stayAwake' ? (
+                    <ActivityIndicator color={t.accentCyan} />
+                  ) : (
+                    <CyberToggle
+                      accessibilityLabel="Stay Awake switch"
+                      value={extraSettings.stayAwake === 'enabled'}
+                      onValueChange={() => toggleExtra('stayAwake')}
+                      size="md"
+                    />
+                  )
+                ) : (
+                  <Pill label={extraSettings.stayAwake === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.stayAwake === 'enabled' ? 'success' : 'neutral'} />
+                )}
+              </View>
+            </Card>
+          </Animated.View>
+
+          {/* Show Visual Touch Taps */}
+          <Animated.View entering={FadeInDown.delay(180).duration(300)}>
+            <Card>
+              <View style={s.switchRow}>
+                <IconContainer tone={extraSettings.showTouches === 'enabled' ? 'success' : 'cyan'} size={44}>
+                  <Hand size={22} color={extraSettings.showTouches === 'enabled' ? t.success : t.accentCyan} />
+                </IconContainer>
+                <View style={s.switchCopy}>
+                  <Text style={[s.switchTitle, { color: t.textPrimary }]}>Show Visual Touch Taps</Text>
+                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                    Displays circular tap highlights wherever fingers touch the screen.
+                  </Text>
+                </View>
+                {granted ? (
+                  busy === 'showTouches' ? (
+                    <ActivityIndicator color={t.accentCyan} />
+                  ) : (
+                    <CyberToggle
+                      accessibilityLabel="Show Touches switch"
+                      value={extraSettings.showTouches === 'enabled'}
+                      onValueChange={() => toggleExtra('showTouches')}
+                      size="md"
+                    />
+                  )
+                ) : (
+                  <Pill label={extraSettings.showTouches === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.showTouches === 'enabled' ? 'success' : 'neutral'} />
+                )}
+              </View>
+            </Card>
+          </Animated.View>
+
+          {/* Quick Link to Developer Settings for Pointer Location & More */}
+          <Animated.View entering={FadeInDown.delay(195).duration(300)}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/dev-settings')}
+              style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}>
+              <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ gap: 3, flex: 1 }}>
+                    <Text style={[s.switchTitle, { color: t.textPrimary }]}>More Developer Options</Text>
+                    <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                      Pointer tracker crosshairs, custom scales, and full Android settings.
+                    </Text>
+                  </View>
+                  <Pill label="SETTINGS" tone="primary" />
+                </View>
+              </Card>
+            </Pressable>
           </Animated.View>
 
           {/* In Development Mode Only: Debug Actions */}
