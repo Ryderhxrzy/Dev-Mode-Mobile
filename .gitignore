@@ -55,6 +55,15 @@ example
 /android/**/.cxx/
 /android/key.properties
 /android/keystore.properties
+
+# Generated Android build files for dev-toggle-native
+/modules/dev-toggle-native/android/build/
+/modules/dev-toggle-native/android/.gradle/
+/modules/dev-toggle-native/android/local.properties
+/modules/dev-toggle-native/android/.cxx/
+/modules/dev-toggle-native/android/.idea/
+/modules/dev-toggle-native/android/properties
+
 *.apk
 *.aab
 *.ap_
