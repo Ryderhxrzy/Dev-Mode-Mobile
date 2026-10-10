@@ -134,6 +134,16 @@ export default function Dashboard() {
         }
 
         const result = await DevToggle.setEnabled(key, willEnable);
+
+        if (key === 'developerOptions' && !willEnable) {
+          if (currentStatus.usbDebugging === 'enabled') {
+            await DevToggle.setEnabled('usbDebugging', false);
+          }
+          if (currentStatus.wirelessDebugging === 'enabled') {
+            await DevToggle.setEnabled('wirelessDebugging', false);
+          }
+        }
+
         await refresh();
         if (!result.changed) {
           showToast(result.message || 'Action Denied');
