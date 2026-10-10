@@ -4,10 +4,14 @@
     android:minHeight="50dp"
     android:targetCellWidth="1"
     android:targetCellHeight="1"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="260dp"
+    android:maxResizeHeight="110dp"
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/dev_toggle_single_dev_widget"
     android:previewLayout="@layout/dev_toggle_single_dev_widget"
     android:previewImage="@drawable/widget_preview_dev_1x1"
-    android:resizeMode="none"
+    android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen">
 </appwidget-provider>
