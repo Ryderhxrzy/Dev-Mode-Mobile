@@ -6,17 +6,17 @@
     android:orientation="vertical"
     android:gravity="center"
     android:background="@drawable/widget_btn_inactive"
-    android:padding="6dp">
+    android:padding="5dp">
 
     <ImageView
         android:id="@+id/iv_single_wireless"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
         android:src="@drawable/ic_widget_wifi"
         android:contentDescription="Wireless Debugging"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
-        android:layout_marginBottom="3dp" />
+        android:layout_marginBottom="2dp" />
 
     <TextView
         android:id="@+id/tv_single_wireless_label"
@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:text="WIRELESS"
         android:textColor="#7A9988"
-        android:textSize="10.5sp"
+        android:textSize="10sp"
         android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end" />
@@ -38,4 +38,15 @@
         android:textSize="9.5sp"
         android:textStyle="bold"
         android:maxLines="1" />
+
+    <TextView
+        android:id="@+id/tv_single_wireless_endpoint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#FFFFFF"
+        android:textSize="8sp"
+        android:maxLines="1"
+        android:ellipsize="middle"
+        android:layout_marginTop="1dp" />
 </LinearLayout>
