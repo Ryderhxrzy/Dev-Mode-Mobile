@@ -15,7 +15,7 @@ export default function SuccessScreen() {
   const t = useTheme();
 
   return (
-    <View style={[s.screen, { backgroundColor: t.bg }]}>
+    <View style={s.screen}>
       <SafeAreaView style={s.screen} edges={['top', 'bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           {/* Prominent Transparent Logo Hero (No background box) */}
