@@ -11,7 +11,7 @@ export default function Setup() {
   const { permission, checking, check } = useWriteSecurePermission();
 
   return (
-    <View style={[s.screen, { backgroundColor: t.bg }]}>
+    <View style={s.screen}>
       <SafeAreaView style={s.screen} edges={['bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           <View style={s.header}>
