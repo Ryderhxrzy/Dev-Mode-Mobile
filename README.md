@@ -29,19 +29,19 @@
 
 <div align="center">
 
-| 📱 Dashboard & Controls | ⚡ Device Speed Booster | 🔔 Status Bar Notification |
+| 📱 Dashboard & Controls | ⚙️ Developer Settings | 🔔 Notification Settings |
 | :---: | :---: | :---: |
-| <img src="assets/images/promotion/page_1.png" width="240" alt="Dashboard & Controls" /> | <img src="assets/images/promotion/page_2.png" width="240" alt="Device Speed Booster" /> | <img src="assets/images/promotion/page_3.png" width="240" alt="Notification Controls" /> |
-| **Core Hardware Controls** | **Performance Acceleration** | **Status Bar Quick Controls** |
-| 1-tap Dev Options, USB & Wireless ADB | 0.5x UI snappy animation boost | Persistent notification shade bar |
+| <img src="assets/images/promotion/page_1.png" width="240" alt="Dashboard & Controls" /> | <img src="assets/images/promotion/page_2.png" width="240" alt="Developer Settings" /> | <img src="assets/images/promotion/page_3.png" width="240" alt="Notification Settings" /> |
+| **Core Hardware Controls** | **Advanced Dev Options** | **Notification Shade Modes** |
+| 1-tap Dev Options, USB & Wireless ADB | Stay awake, touch taps & scales | Always on & dynamic triggers |
 
 <br />
 
-| 📲 Home Screen Widgets | 🛡️ Security & Privacy | 💻 ADB Setup & Permissions |
+| 🔔 Push Notification Persistent | 📲 Home Screen Widgets | 💻 One-Time ADB Setup |
 | :---: | :---: | :---: |
-| <img src="assets/images/promotion/page_4.png" width="240" alt="Home Screen Widgets" /> | <img src="assets/images/promotion/page_5.png" width="240" alt="Security & Privacy" /> | <img src="assets/images/promotion/page_6.png" width="240" alt="ADB Setup Guide" /> |
-| **Desktop Launcher Widgets** | **Privacy & Local Integrity** | **Step-by-Step Authorization** |
-| Zero-latency 3x1 & 1x1 widgets | Zero telemetry, revocable access | 1-time setup via PC or Shizuku |
+| <img src="assets/images/promotion/page_4.png" width="240" alt="Push Notification Persistent" /> | <img src="assets/images/promotion/page_5.png" width="240" alt="Home Screen Widgets" /> | <img src="assets/images/promotion/page_7.png" width="240" alt="One-Time ADB Setup" /> |
+| **Persistent Notification Shade** | **Desktop Launcher Widgets** | **Step-by-Step Authorization** |
+| Live status bar quick toggle chips | 3x1 multi-bar & 1x1 toggle buttons | 1-time setup via PC or Shizuku |
 
 </div>
 
@@ -68,6 +68,11 @@
 ---
 
 ## 📲 Home Screen Widget Setup
+
+<div align="center">
+  <img src="assets/images/promotion/page_6.png" width="340" alt="Widgets on Android Home Screen" />
+  <p><em>Zero-latency 1x1 & 3x1 widgets on Android desktop launcher with real-time sync.</em></p>
+</div>
 
 Dev Mode offers both a comprehensive **3-in-1 multi-control bar** and individual **1x1 standalone widgets**:
 
