@@ -1,4 +1,4 @@
-package com.devtoggle.app
+package com.devmode.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

@@ -1,27 +1,37 @@
-import { AdbSetupGuide, useWriteSecurePermission } from '@/components/adb-setup';
-import { Button, Overline } from '@/components/ui';
-import { space, useTheme } from '@/theme';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowRight } from 'lucide-react-native';
+import { AdbSetupGuide, useWriteSecurePermission } from '@/components/adb-setup';
+import { Button, Overline } from '@/components/ui';
+import { fonts, space, useTheme } from '@/theme';
 
 export default function Setup() {
   const t = useTheme();
-  const { permission, check } = useWriteSecurePermission();
+  const { permission, checking, check } = useWriteSecurePermission();
+
   return (
     <View style={[s.screen, { backgroundColor: t.bg }]}>
       <SafeAreaView style={s.screen} edges={['bottom']}>
         <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
           <View style={s.header}>
-            <Overline>GUIDED SETUP</Overline>
-            <Text style={[s.title, { color: t.text }]}>Grant permission with ADB</Text>
-            <Text style={[s.subtitle, { color: t.muted }]}>
-              Android requires this permission to be granted from a computer. Follow the steps, then come back — the status
-              updates automatically.
+            <Overline>TERMINAL GUIDE</Overline>
+            <Text style={[s.title, { color: t.textPrimary }]}>ADB Permission Setup</Text>
+            <Text style={[s.subtitle, { color: t.textSecondary }]}>
+              Execute the verified command using Android Platform Tools on your computer. Status below checks and updates automatically.
             </Text>
           </View>
-          <AdbSetupGuide permission={permission} onCheck={check} />
-          {permission === 'granted' && <Button label="Back to dashboard" onPress={() => router.back()} />}
+
+          <AdbSetupGuide permission={permission} checking={checking} onCheck={check} />
+
+          {permission === 'granted' && (
+            <Button
+              variant="cyan"
+              label="Continue to Success Screen"
+              icon={<ArrowRight size={16} color="#FFFFFF" />}
+              onPress={() => router.replace('/success')}
+            />
+          )}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -30,8 +40,22 @@ export default function Setup() {
 
 const s = StyleSheet.create({
   screen: { flex: 1 },
-  content: { padding: space.xl, paddingTop: space.sm, paddingBottom: 40, gap: space.xl },
-  header: { gap: space.sm },
-  title: { fontSize: 26, fontWeight: '800', lineHeight: 32, letterSpacing: -0.3 },
-  subtitle: { fontSize: 15, lineHeight: 22 },
+  content: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.sm,
+    paddingBottom: 28,
+    gap: space.lg,
+    width: '100%',
+  },
+  header: { gap: space.xs, width: '100%' },
+  title: {
+    fontFamily: fonts.heading,
+    fontSize: 26,
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 21,
+  },
 });

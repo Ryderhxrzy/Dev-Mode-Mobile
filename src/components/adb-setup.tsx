@@ -1,50 +1,40 @@
-import * as Linking from 'expo-linking';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import {
+  Terminal,
+  ShieldCheck,
+  ShieldAlert,
+  Sliders,
+  KeyRound,
+} from 'lucide-react-native';
 import DevToggle, { type PermissionStatus } from '@/modules/dev-toggle-native';
-import { Button, Card, CodeBlock, IconBadge, Pill } from '@/components/ui';
-import { radius, space, useTheme } from '@/theme';
+import { Button, Card, CodeBlock, FeatureRow, IconContainer, Pill } from '@/components/ui';
+import { fonts, radius, space, useTheme } from '@/theme';
 
-export const APP_ID = 'com.devtoggle.app';
+export const APP_ID = 'com.devmode.app';
 export const GRANT_COMMAND = `adb shell pm grant ${APP_ID} android.permission.WRITE_SECURE_SETTINGS`;
-const PLATFORM_TOOLS_URL = 'https://developer.android.com/tools/releases/platform-tools';
-
-type Step = { icon: string; title: string; body: string; command?: string; action?: 'download' | 'devOptions' };
-
-const STEPS: Step[] = [
-  {
-    icon: '💻',
-    title: 'Install Android Platform Tools',
-    body: 'On your computer, download Platform Tools (it includes ADB) from the official Android site. Extract the ZIP, open the platform-tools folder, then open a terminal there (on Windows: click the address bar, type cmd, press Enter).',
-    action: 'download',
-  },
-  {
-    icon: '🔌',
-    title: 'Turn on USB debugging',
-    body: 'Settings → About phone → tap Build number 7 times. Then open Developer options, turn on USB debugging, and connect your phone with a data-capable USB cable.',
-    action: 'devOptions',
-  },
-  {
-    icon: '🔍',
-    title: 'Verify the connection',
-    body: 'Run this command. Accept the "Allow USB debugging?" prompt on your phone. Your device should be listed as "device" — if it says "unauthorized", check your phone for the prompt.',
-    command: 'adb devices',
-  },
-  {
-    icon: '🔑',
-    title: 'Grant the permission',
-    body: 'Run this one-time command. It only gives Dev Toggle permission to change developer settings. Come back here afterwards — the status below updates automatically.',
-    command: GRANT_COMMAND,
-  },
-];
+export const REVOKE_COMMAND = `adb shell pm revoke ${APP_ID} android.permission.WRITE_SECURE_SETTINGS`;
 
 export function useWriteSecurePermission() {
   const [permission, setPermission] = useState<PermissionStatus>('unknown');
-  const check = useCallback(async () => setPermission(await DevToggle.getPermissionStatus()), []);
+  const [checking, setChecking] = useState(false);
+
+  const check = useCallback(async () => {
+    setChecking(true);
+    try {
+      const status = await DevToggle.getPermissionStatus();
+      setPermission(status);
+    } finally {
+      setChecking(false);
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
-    DevToggle.getPermissionStatus().then(value => active && setPermission(value));
+    DevToggle.getPermissionStatus().then(value => {
+      if (active) setPermission(value);
+    });
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') check();
     });
@@ -53,102 +43,209 @@ export function useWriteSecurePermission() {
       sub.remove();
     };
   }, [check]);
-  return { permission, check };
+
+  return { permission, checking, check };
 }
 
-export function AdbSetupGuide({ permission, onCheck }: { permission: PermissionStatus; onCheck: () => void }) {
+export function AdbSetupGuide({
+  permission,
+  checking,
+  onCheck,
+}: {
+  permission: PermissionStatus;
+  checking: boolean;
+  onCheck: () => void;
+}) {
   const t = useTheme();
-  const [step, setStep] = useState(0);
-  const current = STEPS[step];
-  const last = step === STEPS.length - 1;
 
   return (
     <View style={s.wrap}>
-      <View style={s.progress}>
-        {STEPS.map((item, i) => (
-          <View
-            key={item.title}
-            style={[s.progressBar, { backgroundColor: i <= step ? t.primary : t.border }]}
-          />
-        ))}
-      </View>
+      {/* Live Status Header */}
+      <PermissionStatusCard permission={permission} checking={checking} onCheck={onCheck} />
 
-      <Animated.View key={step} entering={FadeInRight.duration(260)}>
-        <Card>
-          <View style={s.stepHead}>
-            <IconBadge icon={current.icon} />
-            <View style={{ flex: 1 }}>
-              <Text style={[s.stepLabel, { color: t.primary }]}>
-                STEP {step + 1} OF {STEPS.length}
-              </Text>
-              <Text style={[s.stepTitle, { color: t.text }]}>{current.title}</Text>
+      {/* Single Consolidated Setup Card */}
+      <Card>
+        <View style={s.cardHead}>
+          <IconContainer tone="cyan" size={44}>
+            <Terminal size={22} color={t.accentCyan} />
+          </IconContainer>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={[s.cardOverline, { color: t.accentCyan }]}>TERMINAL GUIDE</Text>
+            <Text style={[s.cardTitle, { color: t.textPrimary }]}>Quick ADB Setup</Text>
+          </View>
+        </View>
+
+        {/* Step 1 */}
+        <View style={s.unifiedStep}>
+          <View style={s.stepBadge}>
+            <Text style={[s.stepNum, { color: t.primaryLight }]}>1</Text>
+          </View>
+          <View style={s.stepContent}>
+            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Make sure ADB is installed</Text>
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              Ensure Android Platform Tools / ADB is installed and recognized on your computer terminal.
+            </Text>
+          </View>
+        </View>
+
+        {/* Step 2 */}
+        <View style={s.unifiedStep}>
+          <View style={s.stepBadge}>
+            <Text style={[s.stepNum, { color: t.primaryLight }]}>2</Text>
+          </View>
+          <View style={s.stepContent}>
+            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Enable USB Debugging & connect</Text>
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              Open Developer Options on your phone, turn ON USB Debugging, and connect via USB cable.
+            </Text>
+            <View style={{ marginTop: 4 }}>
+              <Button
+                variant="secondary"
+                label="Open Developer Options"
+                icon={<Sliders size={15} color="#FFFFFF" />}
+                onPress={() => DevToggle.openSettings('developerOptions')}
+              />
             </View>
           </View>
-          <Text style={[s.body, { color: t.muted }]}>{current.body}</Text>
-          {current.command && <CodeBlock command={current.command} />}
-          {current.action === 'download' && (
-            <Button variant="secondary" label="Open official download page ↗" onPress={() => Linking.openURL(PLATFORM_TOOLS_URL)} />
-          )}
-          {current.action === 'devOptions' && (
-            <Button variant="secondary" label="Open Developer options" onPress={() => DevToggle.openSettings('developerOptions')} />
-          )}
-          <View style={s.nav}>
-            <Button variant="ghost" label="Back" disabled={step === 0} onPress={() => setStep(x => x - 1)} style={s.navBtn} />
-            {last ? (
-              <Button variant="secondary" label="Check permission" onPress={onCheck} style={s.navBtn} />
-            ) : (
-              <Button variant="secondary" label="Next step" onPress={() => setStep(x => x + 1)} style={s.navBtn} />
-            )}
+        </View>
+
+        {/* Step 3 */}
+        <View style={s.unifiedStep}>
+          <View style={s.stepBadge}>
+            <Text style={[s.stepNum, { color: t.primaryLight }]}>3</Text>
           </View>
-        </Card>
-      </Animated.View>
+          <View style={s.stepContent}>
+            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Verify device connection</Text>
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              Run this command in your computer terminal and accept the “Always allow” prompt on your phone:
+            </Text>
+            <CodeBlock command="adb devices" />
+          </View>
+        </View>
 
-      <PermissionStatusCard permission={permission} />
+        {/* Step 4 */}
+        <View style={s.unifiedStep}>
+          <View style={s.stepBadge}>
+            <Text style={[s.stepNum, { color: t.primaryLight }]}>4</Text>
+          </View>
+          <View style={s.stepContent}>
+            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Grant permission command</Text>
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              Copy and execute this verified one-line command in your terminal:
+            </Text>
+            <CodeBlock command={GRANT_COMMAND} />
+          </View>
+        </View>
+      </Card>
 
-      <Text style={[s.tip, { color: t.subtle }]}>
-        Trouble? Make sure “adb devices” shows “device”, reconnect the cable, re-accept the USB prompt, then run the grant
-        command again. The permission may need to be granted again after reinstalling the app.
+      {/* Full User Control & Revoke Info (Located in Step 4 as requested) */}
+      <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
+        <FeatureRow
+          icon={<KeyRound size={20} color={t.accentCyan} />}
+          title="Full User Control & Permission Revocation"
+          body="You are in complete control. If you ever want to revoke this permission, simply run this command from your computer:"
+          tone="cyan"
+        />
+        <CodeBlock command={REVOKE_COMMAND} />
+      </Card>
+
+      <Text style={[s.tip, { color: t.textMuted }]}>
+        Note: This authorization stays tied to this device installation. If you reinstall or reset the app, run the grant command again.
       </Text>
     </View>
   );
 }
 
-export function PermissionStatusCard({ permission }: { permission: PermissionStatus }) {
+export function PermissionStatusCard({
+  permission,
+  checking,
+  onCheck,
+}: {
+  permission: PermissionStatus;
+  checking?: boolean;
+  onCheck?: () => void;
+}) {
   const t = useTheme();
   const granted = permission === 'granted';
+
   return (
     <Animated.View
       key={permission}
-      entering={FadeIn.duration(300)}
-      style={[s.status, { backgroundColor: granted ? t.successSoft : t.warningSoft }]}>
-      <Text style={{ fontSize: 22 }}>{granted ? '✅' : '⏳'}</Text>
-      <View style={{ flex: 1, gap: 4 }}>
-        <Text style={[s.statusTitle, { color: t.text }]}>
-          {granted ? 'Permission granted' : permission === 'denied' ? 'Waiting for permission' : 'Unable to verify'}
+      entering={FadeIn.duration(250)}
+      style={[
+        s.status,
+        {
+          backgroundColor: granted ? t.successSoft : t.warningSoft,
+          borderColor: granted ? `${t.success}50` : `${t.warning}50`,
+        },
+      ]}>
+      {granted ? (
+        <ShieldCheck size={28} color={t.success} />
+      ) : (
+        <ShieldAlert size={28} color={t.warning} />
+      )}
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[s.statusTitle, { color: t.textPrimary }]}>
+          {granted ? 'ADB PERMISSION ACTIVE' : 'WRITE_SECURE_SETTINGS: PENDING'}
         </Text>
-        <Text style={[s.statusBody, { color: t.muted }]}>
+        <Text style={[s.statusBody, { color: t.textSecondary }]}>
           {granted
-            ? 'You can now toggle developer settings directly from Dev Toggle.'
-            : 'Status is read live from Android. Complete the steps above, then come back.'}
+            ? 'Hardware permission verified. Instant switching is enabled.'
+            : 'Run the ADB grant command from your PC to unlock direct controls.'}
         </Text>
       </View>
-      <Pill label={granted ? 'Ready' : 'Pending'} tone={granted ? 'success' : 'warning'} />
+      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+        <Pill label={granted ? 'GRANTED' : 'DENIED'} tone={granted ? 'success' : 'warning'} />
+        {onCheck && (
+          <Button
+            variant="ghost"
+            label={checking ? '...' : 'Recheck'}
+            onPress={onCheck}
+            style={s.miniRecheck}
+          />
+        )}
+      </View>
     </Animated.View>
   );
 }
 
 const s = StyleSheet.create({
-  wrap: { gap: space.lg },
-  progress: { flexDirection: 'row', gap: 6 },
-  progressBar: { flex: 1, height: 5, borderRadius: 5 },
-  stepHead: { flexDirection: 'row', gap: space.md, alignItems: 'center' },
-  stepLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 1.2 },
-  stepTitle: { fontSize: 18, fontWeight: '800', marginTop: 2 },
-  body: { fontSize: 14, lineHeight: 21 },
-  nav: { flexDirection: 'row', gap: space.sm },
-  navBtn: { flex: 1 },
-  status: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg },
-  statusTitle: { fontSize: 15, fontWeight: '800' },
-  statusBody: { fontSize: 13, lineHeight: 18 },
-  tip: { fontSize: 12, lineHeight: 18 },
+  wrap: { gap: space.md, width: '100%' },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: 4 },
+  cardOverline: { fontFamily: fonts.monoBold, fontSize: 11, letterSpacing: 1.2 },
+  cardTitle: { fontFamily: fonts.heading, fontSize: 18 },
+  unifiedStep: {
+    flexDirection: 'row',
+    gap: space.md,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  stepBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.4)',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    marginTop: 2,
+  },
+  stepNum: { fontFamily: fonts.monoBold, fontSize: 12 },
+  stepContent: { flex: 1, gap: 6 },
+  stepTitle: { fontFamily: fonts.heading, fontSize: 14.5 },
+  stepBody: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18 },
+  status: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    width: '100%',
+  },
+  statusTitle: { fontFamily: fonts.heading, fontSize: 13, letterSpacing: 0.5 },
+  statusBody: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17 },
+  tip: { fontFamily: fonts.body, fontSize: 12, lineHeight: 17, textAlign: 'center' },
+  miniRecheck: { minHeight: 28, paddingHorizontal: 6 },
 });

@@ -1,4 +1,4 @@
-package com.devtoggle.app
+package com.devmode.app
 
 import android.app.Application
 import android.content.res.Configuration

@@ -1,9 +1,10 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { radius, space, useTheme } from '@/theme';
+import { Check, Copy } from 'lucide-react-native';
+import { fonts, radius, space, useTheme } from '@/theme';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'cyan';
 
 export function Button({
   label,
@@ -11,6 +12,7 @@ export function Button({
   variant = 'primary',
   disabled,
   style,
+  icon,
   accessibilityLabel,
 }: {
   label: string;
@@ -18,11 +20,29 @@ export function Button({
   variant?: ButtonVariant;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  icon?: ReactNode;
   accessibilityLabel?: string;
 }) {
   const t = useTheme();
-  const bg = variant === 'primary' ? t.primary : variant === 'secondary' ? t.primarySoft : 'transparent';
-  const fg = variant === 'primary' ? t.onPrimary : t.primary;
+
+  let bg = t.primary; // Android Emerald Green (#16A34A), aligned with icon2.png and theme
+  let fg = '#FFFFFF';  // Crisp white text matching icons
+  let border = 'rgba(74, 222, 128, 0.35)'; // Neon bio-green accent border matching icon2.png toggle rim
+
+  if (variant === 'cyan') {
+    bg = t.primary;
+    fg = '#FFFFFF';
+    border = 'rgba(74, 222, 128, 0.40)';
+  } else if (variant === 'secondary') {
+    bg = t.canvasElevated;
+    fg = '#FFFFFF';
+    border = t.cardBorder;
+  } else if (variant === 'ghost') {
+    bg = 'transparent';
+    fg = t.textSecondary;
+    border = 'transparent';
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -32,9 +52,16 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         s.button,
-        { backgroundColor: bg, opacity: disabled ? 0.4 : pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+        {
+          backgroundColor: bg,
+          borderColor: border,
+          borderWidth: border !== 'transparent' ? 1 : 0,
+          opacity: disabled ? 0.35 : pressed ? 0.88 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+        },
         style,
       ]}>
+      {icon && <View style={s.btnIcon}>{icon}</View>}
       <Text style={[s.buttonText, { color: fg }]}>{label}</Text>
     </Pressable>
   );
@@ -43,24 +70,26 @@ export function Button({
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const t = useTheme();
   return (
-    <View style={[s.card, { backgroundColor: t.surface, borderColor: t.border }, style]}>{children}</View>
-  );
-}
-
-export function IconBadge({ icon, tone = 'primary', size = 44 }: { icon: string; tone?: Tone; size?: number }) {
-  const t = useTheme();
-  const { soft } = toneColors(t, tone);
-  return (
-    <View style={[s.icon, { width: size, height: size, borderRadius: size / 3, backgroundColor: soft }]}>
-      <Text style={{ fontSize: size * 0.48 }}>{icon}</Text>
+    <View
+      style={[
+        s.card,
+        {
+          backgroundColor: t.canvas,
+          borderColor: t.cardBorder,
+        },
+        style,
+      ]}>
+      {children}
     </View>
   );
 }
 
-export type Tone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
+export type Tone = 'primary' | 'cyan' | 'success' | 'warning' | 'danger' | 'neutral';
 
 export function toneColors(t: ReturnType<typeof useTheme>, tone: Tone) {
   switch (tone) {
+    case 'cyan':
+      return { fg: t.accentCyan, soft: t.accentCyanGlow };
     case 'success':
       return { fg: t.success, soft: t.successSoft };
     case 'warning':
@@ -68,17 +97,45 @@ export function toneColors(t: ReturnType<typeof useTheme>, tone: Tone) {
     case 'danger':
       return { fg: t.danger, soft: t.dangerSoft };
     case 'neutral':
-      return { fg: t.subtle, soft: t.surfaceAlt };
+      return { fg: t.textMuted, soft: t.canvasElevated };
     default:
-      return { fg: t.primary, soft: t.primarySoft };
+      return { fg: t.primaryLight, soft: t.primaryGlow };
   }
 }
 
-export function Pill({ label, tone }: { label: string; tone: Tone }) {
+export function IconContainer({
+  children,
+  tone = 'primary',
+  size = 44,
+}: {
+  children: ReactNode;
+  tone?: Tone;
+  size?: number;
+}) {
   const t = useTheme();
   const { fg, soft } = toneColors(t, tone);
   return (
-    <View style={[s.pill, { backgroundColor: soft }]}>
+    <View
+      style={[
+        s.iconBox,
+        {
+          width: size,
+          height: size,
+          borderRadius: radius.md,
+          backgroundColor: soft,
+          borderColor: `${fg}30`,
+        },
+      ]}>
+      {children}
+    </View>
+  );
+}
+
+export function Pill({ label, tone = 'primary' }: { label: string; tone?: Tone }) {
+  const t = useTheme();
+  const { fg, soft } = toneColors(t, tone);
+  return (
+    <View style={[s.pill, { backgroundColor: soft, borderColor: `${fg}40` }]}>
       <View style={[s.dot, { backgroundColor: fg }]} />
       <Text style={[s.pillText, { color: fg }]}>{label}</Text>
     </View>
@@ -87,63 +144,181 @@ export function Pill({ label, tone }: { label: string; tone: Tone }) {
 
 export function Overline({ children }: { children: string }) {
   const t = useTheme();
-  return <Text style={[s.overline, { color: t.primary }]}>{children}</Text>;
+  return <Text style={[s.overline, { color: t.accentCyan }]}>{children}</Text>;
 }
 
 export function CodeBlock({ command }: { command: string }) {
   const t = useTheme();
   const [copied, setCopied] = useState(false);
+
   const copy = async () => {
     await Clipboard.setStringAsync(command);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    setTimeout(() => setCopied(false), 2000);
   };
+
   return (
-    <View style={[s.code, { backgroundColor: t.code }]}>
+    <View style={[s.code, { backgroundColor: t.codeBg, borderColor: t.codeBorder }]}>
       <Text selectable style={[s.codeText, { color: t.codeText }]}>
-        <Text style={{ color: t.subtle }}>$ </Text>
+        <Text style={{ color: t.textMuted }}>$ </Text>
         {command}
       </Text>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Copy command"
         onPress={copy}
-        style={({ pressed }) => [s.copy, { opacity: pressed ? 0.7 : 1 }]}>
-        <Text style={s.copyText}>{copied ? '✓ Copied' : 'Copy'}</Text>
+        style={({ pressed }) => [
+          s.copy,
+          {
+            backgroundColor: copied ? t.successSoft : 'rgba(255, 255, 255, 0.08)',
+            borderColor: copied ? t.success : t.borderSubtle,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}>
+        {copied ? (
+          <>
+            <Check size={14} color={t.success} />
+            <Text style={[s.copyText, { color: t.success }]}>Copied</Text>
+          </>
+        ) : (
+          <>
+            <Copy size={14} color={t.textPrimary} />
+            <Text style={[s.copyText, { color: t.textPrimary }]}>Copy</Text>
+          </>
+        )}
       </Pressable>
     </View>
   );
 }
 
-export function FeatureRow({ icon, title, body, tone }: { icon: string; title: string; body: string; tone?: Tone }) {
+export function FeatureRow({
+  icon,
+  title,
+  body,
+  tone,
+}: {
+  icon: ReactNode;
+  title: string;
+  body: string;
+  tone?: Tone;
+}) {
   const t = useTheme();
   return (
     <View style={s.feature}>
-      <IconBadge icon={icon} tone={tone} size={40} />
+      <IconContainer tone={tone} size={42}>
+        {icon}
+      </IconContainer>
       <View style={s.featureCopy}>
-        <Text style={[s.featureTitle, { color: t.text }]}>{title}</Text>
-        <Text style={[s.featureBody, { color: t.muted }]}>{body}</Text>
+        <Text style={[s.featureTitle, { color: t.textPrimary }]}>{title}</Text>
+        <Text style={[s.featureBody, { color: t.textSecondary }]}>{body}</Text>
       </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  button: { minHeight: 50, borderRadius: radius.md, paddingHorizontal: space.xl, alignItems: 'center', justifyContent: 'center' },
-  buttonText: { fontSize: 15, fontWeight: '800', letterSpacing: 0.2 },
-  card: { borderRadius: radius.lg, padding: space.xl, gap: space.lg, borderWidth: StyleSheet.hairlineWidth },
-  icon: { alignItems: 'center', justifyContent: 'center' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, alignSelf: 'flex-start' },
-  dot: { width: 7, height: 7, borderRadius: 4 },
-  pillText: { fontSize: 12, fontWeight: '800' },
-  overline: { fontSize: 12, fontWeight: '900', letterSpacing: 1.4 },
-  code: { borderRadius: radius.md, padding: space.lg, paddingRight: 84, minHeight: 52, justifyContent: 'center' },
-  codeText: { fontFamily: 'monospace', fontSize: 13, lineHeight: 20 },
-  copy: { position: 'absolute', right: 8, top: 8, backgroundColor: '#FFFFFF1A', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
-  copyText: { color: '#FFFFFF', fontWeight: '800', fontSize: 12 },
-  feature: { flexDirection: 'row', gap: space.md, alignItems: 'flex-start' },
-  featureCopy: { flex: 1, gap: 3 },
-  featureTitle: { fontSize: 15, fontWeight: '800' },
-  featureBody: { fontSize: 13.5, lineHeight: 19.5 },
+  button: {
+    minHeight: 52,
+    borderRadius: radius.md,
+    paddingHorizontal: space.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.sm,
+  },
+  btnIcon: {
+    marginRight: 2,
+  },
+  buttonText: {
+    fontFamily: fonts.heading,
+    fontSize: 15,
+    letterSpacing: 0.3,
+  },
+  card: {
+    borderRadius: radius.lg,
+    padding: space.lg,
+    gap: space.md,
+    borderWidth: 1,
+    width: '100%',
+  },
+  iconBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.full,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  pillText: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  overline: {
+    fontFamily: fonts.monoBold,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  code: {
+    borderRadius: radius.md,
+    padding: space.lg,
+    paddingRight: 96,
+    minHeight: 54,
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  codeText: {
+    fontFamily: fonts.mono,
+    fontSize: 12.5,
+    lineHeight: 20,
+  },
+  copy: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderWidth: 1,
+  },
+  copyText: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  feature: {
+    flexDirection: 'row',
+    gap: space.md,
+    alignItems: 'flex-start',
+  },
+  featureCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  featureTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 15,
+  },
+  featureBody: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    lineHeight: 19,
+  },
 });
-

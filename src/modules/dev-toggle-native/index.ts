@@ -1,12 +1,21 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export type SettingName = 'developerOptions' | 'usbDebugging' | 'wirelessDebugging';
+export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation';
 export type SettingState = 'enabled' | 'disabled' | 'unknown';
 export type PermissionStatus = 'granted' | 'denied' | 'unknown';
+
 export type DeviceStatus = Record<SettingName, SettingState> & {
   writeSecureSettings: PermissionStatus;
   nativeAvailable: boolean;
 };
+
+export type AnimationScales = {
+  window: number;
+  transition: number;
+  animator: number;
+};
+
 type Result = { opened?: boolean; changed?: boolean; message: string };
 
 type NativeModule = {
@@ -16,6 +25,10 @@ type NativeModule = {
   setEnabled(setting: SettingName, enabled: boolean): Promise<Result>;
   getOnboardingComplete(): Promise<boolean>;
   setOnboardingComplete(complete: boolean): Promise<boolean>;
+  getAnimationScales(): Promise<AnimationScales>;
+  setAnimationScale(type: string, scale: number): Promise<Result>;
+  getExtraSettings(): Promise<Record<ExtraSettingName, SettingState>>;
+  setExtraSetting(setting: ExtraSettingName, enabled: boolean): Promise<Result>;
 };
 
 const native = requireOptionalNativeModule<NativeModule>('DevToggle');
@@ -29,7 +42,6 @@ export const UNAVAILABLE_STATUS: DeviceStatus = {
   nativeAvailable: false,
 };
 
-// In-memory fallback when the native module is missing (e.g. Expo Go).
 let memoryOnboarding = false;
 
 export default {
@@ -53,7 +65,23 @@ export default {
     try {
       await native?.setOnboardingComplete?.(complete);
     } catch {
-      // Keep the in-memory value; the user can still use the app this session.
+      // In-memory fallback
     }
   },
+  getAnimationScales: async (): Promise<AnimationScales> =>
+    native?.getAnimationScales
+      ? native.getAnimationScales()
+      : { window: 1.0, transition: 1.0, animator: 1.0 },
+  setAnimationScale: async (type: string, scale: number): Promise<Result> =>
+    native?.setAnimationScale
+      ? native.setAnimationScale(type, scale)
+      : { changed: false, message: NEEDS_BUILD },
+  getExtraSettings: async (): Promise<Record<ExtraSettingName, SettingState>> =>
+    native?.getExtraSettings
+      ? native.getExtraSettings()
+      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown' },
+  setExtraSetting: async (setting: ExtraSettingName, enabled: boolean): Promise<Result> =>
+    native?.setExtraSetting
+      ? native.setExtraSetting(setting, enabled)
+      : { changed: false, message: NEEDS_BUILD },
 };
