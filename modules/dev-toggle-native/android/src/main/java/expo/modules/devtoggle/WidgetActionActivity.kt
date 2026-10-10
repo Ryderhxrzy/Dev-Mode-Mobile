@@ -146,12 +146,21 @@ class WidgetActionActivity : Activity() {
                 if (success) {
                     showToast(this, if (next == 1) "Wireless Debugging: Enabled" else "Wireless Debugging: Disabled")
                     if (next == 1) {
+                        AdbEndpointHelper.startDiscovery(applicationContext)
                         Handler(Looper.getMainLooper()).postDelayed({
                             DevToggleWidgetProvider.updateAllWidgets(applicationContext)
-                        }, 1200)
+                            DevToggleNotificationManager.updateNotification(applicationContext)
+                        }, 600)
                         Handler(Looper.getMainLooper()).postDelayed({
                             DevToggleWidgetProvider.updateAllWidgets(applicationContext)
-                        }, 2500)
+                            DevToggleNotificationManager.updateNotification(applicationContext)
+                        }, 1300)
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            DevToggleWidgetProvider.updateAllWidgets(applicationContext)
+                            DevToggleNotificationManager.updateNotification(applicationContext)
+                        }, 2600)
+                    } else {
+                        AdbEndpointHelper.clearPersistedEndpoint(applicationContext)
                     }
                 } else {
                     showToast(this, "Permission Required: Run ADB grant command")
@@ -159,6 +168,7 @@ class WidgetActionActivity : Activity() {
                 DevToggleWidgetProvider.updateAllWidgets(this)
             }
         }
+        DevToggleNotificationManager.updateNotification(this)
     }
 }
 
