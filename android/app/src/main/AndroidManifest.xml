@@ -28,5 +28,19 @@
         <data android:scheme="devmode"/>
       </intent-filter>
     </activity>
+    <receiver
+      android:name="expo.modules.devtoggle.DevToggleWidgetProvider"
+      android:label="Dev Mode Quick Toggle"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_DEV"/>
+        <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_USB"/>
+        <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_WIRELESS"/>
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/dev_toggle_widget_info"/>
+    </receiver>
   </application>
 </manifest>
