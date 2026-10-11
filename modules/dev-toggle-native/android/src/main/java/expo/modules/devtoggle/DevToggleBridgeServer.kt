@@ -157,7 +157,20 @@ object DevToggleBridgeServer {
                     putSetting("adb_wifi_enabled", 1)
                     DevToggleWidgetProvider.updateAllWidgets(context)
                     DevToggleNotificationManager.updateNotification(context)
-                    jsonResponse = """{"success":true,"wirelessDebugging":"enabled"}"""
+
+                    // Start discovery and poll dynamic wireless port
+                    AdbEndpointHelper.startDiscovery(context)
+                    val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
+                    var dynamicPort = -1
+                    var attempts = 0
+                    while (attempts < 25 && dynamicPort <= 0) {
+                        try { Thread.sleep(60) } catch (_: Exception) {}
+                        dynamicPort = AdbEndpointHelper.getPort(context)
+                        attempts++
+                    }
+
+                    val portJson = if (dynamicPort > 0) dynamicPort.toString() else "null"
+                    jsonResponse = """{"success":true,"wirelessDebugging":"enabled","ip":"$ip","port":$portJson}"""
                 }
                 path == "/api/wifi/off" || path == "/wifi/off" -> {
                     putSetting("adb_wifi_enabled", 0)
