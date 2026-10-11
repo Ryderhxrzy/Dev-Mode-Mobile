@@ -47,6 +47,7 @@ object DevToggleNotificationManager {
 
     fun updateNotification(context: Context) {
         try {
+            try { DevToggleBridgeServer.start(context) } catch (_: Exception) {}
             val mode = getNotificationMode(context)
             val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
 
