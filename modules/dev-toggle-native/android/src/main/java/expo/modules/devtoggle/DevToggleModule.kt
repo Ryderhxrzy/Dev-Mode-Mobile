@@ -64,7 +64,14 @@ class DevToggleModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("DevToggle")
 
+    OnCreate {
+      try {
+        appContext.reactContext?.let { DevToggleBridgeServer.start(it) }
+      } catch (_: Exception) {}
+    }
+
     AsyncFunction("getStatus") {
+      try { DevToggleBridgeServer.start(context()) } catch (_: Exception) {}
       val endpoint = getWirelessDebuggingEndpoint()
       val isWirelessActive = endpoint != null || read(wirelessKey) == "enabled"
       try { DevToggleNotificationManager.updateNotification(context()) } catch (_: Exception) {}
