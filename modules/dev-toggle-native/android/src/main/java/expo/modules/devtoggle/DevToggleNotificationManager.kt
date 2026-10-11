@@ -1,5 +1,6 @@
 package expo.modules.devtoggle
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -45,21 +46,15 @@ object DevToggleNotificationManager {
         }
     }
 
-    fun updateNotification(context: Context) {
+    fun buildNotification(context: Context): Notification? {
         try {
-            try { DevToggleBridgeServer.start(context) } catch (_: Exception) {}
             val mode = getNotificationMode(context)
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
-
-            if (mode == "disabled") {
-                nm.cancel(NOTIFICATION_ID)
-                return
-            }
+            if (mode == "disabled") return null
 
             // Android 13+ permission check
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    return
+                    return null
                 }
             }
 
@@ -68,8 +63,7 @@ object DevToggleNotificationManager {
                         (try { Settings.Secure.getInt(cr, "development_settings_enabled", 0) == 1 } catch (_: Exception) { false })
 
             if (mode == "when_dev_active" && !devOn) {
-                nm.cancel(NOTIFICATION_ID)
-                return
+                return null
             }
 
             val usbOn = (try { Settings.Global.getInt(cr, "adb_enabled", 0) == 1 } catch (_: Exception) { false }) ||
@@ -127,30 +121,22 @@ object DevToggleNotificationManager {
 
             // 1. Compact Custom RemoteViews
             val compactViews = RemoteViews(context.packageName, R.layout.notification_dev_toggle)
-
-            // Dev
             compactViews.setInt(R.id.notif_btn_dev, "setBackgroundResource", devBg)
-            compactViews.setImageViewResource(R.id.iv_notif_dev, devIconRes)
-            compactViews.setTextViewText(R.id.tv_notif_dev_status, devStatusText)
             compactViews.setTextColor(R.id.tv_notif_dev, if (devOn) colorActiveText else colorInactiveText)
+            compactViews.setTextViewText(R.id.tv_notif_dev_status, devStatusText)
             compactViews.setTextColor(R.id.tv_notif_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
+            compactViews.setImageViewResource(R.id.iv_notif_dev, devIconRes)
             compactViews.setOnClickPendingIntent(R.id.notif_btn_dev, piDev)
 
-            // USB
             compactViews.setInt(R.id.notif_btn_usb, "setBackgroundResource", usbBg)
-            compactViews.setImageViewResource(R.id.iv_notif_usb, R.drawable.ic_widget_usb)
-            compactViews.setInt(R.id.iv_notif_usb, "setColorFilter", if (usbOn) colorActiveText else colorInactiveStatus)
-            compactViews.setTextViewText(R.id.tv_notif_usb_status, usbText)
             compactViews.setTextColor(R.id.tv_notif_usb, if (usbOn) colorActiveText else colorInactiveText)
+            compactViews.setTextViewText(R.id.tv_notif_usb_status, usbText)
             compactViews.setTextColor(R.id.tv_notif_usb_status, if (usbOn) colorActiveStatus else colorInactiveStatus)
             compactViews.setOnClickPendingIntent(R.id.notif_btn_usb, piUsb)
 
-            // Wireless
             compactViews.setInt(R.id.notif_btn_wireless, "setBackgroundResource", wirelessBg)
-            compactViews.setImageViewResource(R.id.iv_notif_wifi, R.drawable.ic_widget_wifi)
-            compactViews.setInt(R.id.iv_notif_wifi, "setColorFilter", if (wirelessOn) colorActiveText else colorInactiveStatus)
-            compactViews.setTextViewText(R.id.tv_notif_wifi_status, wirelessText)
             compactViews.setTextColor(R.id.tv_notif_wifi, if (wirelessOn) colorActiveText else colorInactiveText)
+            compactViews.setTextViewText(R.id.tv_notif_wifi_status, wirelessText)
             compactViews.setTextColor(R.id.tv_notif_wifi_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             compactViews.setOnClickPendingIntent(R.id.notif_btn_wireless, piWireless)
 
@@ -158,35 +144,22 @@ object DevToggleNotificationManager {
 
             // 2. Expanded Custom RemoteViews
             val expandedViews = RemoteViews(context.packageName, R.layout.notification_dev_toggle_expanded)
-
-            // Header info
-            expandedViews.setTextViewText(R.id.tv_notif_header_title, "DEV MODE QUICK CONTROLS")
-            expandedViews.setTextViewText(R.id.tv_notif_header_badge, if (devOn) "ACTIVE" else "DISABLED")
-            expandedViews.setTextColor(R.id.tv_notif_header_badge, if (devOn) colorActiveStatus else colorInactiveStatus)
-
-            // Dev
             expandedViews.setInt(R.id.notif_btn_dev, "setBackgroundResource", devBg)
-            expandedViews.setImageViewResource(R.id.iv_notif_dev, devIconRes)
-            expandedViews.setTextViewText(R.id.tv_notif_dev_status, devStatusText)
             expandedViews.setTextColor(R.id.tv_notif_dev, if (devOn) colorActiveText else colorInactiveText)
+            expandedViews.setTextViewText(R.id.tv_notif_dev_status, devStatusText)
             expandedViews.setTextColor(R.id.tv_notif_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
+            expandedViews.setImageViewResource(R.id.iv_notif_dev, devIconRes)
             expandedViews.setOnClickPendingIntent(R.id.notif_btn_dev, piDev)
 
-            // USB
             expandedViews.setInt(R.id.notif_btn_usb, "setBackgroundResource", usbBg)
-            expandedViews.setImageViewResource(R.id.iv_notif_usb, R.drawable.ic_widget_usb)
-            expandedViews.setInt(R.id.iv_notif_usb, "setColorFilter", if (usbOn) colorActiveText else colorInactiveStatus)
-            expandedViews.setTextViewText(R.id.tv_notif_usb_status, usbText)
             expandedViews.setTextColor(R.id.tv_notif_usb, if (usbOn) colorActiveText else colorInactiveText)
+            expandedViews.setTextViewText(R.id.tv_notif_usb_status, usbText)
             expandedViews.setTextColor(R.id.tv_notif_usb_status, if (usbOn) colorActiveStatus else colorInactiveStatus)
             expandedViews.setOnClickPendingIntent(R.id.notif_btn_usb, piUsb)
 
-            // Wireless
             expandedViews.setInt(R.id.notif_btn_wireless, "setBackgroundResource", wirelessBg)
-            expandedViews.setImageViewResource(R.id.iv_notif_wifi, R.drawable.ic_widget_wifi)
-            expandedViews.setInt(R.id.iv_notif_wifi, "setColorFilter", if (wirelessOn) colorActiveText else colorInactiveStatus)
-            expandedViews.setTextViewText(R.id.tv_notif_wifi_status, wirelessText)
             expandedViews.setTextColor(R.id.tv_notif_wifi, if (wirelessOn) colorActiveText else colorInactiveText)
+            expandedViews.setTextViewText(R.id.tv_notif_wifi_status, wirelessText)
             expandedViews.setTextColor(R.id.tv_notif_wifi_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             expandedViews.setOnClickPendingIntent(R.id.notif_btn_wireless, piWireless)
 
@@ -215,7 +188,39 @@ object DevToggleNotificationManager {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
 
-            nm.notify(NOTIFICATION_ID, builder.build())
+            return builder.build()
+        } catch (_: Exception) {
+            return null
+        }
+    }
+
+    fun updateNotification(context: Context) {
+        try {
+            try { DevToggleBridgeServer.start(context) } catch (_: Exception) {}
+            val mode = getNotificationMode(context)
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+
+            if (mode == "disabled") {
+                nm.cancel(NOTIFICATION_ID)
+                try { context.stopService(Intent(context, DevToggleBridgeService::class.java)) } catch (_: Exception) {}
+                return
+            }
+
+            val notif = buildNotification(context)
+            if (notif != null) {
+                nm.notify(NOTIFICATION_ID, notif)
+                try {
+                    val serviceIntent = Intent(context, DevToggleBridgeService::class.java)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent)
+                    } else {
+                        context.startService(serviceIntent)
+                    }
+                } catch (_: Exception) {}
+            } else {
+                nm.cancel(NOTIFICATION_ID)
+                try { context.stopService(Intent(context, DevToggleBridgeService::class.java)) } catch (_: Exception) {}
+            }
         } catch (_: Exception) {}
     }
 }
