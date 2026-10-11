@@ -1,8 +1,12 @@
 package expo.modules.devtoggle
 
 import android.content.Context
+import android.database.ContentObserver
+import android.net.Uri
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -21,6 +25,7 @@ object DevToggleBridgeServer {
     private var udpSocket: DatagramSocket? = null
     private var nsdManager: NsdManager? = null
     private var registrationListener: NsdManager.RegistrationListener? = null
+    private var contentObserver: ContentObserver? = null
 
     @Synchronized
     fun start(context: Context) {
@@ -72,6 +77,37 @@ object DevToggleBridgeServer {
 
         // 3. Register mDNS
         registerNsd(context)
+
+        // 4. Register real-time ContentObserver for global settings
+        registerSettingsObserver(context)
+    }
+
+    private fun registerSettingsObserver(context: Context) {
+        if (contentObserver != null) return
+        val appContext = context.applicationContext
+        val cr = appContext.contentResolver
+        val handler = Handler(Looper.getMainLooper())
+        val observer = object : ContentObserver(handler) {
+            override fun onChange(selfChange: Boolean, uri: Uri?) {
+                super.onChange(selfChange, uri)
+                try {
+                    DevToggleWidgetProvider.updateAllWidgets(appContext)
+                    DevToggleNotificationManager.updateNotification(appContext)
+
+                    val isWifiEnabled = (try { Settings.Global.getInt(cr, "adb_wifi_enabled", 0) == 1 } catch (_: Exception) { false }) ||
+                        (try { Settings.Secure.getInt(cr, "adb_wifi_enabled", 0) == 1 } catch (_: Exception) { false })
+                    if (!isWifiEnabled) {
+                        AdbEndpointHelper.clearPersistedEndpoint(appContext)
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+        contentObserver = observer
+        try {
+            cr.registerContentObserver(Settings.Global.getUriFor("development_settings_enabled"), false, observer)
+            cr.registerContentObserver(Settings.Global.getUriFor("adb_enabled"), false, observer)
+            cr.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, observer)
+        } catch (_: Exception) {}
     }
 
     private fun registerNsd(context: Context) {
@@ -135,6 +171,7 @@ object DevToggleBridgeServer {
                     putSetting("development_settings_enabled", 0)
                     putSetting("adb_enabled", 0)
                     putSetting("adb_wifi_enabled", 0)
+                    AdbEndpointHelper.clearPersistedEndpoint(context)
                     DevToggleWidgetProvider.updateAllWidgets(context)
                     DevToggleNotificationManager.updateNotification(context)
                     jsonResponse = """{"success":true,"developerOptions":"disabled"}"""
@@ -158,14 +195,15 @@ object DevToggleBridgeServer {
                     DevToggleWidgetProvider.updateAllWidgets(context)
                     DevToggleNotificationManager.updateNotification(context)
 
-                    // Start discovery and poll dynamic wireless port
+                    // Clear any stale cached port and start fresh discovery
+                    AdbEndpointHelper.clearPersistedEndpoint(context)
                     AdbEndpointHelper.startDiscovery(context)
                     val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
                     var dynamicPort = -1
                     var attempts = 0
                     while (attempts < 25 && dynamicPort <= 0) {
-                        try { Thread.sleep(60) } catch (_: Exception) {}
-                        dynamicPort = AdbEndpointHelper.getPort(context)
+                        try { Thread.sleep(80) } catch (_: Exception) {}
+                        dynamicPort = AdbEndpointHelper.getPort(context, allowStale = false)
                         attempts++
                     }
 
@@ -174,6 +212,7 @@ object DevToggleBridgeServer {
                 }
                 path == "/api/wifi/off" || path == "/wifi/off" -> {
                     putSetting("adb_wifi_enabled", 0)
+                    AdbEndpointHelper.clearPersistedEndpoint(context)
                     DevToggleWidgetProvider.updateAllWidgets(context)
                     DevToggleNotificationManager.updateNotification(context)
                     jsonResponse = """{"success":true,"wirelessDebugging":"disabled"}"""

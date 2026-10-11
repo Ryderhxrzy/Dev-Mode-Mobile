@@ -21,6 +21,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
         const val ACTION_TOGGLE_DEV = "expo.modules.devtoggle.ACTION_TOGGLE_DEV"
         const val ACTION_TOGGLE_USB = "expo.modules.devtoggle.ACTION_TOGGLE_USB"
         const val ACTION_TOGGLE_WIRELESS = "expo.modules.devtoggle.ACTION_TOGGLE_WIRELESS"
+        const val ACTION_SYNC = "expo.modules.devtoggle.ACTION_SYNC"
 
         private const val DEV_KEY = "development_settings_enabled"
         private const val USB_KEY = "adb_enabled"
@@ -288,8 +289,17 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
 
+        val action = intent.action
+        if (action == AppWidgetManager.ACTION_APPWIDGET_UPDATE ||
+            action == ACTION_SYNC ||
+            action == Intent.ACTION_BOOT_COMPLETED) {
+            updateAllWidgets(context)
+            DevToggleNotificationManager.updateNotification(context)
+            return
+        }
+
         val cr = context.contentResolver
-        when (intent.action) {
+        when (action) {
             ACTION_TOGGLE_DEV -> {
                 val current = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
                 val next = if (current) 0 else 1

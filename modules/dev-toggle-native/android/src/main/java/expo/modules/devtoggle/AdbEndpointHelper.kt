@@ -230,7 +230,7 @@ object AdbEndpointHelper {
         } catch (_: Exception) {}
     }
 
-    fun getPort(context: Context): Int {
+    fun getPort(context: Context, allowStale: Boolean = true): Int {
         val isAndroid11Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
         // Invalidate stale 5555 on Android 11+
@@ -261,15 +261,16 @@ object AdbEndpointHelper {
             }
         }
 
-        // 3. In-memory cached port if valid dynamic port
-        if (cachedPort in 1024..65535 && (!isAndroid11Plus || cachedPort != 5555)) {
+        // 3. In-memory cached port if valid dynamic port (only if allowStale)
+        if (allowStale && cachedPort in 1024..65535 && (!isAndroid11Plus || cachedPort != 5555)) {
             return cachedPort
         }
 
         // 4. Trigger mDNS discovery in background
         startDiscovery(context)
+        val maxWait = if (allowStale) 600 else 1200
         var waited = 0
-        while (waited < 600 && (cachedPort <= 0 || (isAndroid11Plus && cachedPort == 5555))) {
+        while (waited < maxWait && (cachedPort <= 0 || (isAndroid11Plus && cachedPort == 5555))) {
             try { Thread.sleep(50) } catch (_: Exception) {}
             waited += 50
         }
@@ -278,11 +279,13 @@ object AdbEndpointHelper {
             return cachedPort
         }
 
-        // 5. Persisted Port in SharedPreferences (ONLY if not 5555 on Android 11+)
-        val persisted = getPersistedPort(context)
-        if (persisted in 1024..65535 && (!isAndroid11Plus || persisted != 5555)) {
-            cachedPort = persisted
-            return persisted
+        // 5. Persisted Port in SharedPreferences (ONLY if allowStale and not 5555 on Android 11+)
+        if (allowStale) {
+            val persisted = getPersistedPort(context)
+            if (persisted in 1024..65535 && (!isAndroid11Plus || persisted != 5555)) {
+                cachedPort = persisted
+                return persisted
+            }
         }
 
         // 6. Classic legacy tcp port (5555) ONLY for older Android (< API 30)

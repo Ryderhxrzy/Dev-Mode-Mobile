@@ -117,9 +117,34 @@ export default function Dashboard() {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') refresh();
     });
+
+    // Real-time synchronization: poll every 1.5s while active in foreground
+    // so any change from PC terminal (CMD) or home screen widgets reflects immediately
+    const pollInterval = setInterval(() => {
+      if (AppState.currentState === 'active') {
+        Promise.all([
+          DevToggle.getStatus(),
+          DevToggle.getAnimationScales(),
+          DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
+        ]).then(([st, sc, extra]) => {
+          if (active) {
+            setStatus(st);
+            setAnimationScales(sc);
+            if (extra) {
+              setExtraSettings({
+                stayAwake: extra.stayAwake || 'unknown',
+                showTouches: extra.showTouches || 'unknown',
+              });
+            }
+          }
+        }).catch(() => {});
+      }
+    }, 1500);
+
     return () => {
       active = false;
       sub.remove();
+      clearInterval(pollInterval);
     };
   }, [refresh]);
 

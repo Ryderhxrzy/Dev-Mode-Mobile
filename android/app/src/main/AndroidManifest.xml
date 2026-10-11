@@ -43,6 +43,7 @@
       android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.devtoggle.ACTION_SYNC"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_DEV"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_USB"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_WIRELESS"/>
@@ -59,6 +60,7 @@
       android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.devtoggle.ACTION_SYNC"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_DEV"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_USB"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_WIRELESS"/>
@@ -73,6 +75,7 @@
       android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.devtoggle.ACTION_SYNC"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_DEV"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_USB"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_WIRELESS"/>
@@ -87,6 +90,7 @@
       android:exported="true">
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+        <action android:name="expo.modules.devtoggle.ACTION_SYNC"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_DEV"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_USB"/>
         <action android:name="expo.modules.devtoggle.ACTION_TOGGLE_WIRELESS"/>
