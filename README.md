@@ -11,7 +11,7 @@
     <a href="#-license--attribution"><img src="https://img.shields.io/badge/License-MIT-F59E0B?style=flat-square" alt="License" /></a>
   </p>
   <p>
-    <a href="https://github.com/Ryderhxrzy/Developer-Option-Toggle"><img src="https://img.shields.io/badge/Release-v1.0.0-0284C7?style=flat-square&logo=github&logoColor=white" alt="Release" /></a>
+    <a href="https://github.com/Ryderhxrzy/Dev-Mode-Mobile"><img src="https://img.shields.io/badge/Release-v1.0.0-0284C7?style=flat-square&logo=github&logoColor=white" alt="Release" /></a>
     <img src="https://img.shields.io/badge/Root-Not%20Required-22C55E?style=flat-square" alt="Rootless" />
     <img src="https://img.shields.io/badge/Telemetry-Zero-10B981?style=flat-square" alt="Telemetry" />
     <img src="https://img.shields.io/badge/Security-Local%20Only-06B6D4?style=flat-square" alt="Security" />
