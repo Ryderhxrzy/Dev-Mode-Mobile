@@ -89,7 +89,9 @@ android {
 
     namespace 'com.devmode.app'
     defaultConfig {
-        applicationId 'com.devmode.app'
+        // Expo CLI package resolver reads first match: applicationId 'com.devmode.app.dev'
+        def isProd = (findProperty('APP_VARIANT') == 'production' || System.getenv('APP_VARIANT') == 'production' || gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') })
+        applicationId isProd ? 'com.devmode.app' : 'com.devmode.app.dev'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -108,7 +110,6 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
-            applicationIdSuffix ".dev"
         }
         release {
             // Caution! In production, you need to generate your own keystore file.

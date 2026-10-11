@@ -8,7 +8,7 @@
     "scheme": "devmode",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.devmode.app",
+      "package": "com.devmode.app.dev",
       "notification": {
         "icon": "./assets/images/notification_icon.png",
         "color": "#22C55E"
