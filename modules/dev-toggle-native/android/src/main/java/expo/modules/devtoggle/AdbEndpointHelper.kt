@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.provider.Settings
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -25,6 +26,7 @@ object AdbEndpointHelper {
     private val isResolving = AtomicBoolean(false)
     private var nsdManager: NsdManager? = null
     private var discoveryListener: NsdManager.DiscoveryListener? = null
+    private var multicastLock: WifiManager.MulticastLock? = null
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -141,6 +143,16 @@ object AdbEndpointHelper {
 
     fun startDiscovery(context: Context) {
         try {
+            val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            if (wm != null && (multicastLock == null || !multicastLock!!.isHeld)) {
+                multicastLock = wm.createMulticastLock("DevToggleMulticastLock").apply {
+                    setReferenceCounted(true)
+                    acquire()
+                }
+            }
+        } catch (_: Exception) {}
+
+        try {
             if (isDiscovering.get()) return
             val nsd = context.getSystemService(Context.NSD_SERVICE) as? NsdManager ?: return
             nsdManager = nsd
@@ -206,6 +218,11 @@ object AdbEndpointHelper {
 
     fun stopDiscovery() {
         try {
+            if (multicastLock != null && multicastLock!!.isHeld) {
+                multicastLock?.release()
+            }
+        } catch (_: Exception) {}
+        try {
             if (isDiscovering.get() && nsdManager != null && discoveryListener != null) {
                 nsdManager?.stopServiceDiscovery(discoveryListener)
                 isDiscovering.set(false)
@@ -214,53 +231,67 @@ object AdbEndpointHelper {
     }
 
     fun getPort(context: Context): Int {
+        val isAndroid11Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
+        // Invalidate stale 5555 on Android 11+
+        if (isAndroid11Plus && cachedPort == 5555) {
+            cachedPort = -1
+        }
+
         // 1. Direct System Property: service.adb.tls.port (Set directly by adbd upon starting TLS)
-        for (prop in listOf("service.adb.tls.port", "service.adb.tcp.port")) {
-            val pStr = readSystemProperty(prop)
-            val p = pStr?.toIntOrNull()
-            if (p != null && p > 0 && p <= 65535) {
-                cachedPort = p
-                return p
-            }
+        val tlsPortStr = readSystemProperty("service.adb.tls.port")
+        val tlsPort = tlsPortStr?.toIntOrNull()
+        if (tlsPort != null && tlsPort in 1..65535) {
+            cachedPort = tlsPort
+            return tlsPort
         }
 
-        // 2. In-memory cached port if valid
-        if (cachedPort in 1..65535) {
-            return cachedPort
-        }
-
-        // 3. Settings Global & Secure: adb_wifi_port / adb_port
+        // 2. Settings Global & Secure: adb_wifi_port / adb_port (only if valid dynamic port on Android 11+)
         val cr = context.contentResolver
         for (k in listOf("adb_wifi_port", "adb_port")) {
             val p1 = try { Settings.Global.getInt(cr, k, -1) } catch (_: Exception) { -1 }
-            if (p1 in 1..65535) {
+            if (p1 in 1024..65535 && (!isAndroid11Plus || p1 != 5555)) {
                 cachedPort = p1
                 return p1
             }
             val p2 = try { Settings.Secure.getInt(cr, k, -1) } catch (_: Exception) { -1 }
-            if (p2 in 1..65535) {
+            if (p2 in 1024..65535 && (!isAndroid11Plus || p2 != 5555)) {
                 cachedPort = p2
                 return p2
             }
         }
 
-        // 4. Persisted Port in SharedPreferences (retains active session port across app close/widget updates)
-        val persisted = getPersistedPort(context)
-        if (persisted in 1..65535) {
-            cachedPort = persisted
-            return persisted
+        // 3. In-memory cached port if valid dynamic port
+        if (cachedPort in 1024..65535 && (!isAndroid11Plus || cachedPort != 5555)) {
+            return cachedPort
         }
 
-        // 5. Trigger mDNS discovery in background
+        // 4. Trigger mDNS discovery in background
         startDiscovery(context)
         var waited = 0
-        while (waited < 500 && cachedPort <= 0) {
+        while (waited < 600 && (cachedPort <= 0 || (isAndroid11Plus && cachedPort == 5555))) {
             try { Thread.sleep(50) } catch (_: Exception) {}
             waited += 50
         }
 
-        if (cachedPort in 1..65535) {
+        if (cachedPort in 1024..65535 && (!isAndroid11Plus || cachedPort != 5555)) {
             return cachedPort
+        }
+
+        // 5. Persisted Port in SharedPreferences (ONLY if not 5555 on Android 11+)
+        val persisted = getPersistedPort(context)
+        if (persisted in 1024..65535 && (!isAndroid11Plus || persisted != 5555)) {
+            cachedPort = persisted
+            return persisted
+        }
+
+        // 6. Classic legacy tcp port (5555) ONLY for older Android (< API 30)
+        if (!isAndroid11Plus) {
+            val tcpPort = readSystemProperty("service.adb.tcp.port")?.toIntOrNull()
+            if (tcpPort != null && tcpPort in 1..65535) {
+                cachedPort = tcpPort
+                return tcpPort
+            }
         }
 
         return -1
@@ -284,22 +315,23 @@ object AdbEndpointHelper {
         }
         val ip = if (!rawIp.isNullOrBlank() && !rawIp.startsWith(":") && rawIp != "0.0.0.0") rawIp else null
 
+        val isAndroid11Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
         val port = getPort(context)
 
         // 1. Both IP and Port are active
-        if (ip != null && port in 1..65535) {
+        if (ip != null && port in 1024..65535 && (!isAndroid11Plus || port != 5555)) {
             savePersistedEndpoint(context, ip, port)
             return "$ip:$port"
         }
 
-        // 2. Persisted session fallback
+        // 2. Persisted session fallback (only if valid dynamic port on Android 11+)
         val persistedPort = getPersistedPort(context)
-        if (ip != null && persistedPort in 1..65535) {
+        if (ip != null && persistedPort in 1024..65535 && (!isAndroid11Plus || persistedPort != 5555)) {
             return "$ip:$persistedPort"
         }
 
         val persistedEp = getPrefs(context).getString(KEY_PERSISTED_ENDPOINT, null)
-        if (!persistedEp.isNullOrBlank() && persistedEp.contains(":") && !persistedEp.startsWith(":")) {
+        if (!persistedEp.isNullOrBlank() && persistedEp.contains(":") && !persistedEp.startsWith(":") && (!isAndroid11Plus || !persistedEp.endsWith(":5555"))) {
             return persistedEp
         }
 
