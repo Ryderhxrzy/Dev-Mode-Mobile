@@ -5,6 +5,9 @@
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
   <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+  <uses-permission android:name="android.permission.WAKE_LOCK" />
 
   <application>
     <!-- 1. 3x1 Multi-Toggle Widget -->
@@ -80,5 +83,12 @@
       android:taskAffinity=""
       android:launchMode="singleInstance"
       android:exported="true" />
+
+    <!-- Foreground Service to keep Bridge Server & WifiLock active in background -->
+    <service
+      android:name="expo.modules.devtoggle.DevToggleBridgeService"
+      android:enabled="true"
+      android:exported="false"
+      android:foregroundServiceType="connectedDevice" />
   </application>
 </manifest>
