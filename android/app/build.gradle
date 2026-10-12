@@ -107,6 +107,17 @@ android {
             keyPassword 'android'
         }
     }
+    // Release APKs (GitHub): one APK per ABI instead of a fat universal APK. Debug keeps a single
+    // APK so emulators (x86_64) keep working. Play Store uses the AAB and splits on its own.
+    splits {
+        abi {
+            def isReleaseBuild = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
+            enable isReleaseBuild
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a'
+            universalApk false
+        }
+    }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
