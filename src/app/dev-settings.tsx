@@ -69,6 +69,12 @@ const EXTRA_SETTINGS: {
     icon: 'pointerLocation',
   },
   {
+    key: 'autoWirelessConnect',
+    title: 'Auto Wireless ADB Connect',
+    desc: 'Automatically discover and reconnect paired devices over local Wi-Fi when ADB is available.',
+    icon: 'keepWirelessOn',
+  },
+  {
     key: 'keepWirelessOn',
     title: 'Keep Wireless Debugging On',
     desc: 'Android turns Wireless Debugging off whenever Wi-Fi drops. Re-enable it automatically when Wi-Fi is back.',
@@ -93,6 +99,7 @@ export default function DevSettings() {
     pointerLocation: 'unknown',
     keepWirelessOn: 'unknown',
     webRemote: 'unknown',
+    autoWirelessConnect: 'unknown',
   });
   const [notifMode, setNotifMode] = useState<NotificationMode>('disabled');
 
@@ -152,6 +159,7 @@ export default function DevSettings() {
           pointerLocation: 'Show Pointer Location',
           keepWirelessOn: 'Keep Wireless Debugging On',
           webRemote: 'Web Remote Dashboard',
+          autoWirelessConnect: 'Auto Wireless ADB Connect',
         };
         if (Platform.OS === 'android') {
           ToastAndroid.show(`${labels[key]}: ${willEnable ? 'Enabled' : 'Disabled'}`, ToastAndroid.SHORT);
