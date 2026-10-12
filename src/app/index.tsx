@@ -29,6 +29,7 @@ import CheckCircle2 from 'lucide-react-native/icons/circle-check';
 import SettingsIcon from 'lucide-react-native/icons/settings';
 import SunMedium from 'lucide-react-native/icons/sun-medium';
 import Hand from 'lucide-react-native/icons/hand';
+import Cast from 'lucide-react-native/icons/cast';
 import DevToggle, {
   UNAVAILABLE_STATUS,
   type AnimationScales,
@@ -57,6 +58,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
+  const [isMirroring, setIsMirroring] = useState(false);
 
   // Animation scales
   const [animationScales, setAnimationScales] = useState<AnimationScales>({
@@ -77,15 +79,17 @@ export default function Dashboard() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [newStatus, scales, extra, perf] = await Promise.all([
+      const [newStatus, scales, extra, perf, mirroring] = await Promise.all([
         DevToggle.getStatus(),
         DevToggle.getAnimationScales(),
         DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
         DevToggle.getPerformanceMetrics().catch(() => null),
+        DevToggle.isScreenMirroring().catch(() => false),
       ]);
       setStatus(newStatus);
       setAnimationScales(scales);
       if (perf) setMetrics(perf);
+      setIsMirroring(mirroring);
       if (extra) {
         setExtraSettings({
           stayAwake: extra.stayAwake || 'unknown',
@@ -104,11 +108,13 @@ export default function Dashboard() {
       DevToggle.getAnimationScales(),
       DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
       DevToggle.getPerformanceMetrics().catch(() => null),
-    ]).then(([st, sc, extra, perf]) => {
+      DevToggle.isScreenMirroring().catch(() => false),
+    ]).then(([st, sc, extra, perf, mirroring]) => {
       if (active) {
         setStatus(st);
         setAnimationScales(sc);
         if (perf) setMetrics(perf);
+        setIsMirroring(mirroring);
         if (extra) {
           setExtraSettings({
             stayAwake: extra.stayAwake || 'unknown',
@@ -122,7 +128,7 @@ export default function Dashboard() {
       if (state === 'active') refresh();
     });
 
-    // Real-time synchronization: poll every 2.5s while active in foreground
+    // Real-time synchronization: poll every 1.5s while active in foreground
     // so any change from PC terminal (CMD) or home screen widgets reflects immediately
     const pollInterval = setInterval(() => {
       if (AppState.currentState === 'active') {
@@ -131,11 +137,13 @@ export default function Dashboard() {
           DevToggle.getAnimationScales(),
           DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
           DevToggle.getPerformanceMetrics().catch(() => null),
-        ]).then(([st, sc, extra, perf]) => {
+          DevToggle.isScreenMirroring().catch(() => false),
+        ]).then(([st, sc, extra, perf, mirroring]) => {
           if (active) {
             setStatus(st);
             setAnimationScales(sc);
             if (perf) setMetrics(perf);
+            setIsMirroring(mirroring);
             if (extra) {
               setExtraSettings({
                 stayAwake: extra.stayAwake || 'unknown',
@@ -237,6 +245,22 @@ export default function Dashboard() {
     },
     [extraSettings, showToast]
   );
+
+  const toggleScreenMirroring = useCallback(async () => {
+    if (isMirroring) {
+      await DevToggle.stopScreenMirror();
+      setIsMirroring(false);
+      showToast('Screen Mirroring stopped');
+    } else {
+      showToast('Opening Screen Capture permission...');
+      await DevToggle.startScreenMirror();
+      setTimeout(async () => {
+        const active = await DevToggle.isScreenMirroring();
+        setIsMirroring(active);
+        if (active) showToast('Live Screen Mirroring is now ACTIVE!');
+      }, 1500);
+    }
+  }, [isMirroring, showToast]);
 
   useEffect(() => {
     const handleUrl = (event: { url: string }) => {
@@ -763,6 +787,43 @@ export default function Dashboard() {
                     Live hardware queries active. Pull down or refresh to sync metrics.
                   </Text>
                 )}
+              </View>
+            </Card>
+          </Animated.View>
+
+          {/* Section: Device Screen Mirroring */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>DEVICE SCREEN MIRRORING</Text>
+          </View>
+
+          <Animated.View entering={FadeInDown.delay(190).duration(300)}>
+            <Card style={{ backgroundColor: t.canvasElevated, borderColor: isMirroring ? `${t.success}60` : t.cardBorder }}>
+              <View style={s.switchRow}>
+                <IconContainer tone={isMirroring ? 'success' : 'cyan'} size={44}>
+                  <Cast size={22} color={isMirroring ? t.success : t.accentCyan} />
+                </IconContainer>
+                <View style={s.switchCopy}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[s.switchTitle, { color: t.textPrimary }]}>Live Screen Mirroring</Text>
+                    <Pill
+                      label={isMirroring ? 'STREAMING' : 'OFF'}
+                      tone={isMirroring ? 'success' : 'neutral'}
+                    />
+                  </View>
+                  <Text style={[s.switchDesc, { color: t.textSecondary }]}>
+                    {isMirroring
+                      ? `Streaming live to port 52882. View on PC browser or Web Dashboard.`
+                      : 'Stream phone display live to Web Dashboard or PC browser without 3rd-party tools.'}
+                  </Text>
+                </View>
+
+                <CyberToggle
+                  accessibilityLabel="Screen Mirroring switch"
+                  value={isMirroring}
+                  onValueChange={toggleScreenMirroring}
+                  size="md"
+                  tone={isMirroring ? 'success' : 'cyan'}
+                />
               </View>
             </Card>
           </Animated.View>

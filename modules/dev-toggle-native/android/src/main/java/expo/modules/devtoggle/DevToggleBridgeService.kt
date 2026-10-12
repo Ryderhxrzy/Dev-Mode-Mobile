@@ -39,21 +39,74 @@ class DevToggleBridgeService : Service() {
         DevToggleBridgeServer.start(applicationContext)
     }
 
+    companion object {
+        const val ACTION_START_MEDIA_PROJECTION = "expo.modules.devtoggle.START_MEDIA_PROJECTION"
+        const val ACTION_STOP_MEDIA_PROJECTION = "expo.modules.devtoggle.STOP_MEDIA_PROJECTION"
+        const val EXTRA_RESULT_CODE = "extra_result_code"
+        const val EXTRA_DATA_INTENT = "extra_data_intent"
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        try {
-            val notification: Notification? = DevToggleNotificationManager.buildNotification(this)
-            if (notification != null) {
+        val action = intent?.action
+
+        if (action == ACTION_START_MEDIA_PROJECTION) {
+            val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, 0)
+            @Suppress("DEPRECATION")
+            val dataIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(EXTRA_DATA_INTENT, Intent::class.java)
+            } else {
+                intent.getParcelableExtra(EXTRA_DATA_INTENT)
+            }
+
+            try {
+                val notification = DevToggleNotificationManager.buildMirrorServiceNotification(this)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    startForeground(
-                        DevToggleNotificationManager.NOTIFICATION_ID,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-                    )
+                    val serviceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE or
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                    startForeground(DevToggleNotificationManager.NOTIFICATION_ID, notification, serviceType)
                 } else {
                     startForeground(DevToggleNotificationManager.NOTIFICATION_ID, notification)
                 }
+            } catch (_: Exception) {}
+
+            if (resultCode != 0 && dataIntent != null) {
+                DevToggleScreenMirrorManager.start(this, resultCode, dataIntent)
             }
-        } catch (_: Exception) {}
+        } else if (action == ACTION_STOP_MEDIA_PROJECTION) {
+            DevToggleScreenMirrorManager.stop()
+            try {
+                val notification: Notification? = DevToggleNotificationManager.buildNotification(this)
+                if (notification != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(
+                            DevToggleNotificationManager.NOTIFICATION_ID,
+                            notification,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                        )
+                    } else {
+                        startForeground(DevToggleNotificationManager.NOTIFICATION_ID, notification)
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    stopForeground(true)
+                }
+            } catch (_: Exception) {}
+        } else {
+            try {
+                val notification: Notification? = DevToggleNotificationManager.buildNotification(this)
+                if (notification != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        startForeground(
+                            DevToggleNotificationManager.NOTIFICATION_ID,
+                            notification,
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                        )
+                    } else {
+                        startForeground(DevToggleNotificationManager.NOTIFICATION_ID, notification)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
 
         DevToggleBridgeServer.start(applicationContext)
         return START_STICKY

@@ -1,6 +1,7 @@
 package expo.modules.devtoggle
 
 import android.app.ActivityManager
+import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -240,10 +241,108 @@ object DevToggleBridgeServer {
                 Settings.Global.putInt(cr, key, value)
             } catch (_: Exception) { false }
 
+            if (path == "/api/screen/stream" || path == "/screen/stream") {
+                socket.soTimeout = 0
+                val rawOut = socket.getOutputStream()
+                if (!DevToggleScreenMirrorManager.isStreaming()) {
+                    val msg = """{"error":"Screen mirroring not active. Start mirroring from mobile app first.","streaming":false}"""
+                    val b = msg.toByteArray(Charsets.UTF_8)
+                    rawOut.write("HTTP/1.1 503 Service Unavailable\r\nContent-Type: application/json; charset=utf-8\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: ${b.size}\r\n\r\n".toByteArray(Charsets.US_ASCII))
+                    rawOut.write(b)
+                    rawOut.flush()
+                } else {
+                    DevToggleScreenMirrorManager.handleStreamClient(rawOut)
+                }
+                return
+            }
+
+            if (path == "/api/screen/frame" || path == "/screen/frame") {
+                val rawOut = socket.getOutputStream()
+                val jpeg = DevToggleScreenMirrorManager.getLatestJpeg()
+                if (jpeg != null) {
+                    rawOut.write("HTTP/1.1 200 OK\r\nContent-Type: image/jpeg\r\nAccess-Control-Allow-Origin: *\r\nCache-Control: no-cache, no-store, must-revalidate\r\nContent-Length: ${jpeg.size}\r\n\r\n".toByteArray(Charsets.US_ASCII))
+                    rawOut.write(jpeg)
+                    rawOut.flush()
+                } else {
+                    val msg = """{"error":"No frame available","streaming":${DevToggleScreenMirrorManager.isStreaming()}}"""
+                    val b = msg.toByteArray(Charsets.UTF_8)
+                    rawOut.write("HTTP/1.1 404 Not Found\r\nContent-Type: application/json; charset=utf-8\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: ${b.size}\r\n\r\n".toByteArray(Charsets.US_ASCII))
+                    rawOut.write(b)
+                    rawOut.flush()
+                }
+                return
+            }
+
             var jsonResponse = "{}"
             var statusCode = "200 OK"
 
             when {
+                path == "/api/screen/status" || path == "/screen/status" -> {
+                    val streaming = DevToggleScreenMirrorManager.isStreaming()
+                    val w = DevToggleScreenMirrorManager.streamWidth
+                    val h = DevToggleScreenMirrorManager.streamHeight
+                    val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
+                    val isAppVd = DevToggleScreenMirrorManager.isAppVirtualDisplay
+                    val dispId = DevToggleScreenMirrorManager.currentDisplayId
+                    jsonResponse = """{"streaming":$streaming,"width":$w,"height":$h,"displayId":$dispId,"isAppVirtualDisplay":$isAppVd,"streamUrl":"http://$ip:$PORT/api/screen/stream"}"""
+                }
+                path == "/api/screen/start" -> {
+                    DevToggleScreenCaptureActivity.start(context)
+                    jsonResponse = """{"success":true,"message":"Screen capture request dispatched"}"""
+                }
+                path == "/api/screen/stop" -> {
+                    DevToggleScreenCaptureActivity.stop(context)
+                    jsonResponse = """{"success":true,"streaming":false}"""
+                }
+                path == "/api/virtual_display/start" || path.startsWith("/api/virtual_display/start?") -> {
+                    val displayId = DevToggleScreenMirrorManager.startVirtualAppDisplay(context)
+                    val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
+                    jsonResponse = """{"success":${displayId > 0},"displayId":$displayId,"streamUrl":"http://$ip:$PORT/api/screen/stream"}"""
+                }
+                path == "/api/virtual_display/stop" -> {
+                    DevToggleScreenMirrorManager.stop()
+                    jsonResponse = """{"success":true,"streaming":false}"""
+                }
+                path.startsWith("/api/virtual_display/launch") -> {
+                    val query = if (path.contains("?")) path.substringAfter("?") else ""
+                    val pkg = query.split("&").find { it.startsWith("package=") }?.substringAfter("package=") ?: ""
+                    val displayId = DevToggleScreenMirrorManager.currentDisplayId
+                    if (pkg.isNotEmpty()) {
+                        val launchIntent = context.packageManager.getLaunchIntentForPackage(pkg)?.apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                        }
+                        if (launchIntent != null) {
+                            if (displayId > 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                val opts = ActivityOptions.makeBasic().apply { setLaunchDisplayId(displayId) }
+                                context.startActivity(launchIntent, opts.toBundle())
+                            } else {
+                                context.startActivity(launchIntent)
+                            }
+                            jsonResponse = """{"success":true,"package":"$pkg","displayId":$displayId}"""
+                        } else {
+                            jsonResponse = """{"success":false,"error":"Launch intent not found for $pkg"}"""
+                        }
+                    } else {
+                        jsonResponse = """{"success":false,"error":"Missing package parameter"}"""
+                    }
+                }
+                path == "/api/apps" || path == "/apps" -> {
+                    val pm = context.packageManager
+                    val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }
+                    val list = pm.queryIntentActivities(mainIntent, 0)
+                    val sb = StringBuilder("[")
+                    var first = true
+                    for (info in list) {
+                        val pkg = info.activityInfo.packageName
+                        val label = info.loadLabel(pm).toString().replace("\\", "\\\\").replace("\"", "\\\"")
+                        val act = info.activityInfo.name
+                        if (!first) sb.append(",")
+                        first = false
+                        sb.append("""{"name":"$label","package":"$pkg","activity":"$act"}""")
+                    }
+                    sb.append("]")
+                    jsonResponse = sb.toString()
+                }
                 path == "/status" || path == "/api/status" -> {
                     val dev = getSetting("development_settings_enabled")
                     val usb = getSetting("adb_enabled")

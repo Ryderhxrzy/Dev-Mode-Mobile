@@ -292,5 +292,35 @@ class DevToggleModule : Module() {
         mapOf("changed" to false, "message" to "Android blocked this protected operation.")
       }
     }
+
+    AsyncFunction("isScreenMirroring") {
+      DevToggleScreenMirrorManager.isStreaming()
+    }
+
+    AsyncFunction("startScreenMirror") {
+      DevToggleScreenCaptureActivity.start(context())
+      true
+    }
+
+    AsyncFunction("stopScreenMirror") {
+      DevToggleScreenCaptureActivity.stop(context())
+      true
+    }
+
+    AsyncFunction("getScreenMirrorUrl") {
+      val ip = AdbEndpointHelper.getLocalIpAddress(context()) ?: "127.0.0.1"
+      "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
+    }
+
+    AsyncFunction("getScreenMirrorStatus") {
+      val streaming = DevToggleScreenMirrorManager.isStreaming()
+      val ip = AdbEndpointHelper.getLocalIpAddress(context()) ?: "127.0.0.1"
+      mapOf(
+        "streaming" to streaming,
+        "width" to DevToggleScreenMirrorManager.streamWidth,
+        "height" to DevToggleScreenMirrorManager.streamHeight,
+        "streamUrl" to "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
+      )
+    }
   }
 }

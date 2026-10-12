@@ -7,6 +7,7 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
   <uses-permission android:name="android.permission.WAKE_LOCK" />
 
   <application>
@@ -84,11 +85,21 @@
       android:launchMode="singleInstance"
       android:exported="true" />
 
+    <!-- Transparent activity for system-level screen capture permission dialog -->
+    <activity
+      android:name="expo.modules.devtoggle.DevToggleScreenCaptureActivity"
+      android:theme="@android:style/Theme.Translucent.NoTitleBar"
+      android:excludeFromRecents="true"
+      android:noHistory="true"
+      android:taskAffinity=""
+      android:launchMode="singleInstance"
+      android:exported="false" />
+
     <!-- Foreground Service to keep Bridge Server & WifiLock active in background -->
     <service
       android:name="expo.modules.devtoggle.DevToggleBridgeService"
       android:enabled="true"
       android:exported="false"
-      android:foregroundServiceType="connectedDevice" />
+      android:foregroundServiceType="connectedDevice|mediaProjection" />
   </application>
 </manifest>

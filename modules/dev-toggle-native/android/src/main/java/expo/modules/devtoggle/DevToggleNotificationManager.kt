@@ -46,6 +46,30 @@ object DevToggleNotificationManager {
         }
     }
 
+    fun buildMirrorServiceNotification(context: Context): Notification {
+        createNotificationChannel(context)
+        val mainIntent = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: Intent()
+        mainIntent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        val piMain = PendingIntent.getActivity(
+            context,
+            100,
+            mainIntent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
+        )
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_camera)
+            .setContentTitle("Dev Mode Screen Mirroring")
+            .setContentText("Screen stream is active on port 52882")
+            .setContentIntent(piMain)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+    }
+
     fun buildNotification(context: Context): Notification? {
         try {
             val mode = getNotificationMode(context)
