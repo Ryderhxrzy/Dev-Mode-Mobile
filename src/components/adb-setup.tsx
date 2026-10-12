@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AppState, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Terminal from 'lucide-react-native/icons/terminal';
@@ -12,6 +12,12 @@ import { fonts, radius, space, useTheme } from '@/theme';
 
 export const APP_ID = 'com.devmode.app';
 export const GRANT_COMMAND = `adb shell pm grant ${APP_ID} android.permission.WRITE_SECURE_SETTINGS`;
+// The npm package is 'dev-mode-cli' but the command it installs is 'devmode'.
+// Without installing, npx must use the package name: plain 'npx devmode' would run an unrelated npm package.
+export const CLI_INSTALL_COMMAND = 'npm install -g dev-mode-cli';
+export const CLI_GRANT_COMMAND = 'devmode grant';
+export const CLI_AUTO_COMMAND = 'devmode auto';
+export const NPX_GRANT_COMMAND = 'npx dev-mode-cli grant';
 export const REVOKE_COMMAND = `adb shell pm revoke ${APP_ID} android.permission.WRITE_SECURE_SETTINGS`;
 
 export function useWriteSecurePermission() {
@@ -55,13 +61,87 @@ export function AdbSetupGuide({
   onCheck: () => void;
 }) {
   const t = useTheme();
+  const [method, setMethod] = useState<'npx' | 'adb'>('npx');
 
   return (
     <View style={s.wrap}>
       {/* Live Status Header */}
       <PermissionStatusCard permission={permission} checking={checking} onCheck={onCheck} />
 
-      {/* Single Consolidated Setup Card */}
+      {/* Method switch: our CLI (recommended) or plain ADB */}
+      <View style={s.methodRow}>
+        <Button
+          variant={method === 'npx' ? 'cyan' : 'ghost'}
+          label="Dev Mode CLI"
+          onPress={() => setMethod('npx')}
+          style={s.methodBtn}
+        />
+        <Button
+          variant={method === 'adb' ? 'cyan' : 'ghost'}
+          label="Manual ADB"
+          onPress={() => setMethod('adb')}
+          style={s.methodBtn}
+        />
+      </View>
+
+      {method === 'npx' ? (
+        <Card>
+          <View style={s.cardHead}>
+            <IconContainer tone="cyan" size={44}>
+              <Terminal size={22} color={t.accentCyan} />
+            </IconContainer>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={[s.cardOverline, { color: t.accentCyan }]}>RECOMMENDED</Text>
+              <Text style={[s.cardTitle, { color: t.textPrimary }]}>Grant with the Dev Mode CLI</Text>
+            </View>
+          </View>
+
+          <Step n={1} title="Install Node.js and ADB">
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              You need Node.js 16+ and Android Platform Tools (adb) available in your computer terminal.
+            </Text>
+          </Step>
+
+          <Step n={2} title="Enable USB Debugging & connect">
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              Turn ON USB Debugging, connect the cable, and tap “Always allow” on your phone.
+            </Text>
+            <View style={{ marginTop: 4 }}>
+              <Button
+                variant="secondary"
+                label="Open Developer Options"
+                icon={<Sliders size={15} color="#FFFFFF" />}
+                onPress={() => DevToggle.openSettings('developerOptions')}
+              />
+            </View>
+          </Step>
+
+          <Step n={3} title="Install the Dev Mode CLI">
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              One-time install. This adds the devmode command to your computer:
+            </Text>
+            <CodeBlock command={CLI_INSTALL_COMMAND} />
+          </Step>
+
+          <Step n={4} title="Grant the permission">
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              It finds your phone and grants the permission for you:
+            </Text>
+            <CodeBlock command={CLI_GRANT_COMMAND} />
+            <Text style={[s.stepBody, { color: t.textMuted }]}>
+              Prefer not to install? Run it once without installing:
+            </Text>
+            <CodeBlock command={NPX_GRANT_COMMAND} />
+          </Step>
+
+          <Step n={5} title="Optional: control Dev Mode from your PC">
+            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+              The same CLI can toggle Developer Options, USB and Wireless Debugging, and connect over Wi-Fi. Open its one-key menu with:
+            </Text>
+            <CodeBlock command={CLI_AUTO_COMMAND} />
+          </Step>
+        </Card>
+      ) : (
       <Card>
         <View style={s.cardHead}>
           <IconContainer tone="cyan" size={44}>
@@ -135,6 +215,7 @@ export function AdbSetupGuide({
           </View>
         </View>
       </Card>
+      )}
 
       {/* Full User Control & Revoke Info (Located in Step 4 as requested) */}
       <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
@@ -150,6 +231,21 @@ export function AdbSetupGuide({
       <Text style={[s.tip, { color: t.textMuted }]}>
         Note: This authorization stays tied to this device installation. If you reinstall or reset the app, run the grant command again.
       </Text>
+    </View>
+  );
+}
+
+function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  const t = useTheme();
+  return (
+    <View style={s.unifiedStep}>
+      <View style={s.stepBadge}>
+        <Text style={[s.stepNum, { color: t.primaryLight }]}>{n}</Text>
+      </View>
+      <View style={s.stepContent}>
+        <Text style={[s.stepTitle, { color: t.textPrimary }]}>{title}</Text>
+        {children}
+      </View>
     </View>
   );
 }
@@ -189,7 +285,7 @@ export function PermissionStatusCard({
         <Text style={[s.statusBody, { color: t.textSecondary }]}>
           {granted
             ? 'Hardware permission verified. Instant switching is enabled.'
-            : 'Run the ADB grant command from your PC to unlock direct controls.'}
+            : 'Run the grant command from your PC (Dev Mode CLI or ADB) to unlock direct controls.'}
         </Text>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
@@ -209,6 +305,8 @@ export function PermissionStatusCard({
 
 const s = StyleSheet.create({
   wrap: { gap: space.md, width: '100%' },
+  methodRow: { flexDirection: 'row', gap: space.sm, width: '100%' },
+  methodBtn: { flex: 1 },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: 4 },
   cardOverline: { fontFamily: fonts.monoBold, fontSize: 11, letterSpacing: 1.2 },
   cardTitle: { fontFamily: fonts.heading, fontSize: 18 },

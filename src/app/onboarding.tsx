@@ -90,7 +90,7 @@ export default function Onboarding() {
                 <PageHeader
                   overline="STAGE 04 // ADB AUTHORIZATION"
                   title="Configure ADB Permission"
-                  subtitle="To toggle secure system values directly without root, Android requires WRITE_SECURE_SETTINGS granted via ADB terminal."
+                  subtitle="To toggle secure system values directly without root, Android requires WRITE_SECURE_SETTINGS granted from your computer. Use the Dev Mode CLI or plain ADB."
                 />
                 <AdbSetupGuide permission={permission} checking={checking} onCheck={check} />
               </>
@@ -301,7 +301,7 @@ function HowItWorks() {
       <PageHeader
         overline="STAGE 03 // ARCHITECTURE & CAPABILITIES"
         title="What Dev Mode Unlocks"
-        subtitle="By granting WRITE_SECURE_SETTINGS via ADB on the next page, Dev Mode gains hardware permission to manage these core features without root."
+        subtitle="By granting WRITE_SECURE_SETTINGS from your computer on the next page (Dev Mode CLI or ADB), Dev Mode gains hardware permission to manage these core features without root."
       />
 
       {/* Feature capabilities grid */}

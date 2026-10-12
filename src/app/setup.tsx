@@ -19,7 +19,7 @@ export default function Setup() {
             <Overline>TERMINAL GUIDE</Overline>
             <Text style={[s.title, { color: t.textPrimary }]}>ADB Permission Setup</Text>
             <Text style={[s.subtitle, { color: t.textSecondary }]}>
-              Execute the verified command using Android Platform Tools on your computer. Status below checks and updates automatically.
+              Run the Dev Mode CLI command, or the manual ADB command, on your computer. Status below checks and updates automatically.
             </Text>
           </View>
 
