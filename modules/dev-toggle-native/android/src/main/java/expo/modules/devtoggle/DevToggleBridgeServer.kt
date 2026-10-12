@@ -26,6 +26,7 @@ object DevToggleBridgeServer {
     const val PORT = 52882
     private const val KEY_KEEP_WIRELESS_ON = "keep_wireless_on"
     private const val KEY_WIRELESS_WANTED = "wireless_wanted"
+    private const val KEY_WEB_REMOTE_ENABLED = "web_remote_enabled"
     private val isRunning = AtomicBoolean(false)
     private var serverSocket: ServerSocket? = null
     private var udpSocket: DatagramSocket? = null
@@ -36,6 +37,10 @@ object DevToggleBridgeServer {
 
     @Synchronized
     fun start(context: Context) {
+        // Always ensure ContentObserver runs so local widgets stay in sync with settings
+        ensureSettingsObserver(context)
+
+        if (!isWebRemoteEnabled(context)) return
         if (isRunning.get()) return
         isRunning.set(true)
 
@@ -95,6 +100,17 @@ object DevToggleBridgeServer {
     fun isKeepWirelessOn(context: Context): Boolean = prefs(context).getBoolean(KEY_KEEP_WIRELESS_ON, true)
     fun setKeepWirelessOn(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_KEEP_WIRELESS_ON, enabled).apply()
+    }
+
+    /** User preference: enable web remote control bridge (port 52882) */
+    fun isWebRemoteEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_WEB_REMOTE_ENABLED, true)
+    fun setWebRemoteEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_WEB_REMOTE_ENABLED, enabled).apply()
+        if (enabled) {
+            start(context)
+        } else {
+            stop()
+        }
     }
 
     private fun isWifiConnected(context: Context): Boolean = try {
