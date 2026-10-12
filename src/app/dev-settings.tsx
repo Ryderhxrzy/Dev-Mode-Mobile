@@ -47,7 +47,7 @@ const EXTRA_SETTINGS: {
   {
     key: 'webRemote',
     title: 'Web Remote Dashboard',
-    desc: 'Allows controlling Developer Options & ADB remotely from your PC browser (http://localhost:3000) over local Wi-Fi.',
+    desc: 'Allows controlling Developer Options & ADB remotely from your PC browser (e.g. via devmode web) over local Wi-Fi.',
     icon: 'webRemote',
   },
   {
