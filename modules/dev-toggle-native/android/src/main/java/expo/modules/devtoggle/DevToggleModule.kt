@@ -181,8 +181,17 @@ class DevToggleModule : Module() {
         "showTouches" to readSystem(showTouchesKey),
         "pointerLocation" to readSystem(pointerLocationKey),
         "keepWirelessOn" to (if (DevToggleBridgeServer.isKeepWirelessOn(context())) "enabled" else "disabled"),
-        "webRemote" to (if (DevToggleBridgeServer.isWebRemoteEnabled(context())) "enabled" else "disabled")
+        "webRemote" to (if (DevToggleBridgeServer.isWebRemoteEnabled(context())) "enabled" else "disabled"),
+        "autoWirelessConnect" to (if (DevToggleBridgeServer.isAutoWirelessConnect(context())) "enabled" else "disabled")
       )
+    }
+
+    AsyncFunction("getPerformanceMetrics") {
+      DevToggleBridgeServer.getPerformanceMetricsJson(context())
+    }
+
+    AsyncFunction("getDeviceInfo") {
+      DevToggleBridgeServer.getDeviceInfoJson(context())
     }
 
     AsyncFunction("setExtraSetting") { setting: String, enabled: Boolean ->
@@ -194,6 +203,10 @@ class DevToggleModule : Module() {
       if (setting == "webRemote") {
         DevToggleBridgeServer.setWebRemoteEnabled(context(), enabled)
         return@AsyncFunction mapOf("changed" to true, "message" to "Web Remote setting updated.")
+      }
+      if (setting == "autoWirelessConnect") {
+        DevToggleBridgeServer.setAutoWirelessConnect(context(), enabled)
+        return@AsyncFunction mapOf("changed" to true, "message" to "Auto Wireless Connect setting updated.")
       }
       if (permission() != "granted") {
         return@AsyncFunction mapOf("changed" to false, "message" to "WRITE_SECURE_SETTINGS is not granted.")
