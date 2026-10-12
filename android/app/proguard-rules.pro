@@ -12,3 +12,9 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# Dev Mode native module: widgets, bridge server and settings helper are reached from the
+# manifest / reflection, keep them intact under R8
+-keep class expo.modules.devtoggle.** { *; }
+# Our Kotlin/Expo module uses SystemProperties through reflection
+-dontwarn android.os.SystemProperties
