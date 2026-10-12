@@ -54,6 +54,7 @@
 | **Core Debugging** | **Master Developer Options** | Instant 1-tap toggle for Android's system developer mode without navigating deep into Settings menus. | `development_settings_enabled` | ✅ Yes |
 | **Core Debugging** | **USB Debugging** | Fast direct toggle allowing authorized PC debugging over physical USB cable. | `adb_enabled` | ✅ Yes |
 | **Core Debugging** | **Wireless ADB Debugging** | Wi-Fi ADB toggle with live dynamic IP:port socket display and 1-tap clipboard copy pill. | `adb_wifi_enabled` + port polling | ✅ Yes |
+| **Core Debugging** | **Keep Wireless On** | Android switches Wireless Debugging off every time Wi-Fi drops. Dev Mode turns it back on automatically when Wi-Fi returns (toggle in Developer Settings, on by default). | Wi-Fi network callback | ✅ Yes |
 | **Performance** | **Device Speed Booster** | Direct 1-tap boost setting Window, Transition, and Animator scales to **0.5x** for instant UI responses. | UI Duration Multipliers | ✅ Yes |
 | **Performance** | **Custom Animation Scales** | Fine-grained tuning presets: Off (0.0x), Ultra Fast (0.25x), Snappy (0.5x), Standard (1.0x), Relaxed (1.5x). | Window / Transition / Animator | ✅ Yes |
 | **System Tools** | **Stay Awake While Charging** | Keeps the device screen illuminated indefinitely while connected to AC power or USB. | `stay_on_while_plugged_in` | ✅ Yes |
@@ -87,17 +88,58 @@ Dev Mode offers both a comprehensive **3-in-1 multi-control bar** and individual
 
 ---
 
-## 🚀 One-Time Setup (ADB Grant)
+## 📥 Install
 
-Because modifying Android developer settings requires elevated privileges, `Dev Mode` requires a one-time permission grant via standard ADB:
+1. Open the [Releases page](https://github.com/Ryderhxrzy/Developer-Option-Toggle/releases) and download the latest APK:
+   - **`app-arm64-v8a-release.apk`**: for almost every phone made in the last several years (about 35 MB).
+   - **`app-armeabi-v7a-release.apk`**: only for older 32-bit phones (about 29 MB).
+2. Open the downloaded file. When Android asks, allow **Install unknown apps** for your browser or file manager.
+3. Open **Dev Mode** and follow the onboarding. The last step is the one-time permission grant below.
+
+> Not sure which APK? Pick `arm64-v8a`. If Android says the app is not compatible, use `armeabi-v7a`.
+
+Updates are manual: download the newer APK and install it over the old one. Your settings stay, because every release is signed with the same key.
+
+---
+
+## 🚀 One-Time Setup (Permission Grant)
+
+Changing Android developer settings needs a permission that only a computer can grant. Do this once per install. Pick **one** of the two ways below.
 
 ### Prerequisites
-1. Enable **Developer Options** and **USB Debugging** manually on your phone once.
-2. Connect your smartphone to your PC via USB cable.
+1. Turn on **Developer Options** and **USB Debugging** on your phone once (Settings → About phone → tap *Build number* 7 times).
+2. Connect the phone to your computer with a USB cable and tap **Always allow** on the phone.
 
-### Grant Command
+### Option A: Dev Mode CLI (recommended)
 
-Open your terminal or command prompt on your computer and execute:
+The [Dev Mode CLI](https://github.com/Ryderhxrzy/Dev-Mode-CLI) finds your phone and grants the permission for you. It needs [Node.js](https://nodejs.org) 16+ and Android Platform Tools (`adb`).
+
+```bash
+# Install once. The package is named dev-mode-cli, the command it adds is devmode
+npm install -g dev-mode-cli
+
+# Grant the permission
+devmode grant
+```
+
+Prefer not to install anything? Run it once with `npx`:
+
+```bash
+npx dev-mode-cli grant
+```
+
+> Use `npx dev-mode-cli`, not `npx devmode`. On npm, `devmode` is a different, unrelated package.
+
+The same CLI also controls the app from your PC. Open its one-key menu with `devmode auto`, or run commands directly:
+
+```bash
+devmode on            # Developer Options ON
+devmode usb on        # USB Debugging ON
+devmode wifi on       # Wireless Debugging ON and auto-connect over Wi-Fi
+devmode status        # Show device status
+```
+
+### Option B: Manual ADB
 
 ```bash
 adb shell pm grant com.devmode.app android.permission.WRITE_SECURE_SETTINGS
@@ -105,14 +147,19 @@ adb shell pm grant com.devmode.app android.permission.WRITE_SECURE_SETTINGS
 
 > **Using Shizuku?** You can also authorize the permission directly on-device using [Shizuku](https://shizuku.rikka.app/) without needing a PC connection.
 
+### Check it worked
+The onboarding screen and the **Security** screen show **GRANTED** once the permission is active. Tap **Recheck** if it still says pending.
+
 ### Revoking Permission
 
-You maintain 100% authority over your device. You can revoke this permission at any time from your computer:
+You keep full control. Revoke it any time from your computer:
 
 ```bash
 adb shell pm revoke com.devmode.app android.permission.WRITE_SECURE_SETTINGS
 ```
-*(or simply by uninstalling the application).*
+*(or simply uninstall the application).*
+
+> If you reinstall or clear the app, run the grant command again.
 
 ---
 
@@ -138,6 +185,47 @@ npx expo lint
 
 # Build & launch on connected Android device
 npx expo run:android
+```
+
+### Release Builds (signed APK)
+
+Release builds are signed with your own keystore. Create `android/keystore.properties` (git-ignored) next to your `.jks` file:
+
+```properties
+storeFile=devmode-release.jks
+storePassword=YOUR_PASSWORD
+keyAlias=devmode
+keyPassword=YOUR_PASSWORD
+```
+
+`storeFile` is resolved from `android/app/`. Without this file the release build falls back to the debug key, so a fresh clone still builds, but that APK is not suitable for publishing.
+
+```bash
+cd android
+./gradlew assembleRelease     # Windows: .\gradlew.bat assembleRelease
+```
+
+Output: `android/app/build/outputs/apk/release/` with one APK per CPU architecture (`arm64-v8a`, `armeabi-v7a`). Release builds use R8 code shrinking and resource shrinking to keep the download small.
+
+> **Never commit or lose the keystore.** Back up the `.jks` file and its password. Without the same key you cannot publish updates that install over existing installs.
+
+### Publishing a release
+
+Keep three things in step for every release:
+
+| Where | Example |
+| :--- | :--- |
+| Git tag | `v1.2.0` |
+| `versionName` in `android/app/build.gradle` (and `version` in `app.json`) | `1.2.0` |
+| `versionCode` in `android/app/build.gradle` | higher than the previous release |
+
+Android refuses to install an APK whose `versionCode` is the same or lower than the installed one, so always increase it.
+
+```bash
+gh release create v1.2.0 \
+  android/app/build/outputs/apk/release/app-arm64-v8a-release.apk \
+  android/app/build/outputs/apk/release/app-armeabi-v7a-release.apk \
+  --title "Dev Mode v1.2.0" --notes "What changed"
 ```
 
 ### Cloud Builds with EAS
