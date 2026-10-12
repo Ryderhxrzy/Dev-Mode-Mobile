@@ -2,13 +2,14 @@
   "expo": {
     "name": "Dev Mode",
     "slug": "dev-mode",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "devmode",
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.devmode.app.dev",
+      "versionCode": 2,
       "notification": {
         "icon": "./assets/images/notification_icon.png",
         "color": "#22C55E"
