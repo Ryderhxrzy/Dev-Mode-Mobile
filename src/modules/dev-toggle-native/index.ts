@@ -1,11 +1,28 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export type SettingName = 'developerOptions' | 'usbDebugging' | 'wirelessDebugging';
-export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn' | 'webRemote';
+export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn' | 'webRemote' | 'autoWirelessConnect';
 export type SettingState = 'enabled' | 'disabled' | 'unknown';
 export type PermissionStatus = 'granted' | 'denied' | 'unknown';
 
 export type NotificationMode = 'always' | 'when_dev_active' | 'disabled';
+
+export type PerformanceMetrics = {
+  cpu: { cores: number };
+  ram: { totalMb: number; usedMb: number; availableMb: number; percentage: number };
+  battery: { level: number; temperature: number; voltage: number; isCharging: boolean; plugged: string; health: string };
+  thermal: { status: string };
+};
+
+export type DeviceInfo = {
+  model: string;
+  manufacturer: string;
+  brand: string;
+  androidVersion: string;
+  sdkInt: number;
+  ip: string;
+  port: number;
+};
 
 export type DeviceStatus = Record<SettingName, SettingState> & {
   writeSecureSettings: PermissionStatus;
@@ -38,6 +55,8 @@ type NativeModule = {
   setNotificationMode?(mode: NotificationMode): Promise<{ mode: NotificationMode; success: boolean }>;
   hasNotificationPermission?(): Promise<boolean>;
   requestNotificationPermission?(): Promise<boolean>;
+  getPerformanceMetrics?(): Promise<string>;
+  getDeviceInfo?(): Promise<string>;
 };
 
 const native = requireOptionalNativeModule<NativeModule>('DevToggle');
@@ -89,7 +108,7 @@ export default {
   getExtraSettings: async (): Promise<Record<ExtraSettingName, SettingState>> =>
     native?.getExtraSettings
       ? native.getExtraSettings()
-      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown', keepWirelessOn: 'unknown', webRemote: 'unknown' },
+      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown', keepWirelessOn: 'unknown', webRemote: 'unknown', autoWirelessConnect: 'unknown' },
   setExtraSetting: async (setting: ExtraSettingName, enabled: boolean): Promise<Result> =>
     native?.setExtraSetting
       ? native.setExtraSetting(setting, enabled)
@@ -106,4 +125,22 @@ export default {
     native?.hasNotificationPermission ? native.hasNotificationPermission() : true,
   requestNotificationPermission: async (): Promise<boolean> =>
     native?.requestNotificationPermission ? native.requestNotificationPermission() : true,
+  getPerformanceMetrics: async (): Promise<PerformanceMetrics | null> => {
+    if (!native?.getPerformanceMetrics) return null;
+    try {
+      const res = await native.getPerformanceMetrics();
+      return typeof res === 'string' ? JSON.parse(res) : (res as PerformanceMetrics);
+    } catch {
+      return null;
+    }
+  },
+  getDeviceInfo: async (): Promise<DeviceInfo | null> => {
+    if (!native?.getDeviceInfo) return null;
+    try {
+      const res = await native.getDeviceInfo();
+      return typeof res === 'string' ? JSON.parse(res) : (res as DeviceInfo);
+    } catch {
+      return null;
+    }
+  },
 };
