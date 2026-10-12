@@ -18,19 +18,17 @@ import {
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Cpu,
-  Usb,
-  Wifi,
-  ShieldAlert,
-  Sliders,
-  RotateCcw,
-  Zap,
-  CheckCircle2,
-  Settings as SettingsIcon,
-  SunMedium,
-  Hand,
-} from 'lucide-react-native';
+import Cpu from 'lucide-react-native/icons/cpu';
+import Usb from 'lucide-react-native/icons/usb';
+import Wifi from 'lucide-react-native/icons/wifi';
+import ShieldAlert from 'lucide-react-native/icons/shield-alert';
+import Sliders from 'lucide-react-native/icons/sliders-vertical';
+import RotateCcw from 'lucide-react-native/icons/rotate-ccw';
+import Zap from 'lucide-react-native/icons/zap';
+import CheckCircle2 from 'lucide-react-native/icons/circle-check';
+import SettingsIcon from 'lucide-react-native/icons/settings';
+import SunMedium from 'lucide-react-native/icons/sun-medium';
+import Hand from 'lucide-react-native/icons/hand';
 import DevToggle, {
   UNAVAILABLE_STATUS,
   type AnimationScales,

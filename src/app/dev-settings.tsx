@@ -13,20 +13,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  SunMedium,
-  Hand,
-  Crosshair,
-  Gauge,
-  ChevronDown,
-  ChevronUp,
-  ChevronRight,
-  Check,
-  ShieldCheck,
-  Trash2,
-  Layers,
-  BellRing,
-} from 'lucide-react-native';
+import SunMedium from 'lucide-react-native/icons/sun-medium';
+import Hand from 'lucide-react-native/icons/hand';
+import Crosshair from 'lucide-react-native/icons/crosshair';
+import Gauge from 'lucide-react-native/icons/gauge';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Check from 'lucide-react-native/icons/check';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import Trash2 from 'lucide-react-native/icons/trash';
+import Layers from 'lucide-react-native/icons/layers';
+import BellRing from 'lucide-react-native/icons/bell-ring';
+import Wifi from 'lucide-react-native/icons/wifi';
 import DevToggle, {
   type AnimationScales,
   type ExtraSettingName,
@@ -42,7 +41,7 @@ const EXTRA_SETTINGS: {
   key: ExtraSettingName;
   title: string;
   desc: string;
-  icon: 'stayAwake' | 'showTouches' | 'pointerLocation';
+  icon: 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn';
 }[] = [
   {
     key: 'stayAwake',
@@ -62,6 +61,12 @@ const EXTRA_SETTINGS: {
     desc: 'Displays screen touch overlay coordinates and crosshair data.',
     icon: 'pointerLocation',
   },
+  {
+    key: 'keepWirelessOn',
+    title: 'Keep Wireless Debugging On',
+    desc: 'Android turns Wireless Debugging off whenever Wi-Fi drops. Re-enable it automatically when Wi-Fi is back.',
+    icon: 'keepWirelessOn',
+  },
 ];
 
 export default function DevSettings() {
@@ -79,6 +84,7 @@ export default function DevSettings() {
     stayAwake: 'unknown',
     showTouches: 'unknown',
     pointerLocation: 'unknown',
+    keepWirelessOn: 'unknown',
   });
   const [notifMode, setNotifMode] = useState<NotificationMode>('disabled');
 
@@ -136,6 +142,7 @@ export default function DevSettings() {
           stayAwake: 'Keep Screen Awake',
           showTouches: 'Show Screen Touches',
           pointerLocation: 'Show Pointer Location',
+          keepWirelessOn: 'Keep Wireless Debugging On',
         };
         if (Platform.OS === 'android') {
           ToastAndroid.show(`${labels[key]}: ${willEnable ? 'Enabled' : 'Disabled'}`, ToastAndroid.SHORT);
@@ -212,6 +219,8 @@ export default function DevSettings() {
         return <Hand size={22} color={isEnabled ? t.success : t.accentCyan} />;
       case 'pointerLocation':
         return <Crosshair size={22} color={isEnabled ? t.success : t.warning} />;
+      case 'keepWirelessOn':
+        return <Wifi size={22} color={isEnabled ? t.success : t.accentCyan} />;
       default:
         return <SunMedium size={22} color={t.accentCyan} />;
     }

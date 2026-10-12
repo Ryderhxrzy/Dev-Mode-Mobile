@@ -3,16 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Image, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  useFonts,
-  SpaceGrotesk_400Regular,
-  SpaceGrotesk_500Medium,
-  SpaceGrotesk_700Bold,
-} from '@expo-google-fonts/space-grotesk';
-import {
-  JetBrainsMono_500Medium,
-  JetBrainsMono_700Bold,
-} from '@expo-google-fonts/jetbrains-mono';
+import { useFonts } from 'expo-font';
 import { OnboardingProvider, useOnboarding } from '@/state/onboarding';
 import { useTheme } from '@/theme';
 
@@ -21,12 +12,13 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  // Require each weight directly: the package index pulls in every weight (21 fonts, ~3 MB)
   const [fontsLoaded, fontError] = useFonts({
-    SpaceGrotesk_400Regular,
-    SpaceGrotesk_500Medium,
-    SpaceGrotesk_700Bold,
-    JetBrainsMono_500Medium,
-    JetBrainsMono_700Bold,
+    SpaceGrotesk_400Regular: require('@expo-google-fonts/space-grotesk/400Regular/SpaceGrotesk_400Regular.ttf'),
+    SpaceGrotesk_500Medium: require('@expo-google-fonts/space-grotesk/500Medium/SpaceGrotesk_500Medium.ttf'),
+    SpaceGrotesk_700Bold: require('@expo-google-fonts/space-grotesk/700Bold/SpaceGrotesk_700Bold.ttf'),
+    JetBrainsMono_500Medium: require('@expo-google-fonts/jetbrains-mono/500Medium/JetBrainsMono_500Medium.ttf'),
+    JetBrainsMono_700Bold: require('@expo-google-fonts/jetbrains-mono/700Bold/JetBrainsMono_700Bold.ttf'),
   });
 
   if (!fontsLoaded && !fontError) {

@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import {
-  Terminal,
-  ShieldCheck,
-  ShieldAlert,
-  Sliders,
-  KeyRound,
-} from 'lucide-react-native';
+import Terminal from 'lucide-react-native/icons/terminal';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import ShieldAlert from 'lucide-react-native/icons/shield-alert';
+import Sliders from 'lucide-react-native/icons/sliders-vertical';
+import KeyRound from 'lucide-react-native/icons/key-round';
 import DevToggle, { type PermissionStatus } from '@/modules/dev-toggle-native';
 import { Button, Card, CodeBlock, FeatureRow, IconContainer, Pill } from '@/components/ui';
 import { fonts, radius, space, useTheme } from '@/theme';

@@ -3,25 +3,23 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import {
-  ShieldCheck,
-  Cpu,
-  Wifi,
-  Usb,
-  Lock,
-  EyeOff,
-  UserX,
-  CloudOff,
-  Trash2,
-  Check,
-  Zap,
-  ArrowRight,
-  ArrowLeft,
-  RotateCw,
-  Terminal,
-  Layers,
-  Sliders,
-} from 'lucide-react-native';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import Cpu from 'lucide-react-native/icons/cpu';
+import Wifi from 'lucide-react-native/icons/wifi';
+import Usb from 'lucide-react-native/icons/usb';
+import Lock from 'lucide-react-native/icons/lock';
+import EyeOff from 'lucide-react-native/icons/eye-off';
+import UserX from 'lucide-react-native/icons/user-x';
+import CloudOff from 'lucide-react-native/icons/cloud-off';
+import Trash2 from 'lucide-react-native/icons/trash';
+import Check from 'lucide-react-native/icons/check';
+import Zap from 'lucide-react-native/icons/zap';
+import ArrowRight from 'lucide-react-native/icons/arrow-right';
+import ArrowLeft from 'lucide-react-native/icons/arrow-left';
+import RotateCw from 'lucide-react-native/icons/rotate-cw';
+import Terminal from 'lucide-react-native/icons/terminal';
+import Layers from 'lucide-react-native/icons/layers';
+import Sliders from 'lucide-react-native/icons/sliders-vertical';
 import { AdbSetupGuide, useWriteSecurePermission } from '@/components/adb-setup';
 import { Button, Card, FeatureRow, IconContainer, Overline } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';

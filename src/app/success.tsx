@@ -2,12 +2,10 @@ import { router } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ShieldCheck,
-  Zap,
-  Sliders,
-  Sparkles,
-} from 'lucide-react-native';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import Zap from 'lucide-react-native/icons/zap';
+import Sliders from 'lucide-react-native/icons/sliders-vertical';
+import Sparkles from 'lucide-react-native/icons/sparkles';
 import { Button, Card, IconContainer, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { fonts, radius, space, useTheme } from '@/theme';

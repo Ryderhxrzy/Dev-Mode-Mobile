@@ -1,7 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Check, Copy } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Copy from 'lucide-react-native/icons/copy';
 import { fonts, radius, space, useTheme } from '@/theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'cyan';

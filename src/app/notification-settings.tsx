@@ -14,14 +14,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Bell,
-  BellRing,
-  BellOff,
-  CheckCircle2,
-  Maximize2,
-  X,
-} from 'lucide-react-native';
+import Bell from 'lucide-react-native/icons/bell';
+import BellRing from 'lucide-react-native/icons/bell-ring';
+import BellOff from 'lucide-react-native/icons/bell-off';
+import CheckCircle2 from 'lucide-react-native/icons/circle-check';
+import Maximize2 from 'lucide-react-native/icons/maximize-2';
+import X from 'lucide-react-native/icons/x';
 import DevToggle, {
   type NotificationMode,
 } from '@/modules/dev-toggle-native';

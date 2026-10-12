@@ -1,7 +1,7 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export type SettingName = 'developerOptions' | 'usbDebugging' | 'wirelessDebugging';
-export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation';
+export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn';
 export type SettingState = 'enabled' | 'disabled' | 'unknown';
 export type PermissionStatus = 'granted' | 'denied' | 'unknown';
 
@@ -89,7 +89,7 @@ export default {
   getExtraSettings: async (): Promise<Record<ExtraSettingName, SettingState>> =>
     native?.getExtraSettings
       ? native.getExtraSettings()
-      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown' },
+      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown', keepWirelessOn: 'unknown' },
   setExtraSetting: async (setting: ExtraSettingName, enabled: boolean): Promise<Result> =>
     native?.setExtraSetting
       ? native.setExtraSetting(setting, enabled)

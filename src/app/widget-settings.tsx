@@ -9,10 +9,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Maximize2,
-  X,
-} from 'lucide-react-native';
+import Maximize2 from 'lucide-react-native/icons/maximize-2';
+import X from 'lucide-react-native/icons/x';
 import { Card, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { fonts, radius, space, useTheme } from '@/theme';

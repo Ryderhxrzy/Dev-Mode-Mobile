@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowRight } from 'lucide-react-native';
+import ArrowRight from 'lucide-react-native/icons/arrow-right';
 import { AdbSetupGuide, useWriteSecurePermission } from '@/components/adb-setup';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { Button, Overline } from '@/components/ui';

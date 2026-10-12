@@ -2,16 +2,14 @@ import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ShieldCheck,
-  Lock,
-  Cpu,
-  ServerOff,
-  KeyRound,
-  CheckCircle2,
-  Copy,
-  Check,
-} from 'lucide-react-native';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import Lock from 'lucide-react-native/icons/lock';
+import Cpu from 'lucide-react-native/icons/cpu';
+import ServerOff from 'lucide-react-native/icons/server-off';
+import KeyRound from 'lucide-react-native/icons/key-round';
+import CheckCircle2 from 'lucide-react-native/icons/circle-check';
+import Copy from 'lucide-react-native/icons/copy';
+import Check from 'lucide-react-native/icons/check';
 import DevToggle from '@/modules/dev-toggle-native';
 import { Card, FeatureRow, IconContainer, Overline, Pill } from '@/components/ui';
 import { ScreenBackground } from '@/components/ScreenBackground';
