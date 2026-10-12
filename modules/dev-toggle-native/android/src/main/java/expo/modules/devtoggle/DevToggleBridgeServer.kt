@@ -1,6 +1,9 @@
 package expo.modules.devtoggle
 
+import android.app.ActivityManager
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.database.ContentObserver
 import android.net.ConnectivityManager
 import android.net.Network
@@ -9,8 +12,11 @@ import android.net.NetworkRequest
 import android.net.Uri
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
+import android.os.BatteryManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -27,6 +33,7 @@ object DevToggleBridgeServer {
     private const val KEY_KEEP_WIRELESS_ON = "keep_wireless_on"
     private const val KEY_WIRELESS_WANTED = "wireless_wanted"
     private const val KEY_WEB_REMOTE_ENABLED = "web_remote_enabled"
+    private const val KEY_AUTO_WIRELESS_CONNECT = "auto_wireless_connect"
     private val isRunning = AtomicBoolean(false)
     private var serverSocket: ServerSocket? = null
     private var udpSocket: DatagramSocket? = null
@@ -111,6 +118,12 @@ object DevToggleBridgeServer {
         } else {
             stop()
         }
+    }
+
+    /** User preference: auto wireless ADB discovery and reconnect */
+    fun isAutoWirelessConnect(context: Context): Boolean = prefs(context).getBoolean(KEY_AUTO_WIRELESS_CONNECT, true)
+    fun setAutoWirelessConnect(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_AUTO_WIRELESS_CONNECT, enabled).apply()
     }
 
     private fun isWifiConnected(context: Context): Boolean = try {
@@ -236,7 +249,13 @@ object DevToggleBridgeServer {
                     val usb = getSetting("adb_enabled")
                     val wifi = getSetting("adb_wifi_enabled")
                     val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
-                    jsonResponse = """{"app":"dev-mode","developerOptions":"$dev","usbDebugging":"$usb","wirelessDebugging":"$wifi","ip":"$ip","port":$PORT}"""
+                    jsonResponse = """{"app":"dev-mode","developerOptions":"$dev","usbDebugging":"$usb","wirelessDebugging":"$wifi","ip":"$ip","port":$PORT,"model":"${Build.MODEL}","androidVersion":"${Build.VERSION.RELEASE}","sdkInt":${Build.VERSION.SDK_INT}}"""
+                }
+                path == "/metrics" || path == "/api/metrics" -> {
+                    jsonResponse = getPerformanceMetricsJson(context)
+                }
+                path == "/device/info" || path == "/api/device/info" -> {
+                    jsonResponse = getDeviceInfoJson(context)
                 }
                 path == "/api/dev/on" || path == "/dev/on" -> {
                     putSetting("development_settings_enabled", 1)
@@ -331,5 +350,69 @@ object DevToggleBridgeServer {
         udpSocket = null
         nsdManager = null
         registrationListener = null
+    }
+
+    fun getDeviceInfoJson(context: Context): String {
+        val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
+        return """{"model":"${Build.MODEL}","manufacturer":"${Build.MANUFACTURER}","brand":"${Build.BRAND}","androidVersion":"${Build.VERSION.RELEASE}","sdkInt":${Build.VERSION.SDK_INT},"ip":"$ip","port":$PORT}"""
+    }
+
+    fun getPerformanceMetricsJson(context: Context): String {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        val memInfo = ActivityManager.MemoryInfo()
+        am?.getMemoryInfo(memInfo)
+        val totalMb = ((memInfo.totalMem) / (1024 * 1024)).toInt()
+        val availMb = ((memInfo.availMem) / (1024 * 1024)).toInt()
+        val usedMb = totalMb - availMb
+        val ramPct = if (totalMb > 0) ((usedMb.toDouble() / totalMb) * 100).toInt() else 0
+
+        val batteryStatus: Intent? = IntentFilter(Intent.ACTION_BATTERY_CHANGED).let { filter ->
+            context.registerReceiver(null, filter)
+        }
+        val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = batteryStatus?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val batteryPct = if (level >= 0 && scale > 0) ((level.toFloat() / scale.toFloat()) * 100).toInt() else 0
+        val tempInt = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
+        val tempC = tempInt / 10.0f
+        val voltageMv = batteryStatus?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) ?: 0
+        val bStatus = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val isCharging = bStatus == BatteryManager.BATTERY_STATUS_CHARGING || bStatus == BatteryManager.BATTERY_STATUS_FULL
+        val chargePlug = batteryStatus?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
+        val pluggedStr = when (chargePlug) {
+            BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+            BatteryManager.BATTERY_PLUGGED_AC -> "AC"
+            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "Wireless"
+            else -> "Battery"
+        }
+        val healthInt = batteryStatus?.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN) ?: BatteryManager.BATTERY_HEALTH_UNKNOWN
+        val healthStr = when (healthInt) {
+            BatteryManager.BATTERY_HEALTH_GOOD -> "Good"
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "Overheat"
+            BatteryManager.BATTERY_HEALTH_DEAD -> "Dead"
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "Over Voltage"
+            else -> "Normal"
+        }
+
+        val cores = Runtime.getRuntime().availableProcessors()
+
+        val thermalStatusStr = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                when (pm?.currentThermalStatus) {
+                    PowerManager.THERMAL_STATUS_NONE -> "Nominal"
+                    PowerManager.THERMAL_STATUS_LIGHT -> "Light"
+                    PowerManager.THERMAL_STATUS_MODERATE -> "Moderate"
+                    PowerManager.THERMAL_STATUS_SEVERE -> "Severe"
+                    PowerManager.THERMAL_STATUS_CRITICAL -> "Critical"
+                    PowerManager.THERMAL_STATUS_EMERGENCY -> "Emergency"
+                    PowerManager.THERMAL_STATUS_SHUTDOWN -> "Shutdown"
+                    else -> "Normal"
+                }
+            } catch (_: Exception) { "Normal" }
+        } else {
+            "Normal"
+        }
+
+        return """{"cpu":{"cores":$cores},"ram":{"totalMb":$totalMb,"usedMb":$usedMb,"availableMb":$availMb,"percentage":$ramPct},"battery":{"level":$batteryPct,"temperature":$tempC,"voltage":$voltageMv,"isCharging":$isCharging,"plugged":"$pluggedStr","health":"$healthStr"},"thermal":{"status":"$thermalStatusStr"}}"""
     }
 }
