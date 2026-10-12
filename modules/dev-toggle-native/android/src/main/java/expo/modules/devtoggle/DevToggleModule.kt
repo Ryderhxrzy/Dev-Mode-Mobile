@@ -179,11 +179,17 @@ class DevToggleModule : Module() {
       mapOf(
         "stayAwake" to stayAwake,
         "showTouches" to readSystem(showTouchesKey),
-        "pointerLocation" to readSystem(pointerLocationKey)
+        "pointerLocation" to readSystem(pointerLocationKey),
+        "keepWirelessOn" to (if (DevToggleBridgeServer.isKeepWirelessOn(context())) "enabled" else "disabled")
       )
     }
 
     AsyncFunction("setExtraSetting") { setting: String, enabled: Boolean ->
+      // App preference, not a system setting: no WRITE_SECURE_SETTINGS needed
+      if (setting == "keepWirelessOn") {
+        DevToggleBridgeServer.setKeepWirelessOn(context(), enabled)
+        return@AsyncFunction mapOf("changed" to true, "message" to "Setting updated.")
+      }
       if (permission() != "granted") {
         return@AsyncFunction mapOf("changed" to false, "message" to "WRITE_SECURE_SETTINGS is not granted.")
       }
