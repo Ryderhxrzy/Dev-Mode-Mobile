@@ -79,10 +79,11 @@ object DevToggleBridgeServer {
         registerNsd(context)
 
         // 4. Register real-time ContentObserver for global settings
-        registerSettingsObserver(context)
+        ensureSettingsObserver(context)
     }
 
-    private fun registerSettingsObserver(context: Context) {
+    /** Keeps widgets + notification in sync with settings changed from outside (CLI `settings put`, Settings app). Safe to call repeatedly. */
+    fun ensureSettingsObserver(context: Context) {
         if (contentObserver != null) return
         val appContext = context.applicationContext
         val cr = appContext.contentResolver
@@ -190,25 +191,29 @@ object DevToggleBridgeServer {
                     jsonResponse = """{"success":true,"usbDebugging":"disabled"}"""
                 }
                 path == "/api/wifi/on" || path == "/wifi/on" -> {
+                    val wasEnabled = getSetting("adb_wifi_enabled") == "enabled"
                     putSetting("development_settings_enabled", 1)
                     putSetting("adb_wifi_enabled", 1)
                     DevToggleWidgetProvider.updateAllWidgets(context)
                     DevToggleNotificationManager.updateNotification(context)
 
-                    // Clear any stale cached port and start fresh discovery
-                    AdbEndpointHelper.clearPersistedEndpoint(context)
+                    // A fresh enable makes adbd pick a new TLS port: drop the old one and wait until
+                    // the new listener actually accepts connections before handing it to the CLI.
+                    if (!wasEnabled) AdbEndpointHelper.clearPersistedEndpoint(context)
                     AdbEndpointHelper.startDiscovery(context)
                     val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
-                    var dynamicPort = -1
-                    var attempts = 0
-                    while (attempts < 25 && dynamicPort <= 0) {
-                        try { Thread.sleep(80) } catch (_: Exception) {}
-                        dynamicPort = AdbEndpointHelper.getPort(context, allowStale = false)
-                        attempts++
-                    }
+                    val dynamicPort = AdbEndpointHelper.awaitLivePort(context, if (wasEnabled) 3000L else 8000L)
 
                     val portJson = if (dynamicPort > 0) dynamicPort.toString() else "null"
                     jsonResponse = """{"success":true,"wirelessDebugging":"enabled","ip":"$ip","port":$portJson}"""
+                }
+                path == "/api/wifi/port" || path == "/wifi/port" -> {
+                    // Fresh, verified Wireless ADB endpoint (used by the CLI to retry a connect)
+                    val enabled = getSetting("adb_wifi_enabled") == "enabled"
+                    val ip = AdbEndpointHelper.getLocalIpAddress(context) ?: ""
+                    val port = if (enabled) AdbEndpointHelper.getPort(context, allowStale = false) else -1
+                    val portJson = if (port > 0) port.toString() else "null"
+                    jsonResponse = """{"wirelessDebugging":"${if (enabled) "enabled" else "disabled"}","ip":"$ip","port":$portJson}"""
                 }
                 path == "/api/wifi/off" || path == "/wifi/off" -> {
                     putSetting("adb_wifi_enabled", 0)

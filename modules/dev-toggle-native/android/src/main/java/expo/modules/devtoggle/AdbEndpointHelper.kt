@@ -7,9 +7,12 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Looper
 import android.provider.Settings
 import java.net.Inet4Address
+import java.net.InetSocketAddress
 import java.net.NetworkInterface
+import java.net.Socket
 import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
@@ -178,9 +181,15 @@ object AdbEndpointHelper {
 
                                     override fun onServiceResolved(resolved: NsdServiceInfo) {
                                         try {
-                                            if (resolved.port > 0) {
+                                            val h = resolved.host?.hostAddress
+                                            val localIp = getLocalIpAddress(context)
+                                            // Another phone on the same Wi-Fi also advertises _adb-tls-connect. Reject only a
+                                            // clearly foreign IPv4; IPv6/link-local/unknown hosts are treated as our own.
+                                            val isForeign = resolved.host is Inet4Address && !h.isNullOrEmpty() &&
+                                                h != "0.0.0.0" && localIp != null && h != localIp &&
+                                                resolved.host?.isLoopbackAddress != true
+                                            if (resolved.port > 0 && !isForeign) {
                                                 cachedPort = resolved.port
-                                                val h = resolved.host?.hostAddress
                                                 val currentIp = if (!h.isNullOrEmpty() && h != "0.0.0.0") h else getLocalIpAddress(context)
                                                 if (!currentIp.isNullOrBlank()) {
                                                     cachedIp = currentIp
@@ -230,6 +239,43 @@ object AdbEndpointHelper {
         } catch (_: Exception) {}
     }
 
+    /**
+     * True when adbd is actually accepting TCP connections on [port]. The system property is set
+     * the moment adbd starts, slightly before the TLS listener is ready, and OEM settings keys can
+     * hold a port from a previous session; a loopback connect is the only reliable check.
+     * Network calls are not allowed on the main thread (widgets), so there we trust the source.
+     */
+    fun isPortLive(port: Int, timeoutMs: Int = 200): Boolean {
+        if (port !in 1..65535) return false
+        if (Looper.myLooper() == Looper.getMainLooper()) return true
+        return try {
+            Socket().use { it.connect(InetSocketAddress("127.0.0.1", port), timeoutMs) }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Poll until a Wireless ADB port exists AND accepts connections, or [timeoutMs] elapses
+     * (adbd starts its TLS listener asynchronously). Best effort: if a port is known but the
+     * loopback probe never passes before the deadline, return it anyway; the CLI verifies via mDNS
+     * and retries, so a late port beats no port.
+     */
+    fun awaitLivePort(context: Context, timeoutMs: Long): Int {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        var lastKnown = -1
+        while (true) {
+            val port = getPort(context, allowStale = false)
+            if (port > 0) {
+                lastKnown = port
+                if (isPortLive(port)) return port
+            }
+            if (System.currentTimeMillis() >= deadline) return lastKnown
+            try { Thread.sleep(150) } catch (_: Exception) {}
+        }
+    }
+
     fun getPort(context: Context, allowStale: Boolean = true): Int {
         val isAndroid11Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
@@ -238,10 +284,12 @@ object AdbEndpointHelper {
             cachedPort = -1
         }
 
+        // Valid dynamic port (liveness is gated separately in awaitLivePort so the UI never blanks out)
+        fun usable(p: Int): Boolean = p in 1024..65535 && (!isAndroid11Plus || p != 5555)
+
         // 1. Direct System Property: service.adb.tls.port (Set directly by adbd upon starting TLS)
-        val tlsPortStr = readSystemProperty("service.adb.tls.port")
-        val tlsPort = tlsPortStr?.toIntOrNull()
-        if (tlsPort != null && tlsPort in 1..65535) {
+        val tlsPort = readSystemProperty("service.adb.tls.port")?.toIntOrNull()
+        if (tlsPort != null && usable(tlsPort)) {
             cachedPort = tlsPort
             return tlsPort
         }
@@ -250,19 +298,19 @@ object AdbEndpointHelper {
         val cr = context.contentResolver
         for (k in listOf("adb_wifi_port", "adb_port")) {
             val p1 = try { Settings.Global.getInt(cr, k, -1) } catch (_: Exception) { -1 }
-            if (p1 in 1024..65535 && (!isAndroid11Plus || p1 != 5555)) {
+            if (usable(p1)) {
                 cachedPort = p1
                 return p1
             }
             val p2 = try { Settings.Secure.getInt(cr, k, -1) } catch (_: Exception) { -1 }
-            if (p2 in 1024..65535 && (!isAndroid11Plus || p2 != 5555)) {
+            if (usable(p2)) {
                 cachedPort = p2
                 return p2
             }
         }
 
         // 3. In-memory cached port if valid dynamic port (only if allowStale)
-        if (allowStale && cachedPort in 1024..65535 && (!isAndroid11Plus || cachedPort != 5555)) {
+        if (allowStale && usable(cachedPort)) {
             return cachedPort
         }
 
@@ -275,14 +323,14 @@ object AdbEndpointHelper {
             waited += 50
         }
 
-        if (cachedPort in 1024..65535 && (!isAndroid11Plus || cachedPort != 5555)) {
+        if (usable(cachedPort)) {
             return cachedPort
         }
 
         // 5. Persisted Port in SharedPreferences (ONLY if allowStale and not 5555 on Android 11+)
         if (allowStale) {
             val persisted = getPersistedPort(context)
-            if (persisted in 1024..65535 && (!isAndroid11Plus || persisted != 5555)) {
+            if (usable(persisted)) {
                 cachedPort = persisted
                 return persisted
             }

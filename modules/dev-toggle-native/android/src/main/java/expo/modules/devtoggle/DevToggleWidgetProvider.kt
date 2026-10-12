@@ -288,6 +288,8 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
+        // Any widget event may be the first thing that wakes our process: start watching settings from here on
+        DevToggleBridgeServer.ensureSettingsObserver(context)
 
         val action = intent.action
         if (action == AppWidgetManager.ACTION_APPWIDGET_UPDATE ||
