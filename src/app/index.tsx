@@ -33,6 +33,7 @@ import DevToggle, {
   UNAVAILABLE_STATUS,
   type AnimationScales,
   type DeviceStatus,
+  type PerformanceMetrics,
   type SettingName,
 } from '@/modules/dev-toggle-native';
 import { Button, Card, CyberToggle, FeatureRow, IconContainer, Pill } from '@/components/ui';
@@ -55,6 +56,7 @@ export default function Dashboard() {
   const [status, setStatus] = useState<DeviceStatus>(UNAVAILABLE_STATUS);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
 
   // Animation scales
   const [animationScales, setAnimationScales] = useState<AnimationScales>({
@@ -75,13 +77,15 @@ export default function Dashboard() {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [newStatus, scales, extra] = await Promise.all([
+      const [newStatus, scales, extra, perf] = await Promise.all([
         DevToggle.getStatus(),
         DevToggle.getAnimationScales(),
         DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
+        DevToggle.getPerformanceMetrics().catch(() => null),
       ]);
       setStatus(newStatus);
       setAnimationScales(scales);
+      if (perf) setMetrics(perf);
       if (extra) {
         setExtraSettings({
           stayAwake: extra.stayAwake || 'unknown',
@@ -99,10 +103,12 @@ export default function Dashboard() {
       DevToggle.getStatus(),
       DevToggle.getAnimationScales(),
       DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
-    ]).then(([st, sc, extra]) => {
+      DevToggle.getPerformanceMetrics().catch(() => null),
+    ]).then(([st, sc, extra, perf]) => {
       if (active) {
         setStatus(st);
         setAnimationScales(sc);
+        if (perf) setMetrics(perf);
         if (extra) {
           setExtraSettings({
             stayAwake: extra.stayAwake || 'unknown',
@@ -116,7 +122,7 @@ export default function Dashboard() {
       if (state === 'active') refresh();
     });
 
-    // Real-time synchronization: poll every 1.5s while active in foreground
+    // Real-time synchronization: poll every 2.5s while active in foreground
     // so any change from PC terminal (CMD) or home screen widgets reflects immediately
     const pollInterval = setInterval(() => {
       if (AppState.currentState === 'active') {
@@ -124,10 +130,12 @@ export default function Dashboard() {
           DevToggle.getStatus(),
           DevToggle.getAnimationScales(),
           DevToggle.getExtraSettings().catch(() => ({ stayAwake: 'unknown', showTouches: 'unknown' } as any)),
-        ]).then(([st, sc, extra]) => {
+          DevToggle.getPerformanceMetrics().catch(() => null),
+        ]).then(([st, sc, extra, perf]) => {
           if (active) {
             setStatus(st);
             setAnimationScales(sc);
+            if (perf) setMetrics(perf);
             if (extra) {
               setExtraSettings({
                 stayAwake: extra.stayAwake || 'unknown',
@@ -677,6 +685,83 @@ export default function Dashboard() {
                   )
                 ) : (
                   <Pill label={extraSettings.showTouches === 'enabled' ? 'ON' : 'OFF'} tone={extraSettings.showTouches === 'enabled' ? 'success' : 'neutral'} />
+                )}
+              </View>
+            </Card>
+          </Animated.View>
+
+          {/* Section: Live Device Performance Monitor */}
+          <View style={s.sectionHeader}>
+            <Text style={[s.sectionTitle, { color: t.textMuted }]}>LIVE PERFORMANCE MONITOR</Text>
+          </View>
+
+          <Animated.View entering={FadeInDown.delay(185).duration(300)}>
+            <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
+              <View style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
+                    <IconContainer tone="cyan" size={36}>
+                      <Cpu size={18} color={t.accentCyan} />
+                    </IconContainer>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={[s.switchTitle, { color: t.textPrimary }]} numberOfLines={1}>
+                        Hardware Health
+                      </Text>
+                      <Text style={[s.switchDesc, { color: t.textSecondary }]} numberOfLines={1}>
+                        Real-time system resources
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ flexShrink: 0 }}>
+                    <Pill
+                      label={metrics ? `${metrics.battery.level}%${metrics.battery.isCharging ? ' ⚡' : ''}` : 'ACTIVE'}
+                      tone={metrics && metrics.battery.level <= 20 ? 'danger' : 'success'}
+                    />
+                  </View>
+                </View>
+
+                {metrics ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
+                    <View style={{ flex: 1, minWidth: '46%', backgroundColor: t.canvas, borderRadius: radius.md, padding: 10, borderWidth: 1, borderColor: t.cardBorder }}>
+                      <Text style={{ fontSize: 11, color: t.textMuted, fontWeight: '600' }}>RAM USAGE</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: t.textPrimary, marginTop: 2 }}>
+                        {metrics.ram.percentage}%
+                      </Text>
+                      <Text style={{ fontSize: 11, color: t.textSecondary }} numberOfLines={1}>
+                        {(metrics.ram.usedMb / 1024).toFixed(1)}GB / {(metrics.ram.totalMb / 1024).toFixed(1)}GB
+                      </Text>
+                    </View>
+
+                    <View style={{ flex: 1, minWidth: '46%', backgroundColor: t.canvas, borderRadius: radius.md, padding: 10, borderWidth: 1, borderColor: t.cardBorder }}>
+                      <Text style={{ fontSize: 11, color: t.textMuted, fontWeight: '600' }}>BATTERY</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: metrics.battery.level <= 20 ? t.danger : t.accentCyan, marginTop: 2 }}>
+                        {metrics.battery.level}% {metrics.battery.isCharging ? '⚡' : ''}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: t.textSecondary }} numberOfLines={1}>
+                        {metrics.battery.temperature > 0 ? `${metrics.battery.temperature}°C • ` : ''}{metrics.battery.isCharging ? 'Charging' : metrics.battery.health}
+                      </Text>
+                    </View>
+
+                    <View style={{ flex: 1, minWidth: '46%', backgroundColor: t.canvas, borderRadius: radius.md, padding: 10, borderWidth: 1, borderColor: t.cardBorder }}>
+                      <Text style={{ fontSize: 11, color: t.textMuted, fontWeight: '600' }}>CPU CORES</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: t.textPrimary, marginTop: 2 }}>
+                        {metrics.cpu.cores} Cores Active
+                      </Text>
+                      <Text style={{ fontSize: 11, color: t.textSecondary }} numberOfLines={1}>Multi-core processor</Text>
+                    </View>
+
+                    <View style={{ flex: 1, minWidth: '46%', backgroundColor: t.canvas, borderRadius: radius.md, padding: 10, borderWidth: 1, borderColor: t.cardBorder }}>
+                      <Text style={{ fontSize: 11, color: t.textMuted, fontWeight: '600' }}>THERMAL STATE</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: metrics.thermal.status === 'Nominal' || metrics.thermal.status === 'Normal' ? t.success : t.warning, marginTop: 2 }}>
+                        {metrics.thermal.status}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: t.textSecondary }} numberOfLines={1}>Hardware condition</Text>
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={{ fontSize: 12, color: t.textMuted }}>
+                    Live hardware queries active. Pull down or refresh to sync metrics.
+                  </Text>
                 )}
               </View>
             </Card>
