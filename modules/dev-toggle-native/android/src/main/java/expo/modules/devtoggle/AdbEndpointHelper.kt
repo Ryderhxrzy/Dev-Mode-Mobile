@@ -7,6 +7,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import java.net.Inet4Address
@@ -172,44 +173,54 @@ object AdbEndpointHelper {
                     if (type.contains("pairing", true) || name.contains("pairing", true)) return
 
                     if (type.contains("adb", true) || name.contains("adb", true)) {
-                        if (isResolving.compareAndSet(false, true)) {
-                            try {
-                                nsd.resolveService(serviceInfo, object : NsdManager.ResolveListener {
-                                    override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-                                        isResolving.set(false)
-                                    }
+                        resolveWithRetry(nsd, serviceInfo, attempt = 0)
+                    }
+                }
 
-                                    override fun onServiceResolved(resolved: NsdServiceInfo) {
-                                        try {
-                                            val h = resolved.host?.hostAddress
-                                            val localIp = getLocalIpAddress(context)
-                                            // Another phone on the same Wi-Fi also advertises _adb-tls-connect. Reject only a
-                                            // clearly foreign IPv4; IPv6/link-local/unknown hosts are treated as our own.
-                                            val isForeign = resolved.host is Inet4Address && !h.isNullOrEmpty() &&
-                                                h != "0.0.0.0" && localIp != null && h != localIp &&
-                                                resolved.host?.isLoopbackAddress != true
-                                            if (resolved.port > 0 && !isForeign) {
-                                                cachedPort = resolved.port
-                                                val currentIp = if (!h.isNullOrEmpty() && h != "0.0.0.0") h else getLocalIpAddress(context)
-                                                if (!currentIp.isNullOrBlank()) {
-                                                    cachedIp = currentIp
-                                                    savePersistedEndpoint(context, currentIp, resolved.port)
-                                                }
-                                                // Real-time update to widgets and notifications as soon as resolved
-                                                try {
-                                                    DevToggleWidgetProvider.updateAllWidgets(context)
-                                                    DevToggleNotificationManager.updateNotification(context)
-                                                } catch (_: Exception) {}
-                                            }
-                                        } finally {
-                                            isResolving.set(false)
-                                        }
-                                    }
-                                })
-                            } catch (_: Exception) {
+                // onServiceFound fires once per service, and NsdManager allows only one resolve at a
+                // time (FAILURE_ALREADY_ACTIVE). Dropping it meant the port was never learned and the
+                // UI stayed on "Resolving..."; retry a few times instead.
+                private fun resolveWithRetry(nsd: NsdManager, serviceInfo: NsdServiceInfo, attempt: Int) {
+                    if (attempt > 6) return
+                    val retry = { Handler(Looper.getMainLooper()).postDelayed({ resolveWithRetry(nsd, serviceInfo, attempt + 1) }, 600L) }
+                    if (!isResolving.compareAndSet(false, true)) { retry(); return }
+                    try {
+                        nsd.resolveService(serviceInfo, object : NsdManager.ResolveListener {
+                            override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
                                 isResolving.set(false)
+                                retry()
                             }
-                        }
+
+                            override fun onServiceResolved(resolved: NsdServiceInfo) {
+                                try {
+                                    val host = resolved.host
+                                    val h = host?.hostAddress
+                                    val localIp = getLocalIpAddress(context)
+                                    // Another phone on the same Wi-Fi also advertises _adb-tls-connect. Reject only a
+                                    // clearly foreign IPv4; IPv6/link-local/unknown hosts are treated as our own.
+                                    val isForeign = host is Inet4Address && !h.isNullOrEmpty() &&
+                                        h != "0.0.0.0" && localIp != null && h != localIp && !host.isLoopbackAddress
+                                    if (resolved.port > 0 && !isForeign) {
+                                        cachedPort = resolved.port
+                                        val currentIp = if (host is Inet4Address && !h.isNullOrEmpty() && h != "0.0.0.0" && !host.isLoopbackAddress) h else localIp
+                                        if (!currentIp.isNullOrBlank()) {
+                                            cachedIp = currentIp
+                                            savePersistedEndpoint(context, currentIp, resolved.port)
+                                        }
+                                        // Real-time update to widgets and notifications as soon as resolved
+                                        try {
+                                            DevToggleWidgetProvider.updateAllWidgets(context)
+                                            DevToggleNotificationManager.updateNotification(context)
+                                        } catch (_: Exception) {}
+                                    }
+                                } finally {
+                                    isResolving.set(false)
+                                }
+                            }
+                        })
+                    } catch (_: Exception) {
+                        isResolving.set(false)
+                        retry()
                     }
                 }
 
