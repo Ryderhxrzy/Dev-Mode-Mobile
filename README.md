@@ -25,6 +25,32 @@
 
 ---
 
+## ⚡ Quick Start
+
+New here? Three steps, about five minutes:
+
+1. **Install the app.** Download the APK from the [Releases page](https://github.com/Ryderhxrzy/Dev-Mode-Mobile/releases) and open it on your phone. [Details](#-install)
+2. **Grant the permission once.** Connect your phone to a computer by USB, then run:
+   ```bash
+   npm install -g dev-mode-cli
+   devmode grant
+   ```
+   [Other ways, and what this permission does](#-one-time-setup-permission-grant)
+3. **Use it.** Toggle Developer Options, USB Debugging and Wireless Debugging from the app, the home screen widgets or the notification bar.
+
+### Requirements
+
+| You need | Details |
+| :--- | :--- |
+| **Android** | 7.0 (API 24) or newer |
+| **Wireless Debugging toggle** | Android 11 or newer. Android added this setting in version 11. The Developer Options and USB Debugging toggles work on 7.0 and up. |
+| **Root** | Not needed |
+| **A computer, once** | Only to grant the permission (Windows, macOS or Linux, with a USB cable). You do not need it afterwards. |
+| **For the CLI method** | [Node.js](https://nodejs.org) 16+ and Android Platform Tools (`adb`) |
+| **Internet** | Not needed to use the app |
+
+---
+
 ## 📸 App Screenshots
 
 <div align="center">
@@ -90,7 +116,7 @@ Dev Mode offers both a comprehensive **3-in-1 multi-control bar** and individual
 
 ## 📥 Install
 
-1. Open the [Releases page](https://github.com/Ryderhxrzy/Developer-Option-Toggle/releases) and download the latest APK:
+1. Open the [Releases page](https://github.com/Ryderhxrzy/Dev-Mode-Mobile/releases) and download the latest APK:
    - **`app-arm64-v8a-release.apk`**: for almost every phone made in the last several years (about 35 MB).
    - **`app-armeabi-v7a-release.apk`**: only for older 32-bit phones (about 29 MB).
 2. Open the downloaded file. When Android asks, allow **Install unknown apps** for your browser or file manager.
@@ -99,6 +125,12 @@ Dev Mode offers both a comprehensive **3-in-1 multi-control bar** and individual
 > Not sure which APK? Pick `arm64-v8a`. If Android says the app is not compatible, use `armeabi-v7a`.
 
 Updates are manual: download the newer APK and install it over the old one. Your settings stay, because every release is signed with the same key.
+
+**Optional: verify your download.** Compare the SHA-256 of the file with the checksum in the release notes (PowerShell):
+
+```powershell
+Get-FileHash .\app-arm64-v8a-release.apk -Algorithm SHA256
+```
 
 ---
 
@@ -150,6 +182,32 @@ adb shell pm grant com.devmode.app android.permission.WRITE_SECURE_SETTINGS
 ### Check it worked
 The onboarding screen and the **Security** screen show **GRANTED** once the permission is active. Tap **Recheck** if it still says pending.
 
+### What the permission does
+
+`WRITE_SECURE_SETTINGS` is an Android permission that lets an app change protected system settings. Android has no button to grant it, so it is granted once from a computer.
+
+**Dev Mode uses it only to change these settings:**
+- Developer Options on or off
+- USB Debugging on or off
+- Wireless Debugging on or off
+- Animation scales (window, transition, animator)
+- Stay awake while charging, show touches, pointer location
+
+**It does not give Dev Mode root access.** It does not let the app read your files, photos, messages or other apps.
+
+To be fully transparent: technically this permission allows writing any protected setting. Dev Mode only changes the ones listed above, and all of the code is in this repository so you can check it.
+
+**Permissions the app asks for, and why:**
+
+| Permission | Why |
+| :--- | :--- |
+| `WRITE_SECURE_SETTINGS` | Change the developer settings listed above. Granted by you from a computer. |
+| Notifications | Show the notification bar with quick toggles. Optional. |
+| Foreground service | Keep the notification and the local Wi-Fi bridge alive in the background. |
+| Network and Wi-Fi state | Show your phone's Wi-Fi IP and Wireless Debugging port, and let your computer talk to the app over your own network. |
+
+You can undo the permission at any time, see **Revoking Permission** below.
+
 ### Revoking Permission
 
 You keep full control. Revoke it any time from your computer:
@@ -160,6 +218,34 @@ adb shell pm revoke com.devmode.app android.permission.WRITE_SECURE_SETTINGS
 *(or simply uninstall the application).*
 
 > If you reinstall or clear the app, run the grant command again.
+
+---
+
+## 🧰 Troubleshooting
+
+**The app still says the permission is pending after I ran the command.**
+Run `adb devices` on your computer. Your phone should be listed as `device`. If it says `unauthorized`, unlock the phone and tap **Allow** on the "Allow USB debugging?" prompt. Then run the grant command again and tap **Recheck** in the app.
+
+**`adb` or `devmode` is not recognized.**
+Install [Android Platform Tools](https://developer.android.com/tools/releases/platform-tools) and add the folder to your PATH. For `devmode`, install Node.js first, then run `npm install -g dev-mode-cli`. Open a new terminal window afterwards.
+
+**Which command do I use, `devmode` or `dev-mode-cli`?**
+Install with the package name, run with the short command: `npm install -g dev-mode-cli`, then `devmode grant`. If you do not want to install it, use `npx dev-mode-cli grant`. Do not use `npx devmode`, because `devmode` on npm is a different, unrelated package.
+
+**Wireless Debugging turns itself off when my Wi-Fi drops.**
+That is Android's behavior. Dev Mode can turn it back on when Wi-Fi returns: open **Developer Settings** in the app and enable **Keep Wireless Debugging On**.
+
+**Wireless Debugging will not turn on.**
+It needs Android 11 or newer and a connected Wi-Fi network. The first time on a new network, Android may ask you to approve it in its own **Wireless debugging** screen.
+
+**"App not installed" or "conflicts with an existing package".**
+A copy signed with a different key is already on the phone, for example an older test build. Uninstall it, then install the release APK. You will need to run the grant command again.
+
+**Play Protect warns about the app.**
+Android shows this for any app installed from outside the Play Store. You can compare your download with the SHA-256 checksum in the release notes before choosing **Install anyway**.
+
+**I reinstalled or cleared the app and the toggles stopped working.**
+The permission belongs to the installation. Run the grant command again.
 
 ---
 
