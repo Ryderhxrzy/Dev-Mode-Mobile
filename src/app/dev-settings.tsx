@@ -26,6 +26,7 @@ import Trash2 from 'lucide-react-native/icons/trash';
 import Layers from 'lucide-react-native/icons/layers';
 import BellRing from 'lucide-react-native/icons/bell-ring';
 import Wifi from 'lucide-react-native/icons/wifi';
+import Globe from 'lucide-react-native/icons/globe';
 import DevToggle, {
   type AnimationScales,
   type ExtraSettingName,
@@ -41,8 +42,14 @@ const EXTRA_SETTINGS: {
   key: ExtraSettingName;
   title: string;
   desc: string;
-  icon: 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn';
+  icon: 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn' | 'webRemote';
 }[] = [
+  {
+    key: 'webRemote',
+    title: 'Web Remote Dashboard',
+    desc: 'Allows controlling Developer Options & ADB remotely from your PC browser (http://localhost:3000) over local Wi-Fi.',
+    icon: 'webRemote',
+  },
   {
     key: 'stayAwake',
     title: 'Stay Awake While Charging',
@@ -85,6 +92,7 @@ export default function DevSettings() {
     showTouches: 'unknown',
     pointerLocation: 'unknown',
     keepWirelessOn: 'unknown',
+    webRemote: 'unknown',
   });
   const [notifMode, setNotifMode] = useState<NotificationMode>('disabled');
 
@@ -143,6 +151,7 @@ export default function DevSettings() {
           showTouches: 'Show Screen Touches',
           pointerLocation: 'Show Pointer Location',
           keepWirelessOn: 'Keep Wireless Debugging On',
+          webRemote: 'Web Remote Dashboard',
         };
         if (Platform.OS === 'android') {
           ToastAndroid.show(`${labels[key]}: ${willEnable ? 'Enabled' : 'Disabled'}`, ToastAndroid.SHORT);
@@ -221,6 +230,8 @@ export default function DevSettings() {
         return <Crosshair size={22} color={isEnabled ? t.success : t.warning} />;
       case 'keepWirelessOn':
         return <Wifi size={22} color={isEnabled ? t.success : t.accentCyan} />;
+      case 'webRemote':
+        return <Globe size={22} color={isEnabled ? t.success : t.accentCyan} />;
       default:
         return <SunMedium size={22} color={t.accentCyan} />;
     }
