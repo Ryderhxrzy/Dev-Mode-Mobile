@@ -5,10 +5,12 @@
   "dependencies": {
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo-google-fonts/space-grotesk": "^0.4.1",
+    "dev-mode-cli": "^1.0.10",
     "expo": "~57.0.27",
     "expo-clipboard": "~57.0.2",
     "expo-font": "~57.0.4",
     "expo-linking": "~57.0.12",
+    "expo-localization": "~57.0.2",
     "expo-router": "~57.0.25",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
