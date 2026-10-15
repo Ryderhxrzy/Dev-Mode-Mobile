@@ -24,6 +24,7 @@ import X from 'lucide-react-native/icons/x';
 import Play from 'lucide-react-native/icons/play';
 import Plus from 'lucide-react-native/icons/plus';
 import Check from 'lucide-react-native/icons/check';
+import LayoutGrid from 'lucide-react-native/icons/layout-grid';
 import Info from 'lucide-react-native/icons/info';
 import BatteryCharging from 'lucide-react-native/icons/battery-charging';
 import Smartphone from 'lucide-react-native/icons/smartphone';
@@ -178,8 +179,9 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
     await DevToggle.setProtectedPackages?.(nextList);
 
     if (isAdding) {
-      // Automatically request Android to pin the shielded shortcut with custom shield icon
+      // Automatically request Android to pin the shielded shortcut and 1x1 widget
       DevToggle.createShieldedShortcut?.(pkg);
+      DevToggle.pinShieldWidget1x1?.(pkg);
     }
 
     if (Platform.OS === 'android') {
@@ -189,6 +191,30 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
           : `Unshielded: ${pkg}`,
         ToastAndroid.SHORT
       );
+    }
+  };
+
+  const handlePin1x1Widget = async (pkg: string, appName: string) => {
+    try {
+      const res = await DevToggle.pinShieldWidget1x1?.(pkg);
+      if (!res) {
+        DevToggle.createShieldedShortcut?.(pkg);
+      }
+    } catch {
+      DevToggle.createShieldedShortcut?.(pkg);
+    }
+  };
+
+  const handlePin3x1Widget = async () => {
+    try {
+      const res = await DevToggle.pinShieldWidget3x1?.();
+      if (!res && Platform.OS === 'android') {
+        ToastAndroid.show('Add 3x1 Shield Dock from your launcher widget menu', ToastAndroid.LONG);
+      }
+    } catch {
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Add 3x1 Shield Dock from your launcher widget menu', ToastAndroid.LONG);
+      }
     }
   };
 
@@ -417,6 +443,38 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
               </LocalizedText>
             </View>
 
+            {/* 3x1 Shield Dock Quick Action */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Pin 3x1 Shield Dock to Home screen"
+              onPress={handlePin3x1Widget}
+              style={({ pressed }) => [
+                s.dockBanner,
+                {
+                  backgroundColor: `${t.accentCyan}10`,
+                  borderColor: `${t.accentCyan}45`,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}>
+              <View style={s.dockBannerContent}>
+                <IconContainer tone="cyan" size={32}>
+                  <LayoutGrid size={16} color={t.accentCyan} />
+                </IconContainer>
+                <View style={{ flex: 1, gap: 1 }}>
+                  <LocalizedText style={[s.dockBannerTitle, { color: t.textPrimary }]}>
+                    3x1 Shield Dock Widget
+                  </LocalizedText>
+                  <LocalizedText style={[s.dockBannerDesc, { color: t.textSecondary }]}>
+                    Quick-launch your top shielded apps from your home screen
+                  </LocalizedText>
+                </View>
+                <View style={[s.pinPill, { backgroundColor: `${t.accentCyan}22`, borderColor: `${t.accentCyan}70` }]}>
+                  <Plus size={11} color={t.accentCyan} />
+                  <LocalizedText style={[s.pinPillText, { color: t.accentCyan }]}>Add 3x1</LocalizedText>
+                </View>
+              </View>
+            </Pressable>
+
             {shieldedApps.map(item => (
               <Card
                 key={item.packageName}
@@ -444,6 +502,16 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
                   </View>
 
                   <View style={s.appActions}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Pin 1x1 widget for ${item.appName}`}
+                      onPress={() => handlePin1x1Widget(item.packageName, item.appName)}
+                      style={({ pressed }) => [
+                        s.widgetBtn,
+                        { backgroundColor: `${t.success}20`, opacity: pressed ? 0.7 : 1 },
+                      ]}>
+                      <LayoutGrid size={13} color={t.success} />
+                    </Pressable>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel={`Test launch ${item.appName}`}
@@ -902,6 +970,41 @@ const s = StyleSheet.create({
     flex: 1,
     lineHeight: 17,
   },
+  dockBanner: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: space.xs,
+  },
+  dockBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  dockBannerTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 13,
+  },
+  dockBannerDesc: {
+    fontFamily: fonts.body,
+    fontSize: 11.5,
+    lineHeight: 15,
+  },
+  pinPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  pinPillText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10.5,
+    letterSpacing: 0.5,
+  },
   addMoreCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1001,6 +1104,13 @@ const s = StyleSheet.create({
     gap: 8,
   },
   testLaunchBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  widgetBtn: {
     width: 32,
     height: 32,
     borderRadius: radius.sm,

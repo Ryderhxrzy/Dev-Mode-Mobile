@@ -103,6 +103,34 @@
         android:name="android.appwidget.provider"
         android:resource="@xml/dev_toggle_widget_wireless_info"/>
     </receiver>
+    <!-- 5. Shield 1x1 App Widget -->
+    <receiver
+      android:name="expo.modules.devtoggle.DevToggleShield1x1WidgetProvider"
+      android:label="Shielded App (1x1)"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/dev_toggle_shield_1x1_widget_info"/>
+    </receiver>
+    <!-- 6. Shield 3x1 Dock Widget -->
+    <receiver
+      android:name="expo.modules.devtoggle.DevToggleShield3x1WidgetProvider"
+      android:label="Shield Dock (3x1)"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/dev_toggle_shield_3x1_widget_info"/>
+    </receiver>
+    <!-- Widget Pinning Callback Receiver -->
+    <receiver
+      android:name="expo.modules.devtoggle.DevToggleShieldWidgetPinReceiver"
+      android:exported="false"/>
     <activity
       android:name="expo.modules.devtoggle.WidgetActionActivity"
       android:theme="@android:style/Theme.Translucent.NoTitleBar"

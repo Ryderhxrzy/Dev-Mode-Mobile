@@ -625,5 +625,17 @@ class DevToggleModule : Module() {
         false
       }
     }.runOnQueue(Queues.MAIN)
+
+    Function("isWidgetPinningSupported") {
+      AppShieldManager.isWidgetPinningSupported(context())
+    }
+
+    AsyncFunction("pinShieldWidget1x1") { packageName: String ->
+      AppShieldManager.requestPinShieldWidget1x1(context(), packageName)
+    }.runOnQueue(Queues.MAIN)
+
+    AsyncFunction("pinShieldWidget3x1") {
+      AppShieldManager.requestPinShieldWidget3x1(context())
+    }.runOnQueue(Queues.MAIN)
   }
 }

@@ -1,17 +1,22 @@
 import { CyberBottomNav } from '@/components/CyberBottomNav';
 import LocalizedText from '@/components/LocalizedText';
 import { ScreenBackground } from '@/components/ScreenBackground';
-import { Card, Overline, Pill } from '@/components/ui';
+import { Button, Card, IconContainer, Overline, Pill } from '@/components/ui';
+import DevToggle from '@/modules/dev-toggle-native';
 import { fonts, radius, space, useTheme } from '@/theme';
 import Maximize2 from 'lucide-react-native/icons/maximize-2';
+import Plus from 'lucide-react-native/icons/plus';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import {
     Image,
     Modal,
+    Platform,
     Pressable,
     ScrollView,
     StyleSheet,
+    ToastAndroid,
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,6 +24,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function WidgetSettings() {
   const t = useTheme();
   const [showPromoModal, setShowPromoModal] = useState(false);
+
+  const handlePin3x1ShieldDock = async () => {
+    try {
+      const res = await DevToggle.pinShieldWidget3x1?.();
+      if (!res && Platform.OS === 'android') {
+        ToastAndroid.show('Add 3x1 Shield Dock from your launcher widget menu', ToastAndroid.LONG);
+      }
+    } catch {
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Add 3x1 Shield Dock from your launcher widget menu', ToastAndroid.LONG);
+      }
+    }
+  };
 
   return (
     <ScreenBackground>
@@ -69,6 +87,42 @@ export default function WidgetSettings() {
               </View>
             </Card>
           </Pressable>
+
+          {/* App Shield Widgets (Auto-Off) */}
+          <View style={s.sectionHeader}>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>APP SHIELD WIDGETS (AUTO-OFF)</LocalizedText>
+          </View>
+
+          <Card
+            style={{
+              borderColor: `${t.success}60`,
+              backgroundColor: '#071610',
+              borderWidth: 1.5,
+            }}>
+            <View style={{ gap: space.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+                <IconContainer tone="success" size={40}>
+                  <ShieldCheck size={20} color={t.success} />
+                </IconContainer>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <LocalizedText style={[s.promoTitle, { color: t.textPrimary }]}>
+                    3x1 Shield Dock &amp; 1x1 Quick Launch
+                  </LocalizedText>
+                  <LocalizedText style={[s.promoDesc, { color: t.textSecondary }]}>
+                    Automatically disables Developer Options and ADB before launching banking or protected apps.
+                  </LocalizedText>
+                </View>
+              </View>
+
+              <Button
+                label="Pin 3x1 Shield Dock to Home"
+                variant="primary"
+                icon={<Plus size={16} color="#FFFFFF" />}
+                onPress={handlePin3x1ShieldDock}
+                style={{ marginTop: space.xs }}
+              />
+            </View>
+          </Card>
 
           {/* Setup Guide */}
           <View style={s.sectionHeader}>

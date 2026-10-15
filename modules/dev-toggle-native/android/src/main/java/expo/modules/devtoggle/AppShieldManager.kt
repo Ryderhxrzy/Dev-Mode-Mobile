@@ -70,6 +70,10 @@ object AppShieldManager {
             .edit()
             .putStringSet(KEY_PACKAGES, packages.toSet())
             .apply()
+        try {
+            DevToggleShield3x1WidgetProvider.updateAllWidgets(context)
+            DevToggleShield1x1WidgetProvider.updateAllWidgets(context)
+        } catch (_: Exception) {}
         return true
     }
 
@@ -306,28 +310,28 @@ object AppShieldManager {
         writeDevOptions(context, 1)
     }
 
-    fun createShieldedShortcut(context: Context, packageName: String): Boolean {
-        try {
+    fun getAppLabel(context: Context, packageName: String): String {
+        return try {
             val pm = context.packageManager
-            val launchIntent = pm.getLaunchIntentForPackage(packageName) ?: return false
-            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
             val appInfo = pm.getApplicationInfo(packageName, 0)
-            val appLabel = pm.getApplicationLabel(appInfo).toString()
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (_: Exception) {
+            packageName
+        }
+    }
 
-            // 1. Get original app icon drawable
-            val drawable: Drawable = try {
-                pm.getActivityIcon(launchIntent)
+    fun getBadgedAppBitmap(context: Context, packageName: String, targetSize: Int = 192): Bitmap? {
+        return try {
+            val pm = context.packageManager
+            val launchIntent = pm.getLaunchIntentForPackage(packageName)
+            val drawable: Drawable = (if (launchIntent != null) {
+                try { pm.getActivityIcon(launchIntent) } catch (_: Throwable) { null }
+            } else null) ?: try {
+                pm.getApplicationIcon(packageName)
             } catch (_: Throwable) {
-                try {
-                    pm.getApplicationIcon(packageName)
-                } catch (_: Throwable) {
-                    pm.defaultActivityIcon
-                }
+                pm.defaultActivityIcon
             } ?: pm.defaultActivityIcon
 
-            // 2. Generate crisp badged bitmap (original icon + cyber emerald shield emblem at bottom-right)
-            val targetSize = 192
             val baseBitmap = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(baseBitmap)
             drawable.setBounds(0, 0, targetSize, targetSize)
@@ -378,6 +382,74 @@ object AppShieldManager {
             checkPath.lineTo(sl + sw * 0.45f, st + sh * 0.65f)
             checkPath.lineTo(sl + sw * 0.74f, st + sh * 0.35f)
             canvas.drawPath(checkPath, paint)
+
+            baseBitmap
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun isWidgetPinningSupported(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
+            return appWidgetManager?.isRequestPinAppWidgetSupported == true
+        }
+        return false
+    }
+
+    fun requestPinShieldWidget1x1(context: Context, packageName: String): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
+            if (appWidgetManager != null && appWidgetManager.isRequestPinAppWidgetSupported) {
+                val provider = android.content.ComponentName(context, DevToggleShield1x1WidgetProvider::class.java)
+                val callbackIntent = Intent(context, DevToggleShieldWidgetPinReceiver::class.java).apply {
+                    putExtra("package_name", packageName)
+                }
+                val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE
+                } else {
+                    android.app.PendingIntent.FLAG_UPDATE_CURRENT
+                }
+                val successCallback = android.app.PendingIntent.getBroadcast(
+                    context,
+                    packageName.hashCode(),
+                    callbackIntent,
+                    flags
+                )
+                val result = appWidgetManager.requestPinAppWidget(provider, null, successCallback)
+                if (result) {
+                    val label = getAppLabel(context, packageName)
+                    Toast.makeText(context, "Requesting 1x1 Shield Widget for $label", Toast.LENGTH_SHORT).show()
+                }
+                return result
+            }
+        }
+        return false
+    }
+
+    fun requestPinShieldWidget3x1(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val appWidgetManager = android.appwidget.AppWidgetManager.getInstance(context)
+            if (appWidgetManager != null && appWidgetManager.isRequestPinAppWidgetSupported) {
+                val provider = android.content.ComponentName(context, DevToggleShield3x1WidgetProvider::class.java)
+                val result = appWidgetManager.requestPinAppWidget(provider, null, null)
+                if (result) {
+                    Toast.makeText(context, "Requesting 3x1 Shield Dock Widget", Toast.LENGTH_SHORT).show()
+                }
+                return result
+            }
+        }
+        return false
+    }
+
+    fun createShieldedShortcut(context: Context, packageName: String): Boolean {
+        try {
+            val pm = context.packageManager
+            val launchIntent = pm.getLaunchIntentForPackage(packageName) ?: return false
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+            val appLabel = getAppLabel(context, packageName)
+            val baseBitmap = getBadgedAppBitmap(context, packageName, 192) ?: return false
 
             // Use official launchIntent so Android system launcher recognizes it immediately
             val shortcutIntent = Intent(launchIntent).apply {

@@ -102,6 +102,9 @@ type NativeModule = {
   createShieldedShortcut?(packageName: string): Promise<boolean>;
   openBatteryOptimizationSettings?(): Promise<boolean>;
   openAppDetailsSettings?(): Promise<boolean>;
+  isWidgetPinningSupported?(): boolean;
+  pinShieldWidget1x1?(packageName: string): Promise<boolean>;
+  pinShieldWidget3x1?(): Promise<boolean>;
 };
 
 const native = requireOptionalNativeModule<NativeModule>('DevToggle');
@@ -241,4 +244,10 @@ export default {
     native?.openBatteryOptimizationSettings ? native.openBatteryOptimizationSettings() : false,
   openAppDetailsSettings: async (): Promise<boolean> =>
     native?.openAppDetailsSettings ? native.openAppDetailsSettings() : false,
+  isWidgetPinningSupported: (): boolean =>
+    native?.isWidgetPinningSupported ? native.isWidgetPinningSupported() : false,
+  pinShieldWidget1x1: async (packageName: string): Promise<boolean> =>
+    native?.pinShieldWidget1x1 ? native.pinShieldWidget1x1(packageName) : false,
+  pinShieldWidget3x1: async (): Promise<boolean> =>
+    native?.pinShieldWidget3x1 ? native.pinShieldWidget3x1() : false,
 };
