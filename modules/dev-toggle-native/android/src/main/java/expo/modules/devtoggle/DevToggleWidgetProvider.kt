@@ -98,6 +98,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val wirelessOn = isWirelessEnabled(cr)
 
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_widget)
+            val tr = { value: String -> DevToggleLocalization.text(context, value) }
 
             val colorActiveText = Color.parseColor("#FFFFFF")
             val colorActiveStatus = Color.parseColor("#FFFFFF")
@@ -113,6 +114,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (devOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_dev, if (devOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_dev, tr("Dev Mode"))
             views.setTextViewText(R.id.tv_dev_status, if (devOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
             val devIconRes = if (devOn) R.drawable.white_icon else R.drawable.widget_icon_off
@@ -131,6 +133,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (usbOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_usb, if (usbOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_usb, tr("USB ADB"))
             views.setTextViewText(R.id.tv_usb_status, if (usbOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_usb_status, if (usbOn) colorActiveStatus else colorInactiveStatus)
             views.setInt(R.id.iv_usb, "setColorFilter", if (usbOn) colorActiveText else colorInactiveIcon)
@@ -147,12 +150,13 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (wirelessOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_wireless, if (wirelessOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_wireless, tr("Wireless Debugging"))
             if (wirelessOn) {
                 val ep = AdbEndpointHelper.getEndpoint(context)
                 if (ep != null && ep.contains(":") && !ep.startsWith(":") && !ep.contains("Resolving")) {
                     views.setTextViewText(R.id.tv_wireless_status, ep)
                 } else if (ep != null && ep.contains("Resolving")) {
-                    views.setTextViewText(R.id.tv_wireless_status, "CONNECTING...")
+                    views.setTextViewText(R.id.tv_wireless_status, tr("CONNECTING..."))
                 } else {
                     views.setTextViewText(R.id.tv_wireless_status, "ON")
                 }
@@ -173,6 +177,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val cr = context.contentResolver
             val devOn = isDevEnabled(cr)
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_dev_widget)
+            val tr = { value: String -> DevToggleLocalization.text(context, value) }
 
             val colorActiveText = Color.parseColor("#FFFFFF")
             val colorActiveStatus = Color.parseColor("#FFFFFF")
@@ -186,6 +191,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (devOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_single_dev_label, if (devOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_single_dev_label, tr("Dev Mode"))
             views.setTextViewText(R.id.tv_single_dev_status, if (devOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_single_dev_status, if (devOn) colorActiveStatus else colorInactiveStatus)
             val singleDevIconRes = if (devOn) R.drawable.white_icon else R.drawable.widget_icon_off
@@ -203,6 +209,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val cr = context.contentResolver
             val usbOn = isUsbEnabled(cr)
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_usb_widget)
+            val tr = { value: String -> DevToggleLocalization.text(context, value) }
 
             val colorActiveText = Color.parseColor("#FFFFFF")
             val colorActiveStatus = Color.parseColor("#FFFFFF")
@@ -217,6 +224,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (usbOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_single_usb_label, if (usbOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_single_usb_label, tr("USB ADB"))
             views.setTextViewText(R.id.tv_single_usb_status, if (usbOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_single_usb_status, if (usbOn) colorActiveStatus else colorInactiveStatus)
             views.setInt(R.id.iv_single_usb, "setColorFilter", if (usbOn) colorActiveText else colorInactiveIcon)
@@ -232,6 +240,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
             val cr = context.contentResolver
             val wirelessOn = isWirelessEnabled(cr)
             val views = RemoteViews(context.packageName, R.layout.dev_toggle_single_wireless_widget)
+            val tr = { value: String -> DevToggleLocalization.text(context, value) }
 
             val colorActiveText = Color.parseColor("#FFFFFF")
             val colorActiveStatus = Color.parseColor("#FFFFFF")
@@ -246,6 +255,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (wirelessOn) R.drawable.widget_btn_active else R.drawable.widget_btn_inactive
             )
             views.setTextColor(R.id.tv_single_wireless_label, if (wirelessOn) colorActiveText else colorInactiveText)
+            views.setTextViewText(R.id.tv_single_wireless_label, tr("Wireless Debugging"))
             views.setTextViewText(R.id.tv_single_wireless_status, if (wirelessOn) "ON" else "OFF")
             views.setTextColor(R.id.tv_single_wireless_status, if (wirelessOn) colorActiveStatus else colorInactiveStatus)
             if (wirelessOn) {
@@ -253,7 +263,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                 if (ep != null && ep.contains(":") && !ep.startsWith(":") && !ep.contains("Resolving")) {
                     views.setTextViewText(R.id.tv_single_wireless_endpoint, ep)
                 } else if (ep != null && ep.contains("Resolving")) {
-                    views.setTextViewText(R.id.tv_single_wireless_endpoint, "CONNECTING...")
+                    views.setTextViewText(R.id.tv_single_wireless_endpoint, tr("CONNECTING..."))
                 } else {
                     views.setTextViewText(R.id.tv_single_wireless_endpoint, "ACTIVE")
                 }
@@ -316,7 +326,7 @@ open class DevToggleWidgetProvider : AppWidgetProvider() {
                         try { Settings.Global.putInt(cr, USB_KEY, 0) } catch (_: Exception) {}
                         try { Settings.Global.putInt(cr, WIRELESS_KEY, 0) } catch (_: Exception) {}
                     }
-                    showToast(context, if (next == 1) "Developer Options: Enabled" else "Developer Options: Disabled")
+                    showToast(context, if (next == 1) "Dev Mode: Enabled" else "Dev Mode: Disabled")
                 } else {
                     showToast(context, "Permission Required: Run ADB grant command")
                 }

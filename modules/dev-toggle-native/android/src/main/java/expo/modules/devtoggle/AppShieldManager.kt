@@ -247,7 +247,7 @@ object AppShieldManager {
                     }
                 } catch (_: Exception) {}
 
-                handler.postDelayed(this, 1200)
+                handler.postDelayed(this, 500)
             }
         }
 
@@ -379,11 +379,11 @@ object AppShieldManager {
             checkPath.lineTo(sl + sw * 0.74f, st + sh * 0.35f)
             canvas.drawPath(checkPath, paint)
 
-            // The shortcut intent triggers WidgetActionActivity to immediately pause dev options
-            val shortcutIntent = Intent(context, WidgetActionActivity::class.java).apply {
-                action = WidgetActionActivity.ACTION_LAUNCH_SHIELDED
-                putExtra("package_name", packageName)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            // Use official launchIntent so Android system launcher recognizes it immediately
+            val shortcutIntent = Intent(launchIntent).apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -397,7 +397,7 @@ object AppShieldManager {
                         .build()
 
                     shortcutManager.requestPinShortcut(pinShortcutInfo, null)
-                    Toast.makeText(context, "Shortcut requested for $appLabel", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Shielded shortcut created for $appLabel", Toast.LENGTH_SHORT).show()
                     return true
                 }
             }
@@ -410,7 +410,7 @@ object AppShieldManager {
                 putExtra("duplicate", false)
             }
             context.sendBroadcast(addIntent)
-            Toast.makeText(context, "Shortcut created for $appLabel", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Shielded shortcut created for $appLabel", Toast.LENGTH_SHORT).show()
             return true
         } catch (_: Exception) {
             return false

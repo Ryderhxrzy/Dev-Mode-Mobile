@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import {
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { CyberBottomNav } from '@/components/CyberBottomNav';
+import LocalizedText from '@/components/LocalizedText';
+import { ScreenBackground } from '@/components/ScreenBackground';
+import { Card, Overline, Pill } from '@/components/ui';
+import { fonts, radius, space, useTheme } from '@/theme';
 import Maximize2 from 'lucide-react-native/icons/maximize-2';
 import X from 'lucide-react-native/icons/x';
-import { Card, Overline, Pill } from '@/components/ui';
-import { ScreenBackground } from '@/components/ScreenBackground';
-import { fonts, radius, space, useTheme } from '@/theme';
+import { useState } from 'react';
+import {
+    Image,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function WidgetSettings() {
   const t = useTheme();
@@ -26,10 +27,10 @@ export default function WidgetSettings() {
           {/* Header */}
           <View style={s.header}>
             <Overline>LAUNCHER EXTENSIONS</Overline>
-            <Text style={[s.title, { color: t.textPrimary }]}>Home Screen Widgets</Text>
-            <Text style={[s.subtitle, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.title, { color: t.textPrimary }]}>Home Screen Widgets</LocalizedText>
+            <LocalizedText style={[s.subtitle, { color: t.textSecondary }]}>
               Control Developer Options, USB Debugging, and Wireless ADB directly from your Android desktop launcher.
-            </Text>
+            </LocalizedText>
           </View>
 
           {/* In-App Widget Promotion Banner (Clickable) */}
@@ -54,15 +55,15 @@ export default function WidgetSettings() {
                 />
                 <View style={s.promoBadgeOverlay}>
                   <Maximize2 size={12} color="#4ADE80" />
-                  <Text style={s.promoBadgeText}>TAP TO EXPAND</Text>
+                  <LocalizedText style={s.promoBadgeText}>TAP TO EXPAND</LocalizedText>
                 </View>
               </View>
               <View style={s.promoDetailsBar}>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[s.promoTitle, { color: t.textPrimary }]}>Launcher Desktop Experience</Text>
-                  <Text style={[s.promoDesc, { color: t.textSecondary }]}>
+                  <LocalizedText style={[s.promoTitle, { color: t.textPrimary }]}>Launcher Desktop Experience</LocalizedText>
+                  <LocalizedText style={[s.promoDesc, { color: t.textSecondary }]}>
                     Interactive cybernetic widgets directly on your home screen. Tap banner to expand.
-                  </Text>
+                  </LocalizedText>
                 </View>
                 <Pill label="PREVIEW" tone="success" />
               </View>
@@ -71,45 +72,45 @@ export default function WidgetSettings() {
 
           {/* Setup Guide */}
           <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>HOW TO ADD WIDGETS</Text>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>HOW TO ADD WIDGETS</LocalizedText>
           </View>
 
           <Card>
             <View style={{ gap: space.md }}>
               <View style={s.stepRow}>
                 <View style={s.stepNum}>
-                  <Text style={s.stepNumText}>1</Text>
+                  <LocalizedText style={s.stepNumText}>1</LocalizedText>
                 </View>
-                <Text style={[s.stepText, { color: t.textPrimary }]}>
+                <LocalizedText style={[s.stepText, { color: t.textPrimary }]}>
                   Long press on an empty space on your Android home screen.
-                </Text>
+                </LocalizedText>
               </View>
 
               <View style={s.stepRow}>
                 <View style={s.stepNum}>
-                  <Text style={s.stepNumText}>2</Text>
+                  <LocalizedText style={s.stepNumText}>2</LocalizedText>
                 </View>
-                <Text style={[s.stepText, { color: t.textPrimary }]}>
-                  Tap <Text style={{ fontFamily: fonts.heading, color: t.accentCyan }}>Widgets</Text> in the launcher popup menu.
-                </Text>
+                <LocalizedText style={[s.stepText, { color: t.textPrimary }]}>
+                  Tap <LocalizedText style={{ fontFamily: fonts.heading, color: t.accentCyan }}>Widgets</LocalizedText> in the launcher popup menu.
+                </LocalizedText>
               </View>
 
               <View style={s.stepRow}>
                 <View style={s.stepNum}>
-                  <Text style={s.stepNumText}>3</Text>
+                  <LocalizedText style={s.stepNumText}>3</LocalizedText>
                 </View>
-                <Text style={[s.stepText, { color: t.textPrimary }]}>
-                  Scroll to <Text style={{ fontFamily: fonts.heading, color: t.accentCyan }}>Dev Mode</Text> in the widgets list.
-                </Text>
+                <LocalizedText style={[s.stepText, { color: t.textPrimary }]}>
+                  Scroll to <LocalizedText style={{ fontFamily: fonts.heading, color: t.accentCyan }}>Dev Mode</LocalizedText> in the widgets list.
+                </LocalizedText>
               </View>
 
               <View style={s.stepRow}>
                 <View style={s.stepNum}>
-                  <Text style={s.stepNumText}>4</Text>
+                  <LocalizedText style={s.stepNumText}>4</LocalizedText>
                 </View>
-                <Text style={[s.stepText, { color: t.textPrimary }]}>
+                <LocalizedText style={[s.stepText, { color: t.textPrimary }]}>
                   Drag and drop the 3x1 multi-bar or 1x1 button to your screen.
-                </Text>
+                </LocalizedText>
               </View>
             </View>
           </Card>
@@ -126,7 +127,7 @@ export default function WidgetSettings() {
               <View style={s.modalHeader}>
                 <View style={{ gap: 2, flex: 1 }}>
                   <Overline>PROMOTION PREVIEW</Overline>
-                  <Text style={[s.modalTitle, { color: '#FFFFFF' }]}>Home Screen Widgets</Text>
+                  <LocalizedText style={[s.modalTitle, { color: '#FFFFFF' }]}>Home Screen Widgets</LocalizedText>
                 </View>
                 <Pressable
                   accessibilityRole="button"
@@ -150,12 +151,13 @@ export default function WidgetSettings() {
                   accessibilityRole="button"
                   onPress={() => setShowPromoModal(false)}
                   style={s.modalDismissBtn}>
-                  <Text style={s.modalDismissBtnText}>CLOSE PREVIEW</Text>
+                  <LocalizedText style={s.modalDismissBtnText}>CLOSE PREVIEW</LocalizedText>
                 </Pressable>
               </View>
             </SafeAreaView>
           </View>
         </Modal>
+        <CyberBottomNav currentTab="dev-settings" />
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -166,7 +168,7 @@ const s = StyleSheet.create({
   content: {
     paddingHorizontal: space.lg,
     paddingTop: space.sm,
-    paddingBottom: 36,
+    paddingBottom: 100,
     gap: space.md,
     width: '100%',
   },

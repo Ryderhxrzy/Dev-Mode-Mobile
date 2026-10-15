@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, StyleSheet, View } from 'react-native';
+import LocalizedText from '@/components/LocalizedText';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Terminal from 'lucide-react-native/icons/terminal';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import ShieldAlert from 'lucide-react-native/icons/shield-alert';
 import Sliders from 'lucide-react-native/icons/sliders-vertical';
 import KeyRound from 'lucide-react-native/icons/key-round';
+import Cpu from 'lucide-react-native/icons/cpu';
 import DevToggle, { type PermissionStatus } from '@/modules/dev-toggle-native';
 import { Button, Card, CodeBlock, FeatureRow, IconContainer, Pill } from '@/components/ui';
 import { fonts, radius, space, useTheme } from '@/theme';
@@ -61,18 +63,25 @@ export function AdbSetupGuide({
   onCheck: () => void;
 }) {
   const t = useTheme();
-  const [method, setMethod] = useState<'npx' | 'adb'>('npx');
+  const [method, setMethod] = useState<'npx' | 'adb' | 'shizuku'>('npx');
+  const [shizukuStatus, setShizukuStatus] = useState<string>('unavailable');
+
+  useEffect(() => {
+    DevToggle.getShizukuStatus?.().then(st => {
+      if (st) setShizukuStatus(st);
+    });
+  }, []);
 
   return (
     <View style={s.wrap}>
       {/* Live Status Header */}
       <PermissionStatusCard permission={permission} checking={checking} onCheck={onCheck} />
 
-      {/* Method switch: our CLI (recommended) or plain ADB */}
+      {/* Method switch: CLI, plain ADB, or Shizuku */}
       <View style={s.methodRow}>
         <Button
           variant={method === 'npx' ? 'cyan' : 'ghost'}
-          label="Dev Mode CLI"
+          label="CLI"
           onPress={() => setMethod('npx')}
           style={s.methodBtn}
         />
@@ -82,30 +91,36 @@ export function AdbSetupGuide({
           onPress={() => setMethod('adb')}
           style={s.methodBtn}
         />
+        <Button
+          variant={method === 'shizuku' ? 'cyan' : 'ghost'}
+          label="Shizuku"
+          onPress={() => setMethod('shizuku')}
+          style={s.methodBtn}
+        />
       </View>
 
-      {method === 'npx' ? (
+      {method === 'npx' && (
         <Card>
           <View style={s.cardHead}>
             <IconContainer tone="cyan" size={44}>
               <Terminal size={22} color={t.accentCyan} />
             </IconContainer>
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[s.cardOverline, { color: t.accentCyan }]}>RECOMMENDED</Text>
-              <Text style={[s.cardTitle, { color: t.textPrimary }]}>Grant with the Dev Mode CLI</Text>
+              <LocalizedText style={[s.cardOverline, { color: t.accentCyan }]}>RECOMMENDED</LocalizedText>
+              <LocalizedText style={[s.cardTitle, { color: t.textPrimary }]}>Grant with the Dev Mode CLI</LocalizedText>
             </View>
           </View>
 
           <Step n={1} title="Install Node.js and ADB">
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
               You need Node.js 16+ and Android Platform Tools (adb) available in your computer terminal.
-            </Text>
+            </LocalizedText>
           </Step>
 
           <Step n={2} title="Enable USB Debugging & connect">
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
               Turn ON USB Debugging, connect the cable, and tap “Always allow” on your phone.
-            </Text>
+            </LocalizedText>
             <View style={{ marginTop: 4 }}>
               <Button
                 variant="secondary"
@@ -117,120 +132,191 @@ export function AdbSetupGuide({
           </Step>
 
           <Step n={3} title="Install the Dev Mode CLI">
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
               One-time install. This adds the devmode command to your computer:
-            </Text>
+            </LocalizedText>
             <CodeBlock command={CLI_INSTALL_COMMAND} />
           </Step>
 
           <Step n={4} title="Grant the permission">
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
               It finds your phone and grants the permission for you:
-            </Text>
+            </LocalizedText>
             <CodeBlock command={CLI_GRANT_COMMAND} />
-            <Text style={[s.stepBody, { color: t.textMuted }]}>
+            <LocalizedText style={[s.stepBody, { color: t.textMuted }]}>
               Prefer not to install? Run it once without installing:
-            </Text>
+            </LocalizedText>
             <CodeBlock command={NPX_GRANT_COMMAND} />
           </Step>
 
           <Step n={5} title="Optional: control Dev Mode from your PC">
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
               The same CLI can toggle Developer Options, USB and Wireless Debugging, and connect over Wi-Fi. Open its one-key menu with:
-            </Text>
+            </LocalizedText>
             <CodeBlock command={CLI_AUTO_COMMAND} />
           </Step>
         </Card>
-      ) : (
-      <Card>
-        <View style={s.cardHead}>
-          <IconContainer tone="cyan" size={44}>
-            <Terminal size={22} color={t.accentCyan} />
-          </IconContainer>
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={[s.cardOverline, { color: t.accentCyan }]}>TERMINAL GUIDE</Text>
-            <Text style={[s.cardTitle, { color: t.textPrimary }]}>Quick ADB Setup</Text>
-          </View>
-        </View>
-
-        {/* Step 1 */}
-        <View style={s.unifiedStep}>
-          <View style={s.stepBadge}>
-            <Text style={[s.stepNum, { color: t.primaryLight }]}>1</Text>
-          </View>
-          <View style={s.stepContent}>
-            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Make sure ADB is installed</Text>
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
-              Ensure Android Platform Tools / ADB is installed and recognized on your computer terminal.
-            </Text>
-          </View>
-        </View>
-
-        {/* Step 2 */}
-        <View style={s.unifiedStep}>
-          <View style={s.stepBadge}>
-            <Text style={[s.stepNum, { color: t.primaryLight }]}>2</Text>
-          </View>
-          <View style={s.stepContent}>
-            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Enable USB Debugging & connect</Text>
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
-              Open Developer Options on your phone, turn ON USB Debugging, and connect via USB cable.
-            </Text>
-            <View style={{ marginTop: 4 }}>
-              <Button
-                variant="secondary"
-                label="Open Developer Options"
-                icon={<Sliders size={15} color="#FFFFFF" />}
-                onPress={() => DevToggle.openSettings('developerOptions')}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Step 3 */}
-        <View style={s.unifiedStep}>
-          <View style={s.stepBadge}>
-            <Text style={[s.stepNum, { color: t.primaryLight }]}>3</Text>
-          </View>
-          <View style={s.stepContent}>
-            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Verify device connection</Text>
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
-              Run this command in your computer terminal and accept the “Always allow” prompt on your phone:
-            </Text>
-            <CodeBlock command="adb devices" />
-          </View>
-        </View>
-
-        {/* Step 4 */}
-        <View style={s.unifiedStep}>
-          <View style={s.stepBadge}>
-            <Text style={[s.stepNum, { color: t.primaryLight }]}>4</Text>
-          </View>
-          <View style={s.stepContent}>
-            <Text style={[s.stepTitle, { color: t.textPrimary }]}>Grant permission command</Text>
-            <Text style={[s.stepBody, { color: t.textSecondary }]}>
-              Copy and execute this verified one-line command in your terminal:
-            </Text>
-            <CodeBlock command={GRANT_COMMAND} />
-          </View>
-        </View>
-      </Card>
       )}
 
-      {/* Full User Control & Revoke Info (Located in Step 4 as requested) */}
-      <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
-        <FeatureRow
-          icon={<KeyRound size={20} color={t.accentCyan} />}
-          title="Full User Control & Permission Revocation"
-          body="You are in complete control. If you ever want to revoke this permission, simply run this command from your computer:"
-          tone="cyan"
-        />
-        <CodeBlock command={REVOKE_COMMAND} />
-      </Card>
+      {method === 'adb' && (
+        <Card>
+          <View style={s.cardHead}>
+            <IconContainer tone="cyan" size={44}>
+              <Terminal size={22} color={t.accentCyan} />
+            </IconContainer>
+            <View style={{ flex: 1, gap: 2 }}>
+              <LocalizedText style={[s.cardOverline, { color: t.accentCyan }]}>TERMINAL GUIDE</LocalizedText>
+              <LocalizedText style={[s.cardTitle, { color: t.textPrimary }]}>Quick ADB Setup</LocalizedText>
+            </View>
+          </View>
 
-      <Text style={[s.tip, { color: t.textMuted }]}>
-        Note: This authorization stays tied to this device installation. If you reinstall or reset the app, run the grant command again.
-      </Text>
+          {/* Step 1 */}
+          <View style={s.unifiedStep}>
+            <View style={s.stepBadge}>
+              <LocalizedText style={[s.stepNum, { color: t.primaryLight }]}>1</LocalizedText>
+            </View>
+            <View style={s.stepContent}>
+              <LocalizedText style={[s.stepTitle, { color: t.textPrimary }]}>Make sure ADB is installed</LocalizedText>
+              <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+                Ensure Android Platform Tools / ADB is installed and recognized on your computer terminal.
+              </LocalizedText>
+            </View>
+          </View>
+
+          {/* Step 2 */}
+          <View style={s.unifiedStep}>
+            <View style={s.stepBadge}>
+              <LocalizedText style={[s.stepNum, { color: t.primaryLight }]}>2</LocalizedText>
+            </View>
+            <View style={s.stepContent}>
+              <LocalizedText style={[s.stepTitle, { color: t.textPrimary }]}>Enable USB Debugging & connect</LocalizedText>
+              <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+                Open Developer Options on your phone, turn ON USB Debugging, and connect via USB cable.
+              </LocalizedText>
+              <View style={{ marginTop: 4 }}>
+                <Button
+                  variant="secondary"
+                  label="Open Developer Options"
+                  icon={<Sliders size={15} color="#FFFFFF" />}
+                  onPress={() => DevToggle.openSettings('developerOptions')}
+                />
+              </View>
+            </View>
+          </View>
+
+          {/* Step 3 */}
+          <View style={s.unifiedStep}>
+            <View style={s.stepBadge}>
+              <LocalizedText style={[s.stepNum, { color: t.primaryLight }]}>3</LocalizedText>
+            </View>
+            <View style={s.stepContent}>
+              <LocalizedText style={[s.stepTitle, { color: t.textPrimary }]}>Verify device connection</LocalizedText>
+              <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+                Run this command in your computer terminal and accept the “Always allow” prompt on your phone:
+              </LocalizedText>
+              <CodeBlock command="adb devices" />
+            </View>
+          </View>
+
+          {/* Step 4 */}
+          <View style={s.unifiedStep}>
+            <View style={s.stepBadge}>
+              <LocalizedText style={[s.stepNum, { color: t.primaryLight }]}>4</LocalizedText>
+            </View>
+            <View style={s.stepContent}>
+              <LocalizedText style={[s.stepTitle, { color: t.textPrimary }]}>Grant permission command</LocalizedText>
+              <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+                Copy and execute this verified one-line command in your terminal:
+              </LocalizedText>
+              <CodeBlock command={GRANT_COMMAND} />
+            </View>
+          </View>
+        </Card>
+      )}
+
+      {method === 'shizuku' && (
+        <Card>
+          <View style={s.cardHead}>
+            <IconContainer tone="cyan" size={44}>
+              <Cpu size={22} color={t.accentCyan} />
+            </IconContainer>
+            <View style={{ flex: 1, gap: 2 }}>
+              <LocalizedText style={[s.cardOverline, { color: t.accentCyan }]}>NO PC REQUIRED</LocalizedText>
+              <LocalizedText style={[s.cardTitle, { color: t.textPrimary }]}>On-Device Shizuku Setup</LocalizedText>
+            </View>
+            <Pill
+              label={shizukuStatus === 'authorized' ? 'ACTIVE' : shizukuStatus === 'needs_permission' ? 'PROMPT' : 'OFFLINE'}
+              tone={shizukuStatus === 'authorized' ? 'success' : 'warning'}
+            />
+          </View>
+
+          <Step n={1} title="Get the Shizuku app">
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+              Install the open-source Shizuku app on this device from GitHub or Google Play.
+            </LocalizedText>
+            <View style={{ marginTop: 8 }}>
+              <Button
+                variant="ghost"
+                label="Download Shizuku"
+                onPress={() => Linking.openURL('https://shizuku.rikka.app/download/')}
+              />
+            </View>
+          </Step>
+
+          <Step n={2} title="Start Shizuku via Wireless Debugging">
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+              Open Shizuku, select &quot;Start via Wireless Debugging&quot;, pair via Developer Options, and press Start.
+            </LocalizedText>
+          </Step>
+
+          <Step n={3} title="Authorize Dev Mode">
+            <LocalizedText style={[s.stepBody, { color: t.textSecondary }]}>
+              {shizukuStatus === 'authorized'
+                ? 'Dev Mode is already authorized in Shizuku!'
+                : 'Connect to Shizuku to authorize direct developer toggles without a computer.'}
+            </LocalizedText>
+            <View style={{ marginTop: 8 }}>
+              <Button
+                variant={shizukuStatus === 'authorized' ? 'secondary' : 'cyan'}
+                label={shizukuStatus === 'authorized' ? 'Shizuku Authorized ✓' : 'Authorize in Shizuku'}
+                onPress={async () => {
+                  if (shizukuStatus === 'needs_permission') {
+                    await DevToggle.requestShizukuPermission?.();
+                  } else if (shizukuStatus === 'unavailable') {
+                    if (DevToggle.openShizuku) {
+                      DevToggle.openShizuku();
+                    } else {
+                      Linking.openURL('https://shizuku.rikka.app/');
+                    }
+                  }
+                  const st = await DevToggle.getShizukuStatus?.();
+                  if (st) setShizukuStatus(st);
+                  onCheck();
+                }}
+              />
+            </View>
+          </Step>
+        </Card>
+      )}
+
+      {/* Full User Control & Revoke Info for PC ADB methods */}
+      {method !== 'shizuku' && (
+        <>
+          <Card style={{ backgroundColor: t.canvasElevated, borderColor: t.cardBorder }}>
+            <FeatureRow
+              icon={<KeyRound size={20} color={t.accentCyan} />}
+              title="Full User Control & Permission Revocation"
+              body="You are in complete control. If you ever want to revoke this permission, simply run this command from your computer:"
+              tone="cyan"
+            />
+            <CodeBlock command={REVOKE_COMMAND} />
+          </Card>
+
+          <LocalizedText style={[s.tip, { color: t.textMuted }]}>
+            Note: This authorization stays tied to this device installation. If you reinstall or reset the app, run the grant command again.
+          </LocalizedText>
+        </>
+      )}
     </View>
   );
 }
@@ -240,10 +326,10 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   return (
     <View style={s.unifiedStep}>
       <View style={s.stepBadge}>
-        <Text style={[s.stepNum, { color: t.primaryLight }]}>{n}</Text>
+        <LocalizedText style={[s.stepNum, { color: t.primaryLight }]}>{n}</LocalizedText>
       </View>
       <View style={s.stepContent}>
-        <Text style={[s.stepTitle, { color: t.textPrimary }]}>{title}</Text>
+        <LocalizedText style={[s.stepTitle, { color: t.textPrimary }]}>{title}</LocalizedText>
         {children}
       </View>
     </View>
@@ -279,14 +365,14 @@ export function PermissionStatusCard({
         <ShieldAlert size={28} color={t.warning} />
       )}
       <View style={{ flex: 1, gap: 2 }}>
-        <Text style={[s.statusTitle, { color: t.textPrimary }]}>
+        <LocalizedText style={[s.statusTitle, { color: t.textPrimary }]}>
           {granted ? 'ADB PERMISSION ACTIVE' : 'WRITE_SECURE_SETTINGS: PENDING'}
-        </Text>
-        <Text style={[s.statusBody, { color: t.textSecondary }]}>
+        </LocalizedText>
+        <LocalizedText style={[s.statusBody, { color: t.textSecondary }]}>
           {granted
             ? 'Hardware permission verified. Instant switching is enabled.'
             : 'Run the grant command from your PC (Dev Mode CLI or ADB) to unlock direct controls.'}
-        </Text>
+        </LocalizedText>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
         <Pill label={granted ? 'GRANTED' : 'DENIED'} tone={granted ? 'success' : 'warning'} />

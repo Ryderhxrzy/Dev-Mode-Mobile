@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import LocalizedText from '@/components/LocalizedText';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
@@ -32,10 +33,10 @@ export default function SuccessScreen() {
           {/* Welcome Header */}
           <Animated.View entering={FadeInDown.delay(100).duration(350)} style={s.header}>
             <Overline>HARDWARE ACCESS UNLOCKED</Overline>
-            <Text style={[s.title, { color: t.textPrimary }]}>Welcome to Dev Mode</Text>
-            <Text style={[s.subtitle, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.title, { color: t.textPrimary }]}>Welcome to Dev Mode</LocalizedText>
+            <LocalizedText style={[s.subtitle, { color: t.textSecondary }]}>
               Your device is fully configured and primed for high-performance developer workflows. All settings take effect instantly.
-            </Text>
+            </LocalizedText>
           </Animated.View>
 
           {/* Unlocked Capabilities Grid/Cards */}
@@ -47,14 +48,14 @@ export default function SuccessScreen() {
                   <Zap size={20} color={t.success} />
                 </IconContainer>
                 <View style={s.featureTitleCol}>
-                  <Text style={[s.featureTag, { color: t.primaryLight }]}>PERFORMANCE</Text>
-                  <Text style={[s.featureTitle, { color: t.textPrimary }]}>Animation Speed Booster</Text>
+                  <LocalizedText style={[s.featureTag, { color: t.primaryLight }]}>PERFORMANCE</LocalizedText>
+                  <LocalizedText style={[s.featureTitle, { color: t.textPrimary }]}>Animation Speed Booster</LocalizedText>
                 </View>
                 <Pill label="0.5X READY" tone="success" />
               </View>
-              <Text style={[s.featureBody, { color: t.textSecondary }]}>
+              <LocalizedText style={[s.featureBody, { color: t.textSecondary }]}>
                 Window, transition, and animator scales optimized to 0.5x for snappy, instantaneous UI responsiveness.
-              </Text>
+              </LocalizedText>
             </Card>
 
             {/* Feature 2: Hardware Toggles */}
@@ -64,14 +65,14 @@ export default function SuccessScreen() {
                   <Sliders size={20} color={t.success} />
                 </IconContainer>
                 <View style={s.featureTitleCol}>
-                  <Text style={[s.featureTag, { color: t.primaryLight }]}>CONTROLS</Text>
-                  <Text style={[s.featureTitle, { color: t.textPrimary }]}>Direct Hardware Toggles</Text>
+                  <LocalizedText style={[s.featureTag, { color: t.primaryLight }]}>CONTROLS</LocalizedText>
+                  <LocalizedText style={[s.featureTitle, { color: t.textPrimary }]}>Direct Hardware Toggles</LocalizedText>
                 </View>
                 <Pill label="UNLOCKED" tone="success" />
               </View>
-              <Text style={[s.featureBody, { color: t.textSecondary }]}>
+              <LocalizedText style={[s.featureBody, { color: t.textSecondary }]}>
                 One-tap switches for Developer Options, USB Debugging, Wireless ADB, Stay Awake, and touch inspect.
-              </Text>
+              </LocalizedText>
             </Card>
 
             {/* Feature 3: Privacy Guarantee */}
@@ -81,14 +82,14 @@ export default function SuccessScreen() {
                   <ShieldCheck size={20} color={t.success} />
                 </IconContainer>
                 <View style={s.featureTitleCol}>
-                  <Text style={[s.featureTag, { color: t.primaryLight }]}>SECURITY</Text>
-                  <Text style={[s.featureTitle, { color: t.textPrimary }]}>100% Offline & Local</Text>
+                  <LocalizedText style={[s.featureTag, { color: t.primaryLight }]}>SECURITY</LocalizedText>
+                  <LocalizedText style={[s.featureTitle, { color: t.textPrimary }]}>100% Offline & Local</LocalizedText>
                 </View>
                 <Pill label="PRIVATE" tone="success" />
               </View>
-              <Text style={[s.featureBody, { color: t.textSecondary }]}>
+              <LocalizedText style={[s.featureBody, { color: t.textSecondary }]}>
                 All toggle states and preferences remain strictly on this device. Zero analytics, telemetry, or remote servers.
-              </Text>
+              </LocalizedText>
             </Card>
           </Animated.View>
         </ScrollView>

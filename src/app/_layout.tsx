@@ -6,6 +6,8 @@ import { Image, StyleSheet, useColorScheme, View } from 'react-native';
 import { useFonts } from 'expo-font';
 import { OnboardingProvider, useOnboarding } from '@/state/onboarding';
 import { useTheme } from '@/theme';
+import { LanguageProvider } from '@/state/language';
+import { GithubHeaderButton } from '@/components/GithubHeaderButton';
 
 // Prevent splash screen from auto-hiding until fonts and onboarding state are ready
 SplashScreen.preventAutoHideAsync();
@@ -29,7 +31,9 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <StatusBar style="light" />
       <OnboardingProvider>
-        <RootStack />
+        <LanguageProvider>
+          <RootStack />
+        </LanguageProvider>
       </OnboardingProvider>
     </ThemeProvider>
   );
@@ -65,6 +69,7 @@ function RootStack() {
             fontFamily: 'SpaceGrotesk_700Bold',
             fontSize: 18,
           },
+          headerRight: () => <GithubHeaderButton style={{ marginRight: 4 }} />,
         }}>
         <Stack.Protected guard={!complete}>
           <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
@@ -74,7 +79,7 @@ function RootStack() {
           <Stack.Screen
             name="setup"
             options={{
-              title: 'ADB Authorization',
+              title: 'NPM CLI Commands',
               headerBackTitle: 'Dev Mode',
             }}
           />
@@ -83,6 +88,13 @@ function RootStack() {
             options={{
               title: 'Developer Settings',
               headerBackTitle: 'Dev Mode',
+            }}
+          />
+          <Stack.Screen
+            name="app-shield"
+            options={{
+              title: 'App Shield & Auto-Off',
+              headerBackTitle: 'Settings',
             }}
           />
           <Stack.Screen
@@ -103,6 +115,13 @@ function RootStack() {
             name="widget-settings"
             options={{
               title: 'Home Screen Widgets',
+              headerBackTitle: 'Settings',
+            }}
+          />
+          <Stack.Screen
+            name="language-settings"
+            options={{
+              title: 'App Language',
               headerBackTitle: 'Settings',
             }}
           />

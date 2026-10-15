@@ -4,10 +4,16 @@ version = '1.0.0'
 android {
   namespace 'expo.modules.devtoggle'
   compileSdk rootProject.ext.compileSdkVersion
+  buildFeatures { aidl true }
 
   defaultConfig {
     minSdk rootProject.ext.minSdkVersion
     targetSdk rootProject.ext.targetSdkVersion
   }
 }
-dependencies { implementation project(':expo-modules-core') }
+dependencies {
+  implementation project(':expo-modules-core')
+  implementation 'com.google.mlkit:translate:17.0.3'
+  implementation 'dev.rikka.shizuku:api:13.1.5'
+  implementation 'dev.rikka.shizuku:provider:13.1.5'
+}

@@ -1,6 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, StyleSheet, ToastAndroid, View } from 'react-native';
+import LocalizedText from '@/components/LocalizedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import Lock from 'lucide-react-native/icons/lock';
@@ -20,13 +21,26 @@ const REVOKE_COMMAND = 'adb shell pm revoke com.devmode.app android.permission.W
 export default function SecuritySettings() {
   const t = useTheme();
   const [permission, setPermission] = useState<boolean>(false);
+  const [shizukuStatus, setShizukuStatus] = useState<'unavailable' | 'needs_permission' | 'authorized'>('unavailable');
   const [copied, setCopied] = useState<boolean>(false);
 
   useEffect(() => {
-    DevToggle.getPermissionStatus().then(perm => {
+    Promise.all([DevToggle.getPermissionStatus(), DevToggle.getShizukuStatus()]).then(([perm, shizuku]) => {
       setPermission(perm === 'granted');
+      setShizukuStatus(shizuku);
     });
   }, []);
+
+  const handleShizuku = async () => {
+    if (shizukuStatus === 'needs_permission') {
+      await DevToggle.requestShizukuPermission();
+      setShizukuStatus(await DevToggle.getShizukuStatus());
+      return;
+    }
+    if (shizukuStatus === 'unavailable') {
+      await Linking.openURL('https://shizuku.rikka.app/download/');
+    }
+  };
 
   const handleCopyRevoke = async () => {
     await Clipboard.setStringAsync(REVOKE_COMMAND);
@@ -44,15 +58,15 @@ export default function SecuritySettings() {
           {/* Header */}
           <View style={s.header}>
             <Overline>PRIVACY & INTEGRITY</Overline>
-            <Text style={[s.title, { color: t.textPrimary }]}>Security & Privacy</Text>
-            <Text style={[s.subtitle, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.title, { color: t.textPrimary }]}>Security & Privacy</LocalizedText>
+            <LocalizedText style={[s.subtitle, { color: t.textSecondary }]}>
               Learn how Dev Mode protects your device with local-only architecture, zero telemetry, and scoped hardware permissions.
-            </Text>
+            </LocalizedText>
           </View>
 
           {/* Authorization Status */}
           <View style={s.sectionHeaderRow}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>PERMISSION INTEGRITY STATUS</Text>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>PERMISSION INTEGRITY STATUS</LocalizedText>
             <Pill
               label={permission ? 'GRANTED' : 'NOT AUTHORIZED'}
               tone={permission ? 'success' : 'warning'}
@@ -70,24 +84,49 @@ export default function SecuritySettings() {
               </IconContainer>
               <View style={s.rowCopy}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <Text style={[s.rowTitle, { color: t.textPrimary }]}>WRITE_SECURE_SETTINGS</Text>
+                  <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>WRITE_SECURE_SETTINGS</LocalizedText>
                   <Pill
                     label={permission ? 'GRANTED' : 'PENDING'}
                     tone={permission ? 'success' : 'warning'}
                   />
                 </View>
-                <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
                   {permission
                     ? 'Hardware permission is verified active. Scoped exclusively to developer options toggles.'
                     : 'Permission is pending. Run the one-time ADB command to authorize direct toggles.'}
-                </Text>
+                </LocalizedText>
+              </View>
+            </View>
+          </Card>
+
+          <Card
+            style={{
+              borderColor: shizukuStatus === 'authorized' ? `${t.success}60` : `${t.accentCyan}60`,
+              backgroundColor: shizukuStatus === 'authorized' ? `${t.success}10` : `${t.accentCyan}08`,
+            }}>
+            <View style={s.row}>
+              <IconContainer tone={shizukuStatus === 'authorized' ? 'success' : 'cyan'} size={44}>
+                <Cpu size={22} color={shizukuStatus === 'authorized' ? t.success : t.accentCyan} />
+              </IconContainer>
+              <View style={s.rowCopy}>
+                <View style={s.rowHeader}>
+                  <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Shizuku Access</LocalizedText>
+                  <Pill
+                    label={shizukuStatus === 'authorized' ? 'AUTHORIZED' : shizukuStatus === 'needs_permission' ? 'AUTHORIZE' : 'NOT RUNNING'}
+                    tone={shizukuStatus === 'authorized' ? 'success' : 'cyan'}
+                  />
+                </View>
+                <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>Use Shizuku as a local privileged bridge for developer setting toggles. WRITE_SECURE_SETTINGS remains supported as a fallback.</LocalizedText>
+                <Pressable onPress={handleShizuku} style={[s.shizukuButton, { borderColor: t.cardBorder, backgroundColor: `${t.accentCyan}12` }]}>
+                  <LocalizedText style={[s.shizukuButtonText, { color: t.accentCyan }]}>{shizukuStatus === 'needs_permission' ? 'Authorize Shizuku' : shizukuStatus === 'authorized' ? 'Shizuku Authorized' : 'Get Shizuku'}</LocalizedText>
+                </Pressable>
               </View>
             </View>
           </Card>
 
           {/* Security Features Breakdown */}
           <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>CORE SECURITY COMMITMENTS</Text>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>CORE SECURITY COMMITMENTS</LocalizedText>
           </View>
 
           <Card>
@@ -119,18 +158,18 @@ export default function SecuritySettings() {
 
           {/* Revocation Information */}
           <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>REVOCATION & CONTROLS</Text>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>REVOCATION & CONTROLS</LocalizedText>
           </View>
 
           <Card>
             <View style={{ gap: space.md }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <CheckCircle2 size={16} color={t.success} />
-                <Text style={[s.infoTitle, { color: t.textPrimary }]}>Always In Your Full Control</Text>
+                <LocalizedText style={[s.infoTitle, { color: t.textPrimary }]}>Always In Your Full Control</LocalizedText>
               </View>
-              <Text style={[s.infoDesc, { color: t.textSecondary }]}>
+              <LocalizedText style={[s.infoDesc, { color: t.textSecondary }]}>
                 You retain complete authority. You can revoke WRITE_SECURE_SETTINGS at any time from your computer using ADB, or simply by uninstalling the application.
-              </Text>
+              </LocalizedText>
 
               {/* Copyable Terminal Command Block */}
               <Pressable
@@ -139,19 +178,19 @@ export default function SecuritySettings() {
                 onPress={handleCopyRevoke}
                 style={({ pressed }) => [s.codeCard, { opacity: pressed ? 0.85 : 1 }]}>
                 <View style={s.codeHeader}>
-                  <Text style={[s.codeLabel, { color: t.textMuted }]}>ADB REVOKE COMMAND</Text>
+                  <LocalizedText style={[s.codeLabel, { color: t.textMuted }]}>ADB REVOKE COMMAND</LocalizedText>
                   <View style={s.codeActionRow}>
                     {copied ? (
                       <Check size={14} color="#4ADE80" />
                     ) : (
                       <Copy size={14} color={t.accentCyan} />
                     )}
-                    <Text style={[s.codeActionText, { color: copied ? '#4ADE80' : t.accentCyan }]}>
+                    <LocalizedText style={[s.codeActionText, { color: copied ? '#4ADE80' : t.accentCyan }]}>
                       {copied ? 'COPIED' : 'TAP TO COPY'}
-                    </Text>
+                    </LocalizedText>
                   </View>
                 </View>
-                <Text style={s.codeText}>{REVOKE_COMMAND}</Text>
+                <LocalizedText style={s.codeText}>{REVOKE_COMMAND}</LocalizedText>
               </Pressable>
             </View>
           </Card>
@@ -211,6 +250,9 @@ const s = StyleSheet.create({
     fontSize: 12.5,
     lineHeight: 17,
   },
+  rowHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  shizukuButton: { alignSelf: 'flex-start', marginTop: 10, borderWidth: 1, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 7 },
+  shizukuButtonText: { fontFamily: fonts.heading, fontSize: 12 },
   infoTitle: {
     fontFamily: fonts.heading,
     fontSize: 14,
