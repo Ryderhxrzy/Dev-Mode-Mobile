@@ -86,6 +86,8 @@
       <meta-data
         android:name="android.appwidget.provider"
         android:resource="@xml/dev_toggle_widget_wireless_info" />
+    </receiver>
+
     <!-- 5. Shield 1x1 App Widget -->
     <receiver
       android:name="expo.modules.devtoggle.DevToggleShield1x1WidgetProvider"

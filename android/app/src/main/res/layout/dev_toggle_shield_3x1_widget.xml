@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_shield_3x1_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@drawable/widget_bg"
+    android:paddingLeft="6dp"
+    android:paddingRight="6dp"
+    android:paddingTop="5dp"
+    android:paddingBottom="5dp"
+    android:gravity="center">
+
+    <!-- Slot 1 -->
+    <LinearLayout
+        android:id="@+id/slot_1_root"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_inactive"
+        android:padding="3dp"
+        android:layout_marginEnd="4dp">
+
+        <ImageView
+            android:id="@+id/iv_slot_1_icon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:src="@drawable/white_icon"
+            android:contentDescription="Slot 1 App"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tv_slot_1_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="App 1"
+            android:textColor="#FFFFFF"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_slot_1_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SHIELD"
+            android:textColor="#22C55E"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Slot 2 -->
+    <LinearLayout
+        android:id="@+id/slot_2_root"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_inactive"
+        android:padding="3dp"
+        android:layout_marginEnd="4dp">
+
+        <ImageView
+            android:id="@+id/iv_slot_2_icon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:src="@drawable/white_icon"
+            android:contentDescription="Slot 2 App"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tv_slot_2_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="App 2"
+            android:textColor="#FFFFFF"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_slot_2_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SHIELD"
+            android:textColor="#22C55E"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:maxLines="1" />
+    </LinearLayout>
+
+    <!-- Slot 3 -->
+    <LinearLayout
+        android:id="@+id/slot_3_root"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_btn_inactive"
+        android:padding="3dp">
+
+        <ImageView
+            android:id="@+id/iv_slot_3_icon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:src="@drawable/white_icon"
+            android:contentDescription="Slot 3 App"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
+            android:layout_marginBottom="2dp" />
+
+        <TextView
+            android:id="@+id/tv_slot_3_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="App 3"
+            android:textColor="#FFFFFF"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_slot_3_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SHIELD"
+            android:textColor="#22C55E"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:maxLines="1" />
+    </LinearLayout>
+</LinearLayout>
+
