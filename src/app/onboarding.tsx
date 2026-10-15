@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import LocalizedText from '@/components/LocalizedText';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -70,9 +71,9 @@ export default function Onboarding() {
               />
             ))}
           </View>
-          <Text style={[s.pageCounter, { color: t.textMuted }]}>
+          <LocalizedText style={[s.pageCounter, { color: t.textMuted }]}>
             0{page + 1} / 0{PAGES.length}
-          </Text>
+          </LocalizedText>
         </View>
 
         <ScrollView
@@ -157,8 +158,8 @@ function PageHeader({
   return (
     <View style={s.pageHeader}>
       <Overline>{overline}</Overline>
-      <Text style={[s.title, { color: t.textPrimary }]}>{title}</Text>
-      <Text style={[s.subtitle, { color: t.textSecondary }]}>{subtitle}</Text>
+      <LocalizedText style={[s.title, { color: t.textPrimary }]}>{title}</LocalizedText>
+      <LocalizedText style={[s.subtitle, { color: t.textSecondary }]}>{subtitle}</LocalizedText>
     </View>
   );
 }
@@ -176,14 +177,14 @@ function Welcome() {
             resizeMode="contain"
           />
           <View style={[s.tagBadge, { backgroundColor: t.primaryGlow, borderColor: t.primary }]}>
-            <Text style={[s.tagText, { color: t.primaryLight }]}>LOCAL UTILITY</Text>
+            <LocalizedText style={[s.tagText, { color: t.primaryLight }]}>LOCAL UTILITY</LocalizedText>
           </View>
         </View>
 
-        <Text style={[s.heroTitle, { color: t.textPrimary }]}>Dev Mode</Text>
-        <Text style={[s.heroDesc, { color: t.textSecondary }]}>
+        <LocalizedText style={[s.heroTitle, { color: t.textPrimary }]}>Dev Mode</LocalizedText>
+        <LocalizedText style={[s.heroDesc, { color: t.textSecondary }]}>
           Instant hardware control for Android developer settings. Built for engineers, power users, and QA testing.
-        </Text>
+        </LocalizedText>
       </View>
 
       <PageHeader
@@ -286,9 +287,9 @@ function Privacy({ acknowledged, onToggle }: { acknowledged: boolean; onToggle: 
           ]}>
           {acknowledged && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
         </View>
-        <Text style={[s.ackText, { color: acknowledged ? t.textPrimary : t.textSecondary }]}>
+        <LocalizedText style={[s.ackText, { color: acknowledged ? t.textPrimary : t.textSecondary }]}>
           I confirm that all data stays strictly on this device with zero external access.
-        </Text>
+        </LocalizedText>
       </Pressable>
     </>
   );
@@ -331,11 +332,11 @@ function HowItWorks() {
         <View style={{ gap: space.xs }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Terminal size={16} color={t.accentCyan} />
-            <Text style={[s.prepTitle, { color: t.textPrimary }]}>Preparation for Next Stage</Text>
+            <LocalizedText style={[s.prepTitle, { color: t.textPrimary }]}>Preparation for Next Stage</LocalizedText>
           </View>
-          <Text style={[s.prepBody, { color: t.textSecondary }]}>
+          <LocalizedText style={[s.prepBody, { color: t.textSecondary }]}>
             In Stage 04, you will run one quick command in your computer&apos;s terminal to grant permission. Have your computer and USB cable ready.
-          </Text>
+          </LocalizedText>
         </View>
       </Card>
     </>

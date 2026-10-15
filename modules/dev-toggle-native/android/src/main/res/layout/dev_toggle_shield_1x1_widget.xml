@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_shield_1x1_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_bg"
+    android:padding="6dp">
+
+    <ImageView
+        android:id="@+id/iv_shield_app_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/white_icon"
+        android:contentDescription="Shielded App"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_marginBottom="3dp" />
+
+    <TextView
+        android:id="@+id/tv_shield_app_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SHIELD"
+        android:textColor="#FFFFFF"
+        android:textSize="10.5sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/tv_shield_app_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AUTO-OFF"
+        android:textColor="#22C55E"
+        android:textSize="8.5sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:layout_marginTop="1dp" />
+</LinearLayout>
+

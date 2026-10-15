@@ -26,6 +26,7 @@ export type DeviceInfo = {
 
 export type DeviceStatus = Record<SettingName, SettingState> & {
   writeSecureSettings: PermissionStatus;
+  shizukuStatus?: 'unavailable' | 'needs_permission' | 'authorized';
   nativeAvailable: boolean;
   wirelessEndpoint?: string | null;
   notificationMode?: NotificationMode;
@@ -46,6 +47,19 @@ export type ScreenMirrorStatus = {
 
 type Result = { opened?: boolean; changed?: boolean; message: string };
 
+export type InstalledApp = {
+  packageName: string;
+  appName: string;
+  isSystem: boolean;
+  icon?: string;
+};
+
+export type AppShieldSettings = {
+  enabled: boolean;
+  hasUsageAccess: boolean;
+  protectedPackages: string[];
+};
+
 type NativeModule = {
   getStatus(): Promise<DeviceStatus>;
   getPermissionStatus(): Promise<PermissionStatus>;
@@ -59,6 +73,9 @@ type NativeModule = {
   setExtraSetting(setting: ExtraSettingName, enabled: boolean): Promise<Result>;
   getWirelessEndpoint?(): Promise<string | null>;
   getNotificationMode?(): Promise<NotificationMode>;
+  getShizukuStatus?(): Promise<'unavailable' | 'needs_permission' | 'authorized'>;
+  requestShizukuPermission?(): Promise<boolean>;
+  openShizuku?(): Promise<boolean>;
   setNotificationMode?(mode: NotificationMode): Promise<{ mode: NotificationMode; success: boolean }>;
   hasNotificationPermission?(): Promise<boolean>;
   requestNotificationPermission?(): Promise<boolean>;
@@ -69,6 +86,25 @@ type NativeModule = {
   stopScreenMirror?(): Promise<boolean>;
   getScreenMirrorUrl?(): Promise<string>;
   getScreenMirrorStatus?(): Promise<ScreenMirrorStatus>;
+  getLanguagePreference?(): Promise<string>;
+  setLanguagePreference?(language: string): Promise<boolean>;
+  canWriteSystemSettings?(): Promise<boolean>;
+  openWriteSettingsPermission?(): Promise<boolean>;
+  downloadTranslationModel?(language: string): Promise<boolean>;
+  isTranslationModelDownloaded?(language: string): Promise<boolean>;
+  translateText?(text: string, language: string): Promise<string>;
+  getAppShieldSettings?(): Promise<AppShieldSettings>;
+  setAppShieldEnabled?(enabled: boolean): Promise<boolean>;
+  setProtectedPackages?(packages: string[]): Promise<boolean>;
+  getInstalledApps?(): Promise<InstalledApp[]>;
+  openUsageAccessSettings?(): Promise<boolean>;
+  launchProtectedApp?(packageName: string): Promise<boolean>;
+  createShieldedShortcut?(packageName: string): Promise<boolean>;
+  openBatteryOptimizationSettings?(): Promise<boolean>;
+  openAppDetailsSettings?(): Promise<boolean>;
+  isWidgetPinningSupported?(): boolean;
+  pinShieldWidget1x1?(packageName: string): Promise<boolean>;
+  pinShieldWidget3x1?(): Promise<boolean>;
 };
 
 const native = requireOptionalNativeModule<NativeModule>('DevToggle');
@@ -81,6 +117,7 @@ export const UNAVAILABLE_STATUS: DeviceStatus = {
   wirelessEndpoint: null,
   writeSecureSettings: 'unknown',
   nativeAvailable: false,
+  shizukuStatus: 'unavailable',
 };
 
 let memoryOnboarding = false;
@@ -133,6 +170,12 @@ export default {
     mode: NotificationMode
   ): Promise<{ mode: NotificationMode; success: boolean }> =>
     native?.setNotificationMode ? native.setNotificationMode(mode) : { mode, success: true },
+  getShizukuStatus: async (): Promise<'unavailable' | 'needs_permission' | 'authorized'> =>
+    native?.getShizukuStatus ? native.getShizukuStatus() : 'unavailable',
+  requestShizukuPermission: async (): Promise<boolean> =>
+    native?.requestShizukuPermission ? native.requestShizukuPermission() : false,
+  openShizuku: async (): Promise<boolean> =>
+    native?.openShizuku ? native.openShizuku() : false,
   hasNotificationPermission: async (): Promise<boolean> =>
     native?.hasNotificationPermission ? native.hasNotificationPermission() : true,
   requestNotificationPermission: async (): Promise<boolean> =>
@@ -167,4 +210,44 @@ export default {
     native?.getScreenMirrorStatus
       ? native.getScreenMirrorStatus()
       : { streaming: false, width: 540, height: 1170, streamUrl: '' },
+  getLanguagePreference: async (): Promise<string> =>
+    native?.getLanguagePreference ? native.getLanguagePreference() : 'auto',
+  setLanguagePreference: async (language: string): Promise<boolean> =>
+    native?.setLanguagePreference ? native.setLanguagePreference(language) : false,
+  canWriteSystemSettings: async (): Promise<boolean> =>
+    native?.canWriteSystemSettings ? native.canWriteSystemSettings() : false,
+  openWriteSettingsPermission: async (): Promise<boolean> =>
+    native?.openWriteSettingsPermission ? native.openWriteSettingsPermission() : false,
+  downloadTranslationModel: async (language: string): Promise<boolean> =>
+    native?.downloadTranslationModel ? native.downloadTranslationModel(language) : false,
+  isTranslationModelDownloaded: async (language: string): Promise<boolean> =>
+    native?.isTranslationModelDownloaded ? native.isTranslationModelDownloaded(language) : false,
+  translateText: async (text: string, language: string): Promise<string> =>
+    native?.translateText ? native.translateText(text, language) : text,
+  getAppShieldSettings: async (): Promise<AppShieldSettings> =>
+    native?.getAppShieldSettings
+      ? native.getAppShieldSettings()
+      : { enabled: false, hasUsageAccess: false, protectedPackages: [] },
+  setAppShieldEnabled: async (enabled: boolean): Promise<boolean> =>
+    native?.setAppShieldEnabled ? native.setAppShieldEnabled(enabled) : false,
+  setProtectedPackages: async (packages: string[]): Promise<boolean> =>
+    native?.setProtectedPackages ? native.setProtectedPackages(packages) : false,
+  getInstalledApps: async (): Promise<InstalledApp[]> =>
+    native?.getInstalledApps ? native.getInstalledApps() : [],
+  openUsageAccessSettings: async (): Promise<boolean> =>
+    native?.openUsageAccessSettings ? native.openUsageAccessSettings() : false,
+  launchProtectedApp: async (packageName: string): Promise<boolean> =>
+    native?.launchProtectedApp ? native.launchProtectedApp(packageName) : false,
+  createShieldedShortcut: async (packageName: string): Promise<boolean> =>
+    native?.createShieldedShortcut ? native.createShieldedShortcut(packageName) : false,
+  openBatteryOptimizationSettings: async (): Promise<boolean> =>
+    native?.openBatteryOptimizationSettings ? native.openBatteryOptimizationSettings() : false,
+  openAppDetailsSettings: async (): Promise<boolean> =>
+    native?.openAppDetailsSettings ? native.openAppDetailsSettings() : false,
+  isWidgetPinningSupported: (): boolean =>
+    native?.isWidgetPinningSupported ? native.isWidgetPinningSupported() : false,
+  pinShieldWidget1x1: async (packageName: string): Promise<boolean> =>
+    native?.pinShieldWidget1x1 ? native.pinShieldWidget1x1(packageName) : false,
+  pinShieldWidget3x1: async (): Promise<boolean> =>
+    native?.pinShieldWidget3x1 ? native.pinShieldWidget3x1() : false,
 };

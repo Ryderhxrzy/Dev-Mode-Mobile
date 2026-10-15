@@ -1,6 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import LocalizedText from '@/components/LocalizedText';
 import Check from 'lucide-react-native/icons/check';
 import Copy from 'lucide-react-native/icons/copy';
 import { fonts, radius, space, useTheme } from '@/theme';
@@ -63,7 +64,7 @@ export function Button({
         style,
       ]}>
       {icon && <View style={s.btnIcon}>{icon}</View>}
-      <Text style={[s.buttonText, { color: fg }]}>{label}</Text>
+      <LocalizedText style={[s.buttonText, { color: fg }]}>{label}</LocalizedText>
     </Pressable>
   );
 }
@@ -138,14 +139,14 @@ export function Pill({ label, tone = 'primary' }: { label: string; tone?: Tone }
   return (
     <View style={[s.pill, { backgroundColor: soft, borderColor: `${fg}40` }]}>
       <View style={[s.dot, { backgroundColor: fg }]} />
-      <Text style={[s.pillText, { color: fg }]}>{label}</Text>
+      <LocalizedText style={[s.pillText, { color: fg }]}>{label}</LocalizedText>
     </View>
   );
 }
 
 export function Overline({ children }: { children: string }) {
   const t = useTheme();
-  return <Text style={[s.overline, { color: t.accentCyan }]}>{children}</Text>;
+  return <LocalizedText style={[s.overline, { color: t.accentCyan }]}>{children}</LocalizedText>;
 }
 
 export function CodeBlock({ command }: { command: string }) {
@@ -160,10 +161,10 @@ export function CodeBlock({ command }: { command: string }) {
 
   return (
     <View style={[s.code, { backgroundColor: t.codeBg, borderColor: t.codeBorder }]}>
-      <Text selectable style={[s.codeText, { color: t.codeText }]}>
-        <Text style={{ color: t.textMuted }}>$ </Text>
+      <LocalizedText selectable style={[s.codeText, { color: t.codeText }]}>
+        <LocalizedText style={{ color: t.textMuted }}>$ </LocalizedText>
         {command}
-      </Text>
+      </LocalizedText>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Copy command"
@@ -179,12 +180,12 @@ export function CodeBlock({ command }: { command: string }) {
         {copied ? (
           <>
             <Check size={14} color={t.success} />
-            <Text style={[s.copyText, { color: t.success }]}>Copied</Text>
+            <LocalizedText style={[s.copyText, { color: t.success }]}>Copied</LocalizedText>
           </>
         ) : (
           <>
             <Copy size={14} color={t.textPrimary} />
-            <Text style={[s.copyText, { color: t.textPrimary }]}>Copy</Text>
+            <LocalizedText style={[s.copyText, { color: t.textPrimary }]}>Copy</LocalizedText>
           </>
         )}
       </Pressable>
@@ -210,8 +211,8 @@ export function FeatureRow({
         {icon}
       </IconContainer>
       <View style={s.featureCopy}>
-        <Text style={[s.featureTitle, { color: t.textPrimary }]}>{title}</Text>
-        <Text style={[s.featureBody, { color: t.textSecondary }]}>{body}</Text>
+        <LocalizedText style={[s.featureTitle, { color: t.textPrimary }]}>{title}</LocalizedText>
+        <LocalizedText style={[s.featureBody, { color: t.textSecondary }]}>{body}</LocalizedText>
       </View>
     </View>
   );
@@ -275,7 +276,7 @@ export function CyberToggle({
         {/* Micro text indicator inside track */}
         <View style={s.cyberTrackInner}>
           {value ? (
-            <Text
+            <LocalizedText
               style={[
                 s.cyberLabelOn,
                 {
@@ -285,9 +286,9 @@ export function CyberToggle({
                 },
               ]}>
               ON
-            </Text>
+            </LocalizedText>
           ) : (
-            <Text
+            <LocalizedText
               style={[
                 s.cyberLabelOff,
                 {
@@ -297,7 +298,7 @@ export function CyberToggle({
                 },
               ]}>
               OFF
-            </Text>
+            </LocalizedText>
           )}
         </View>
 

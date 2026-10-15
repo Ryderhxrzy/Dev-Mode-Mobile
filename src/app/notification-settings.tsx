@@ -9,10 +9,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   ToastAndroid,
   View,
 } from 'react-native';
+import LocalizedText from '@/components/LocalizedText';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Bell from 'lucide-react-native/icons/bell';
 import BellRing from 'lucide-react-native/icons/bell-ring';
@@ -91,10 +91,10 @@ export default function NotificationSettings() {
           {/* Header */}
           <View style={s.header}>
             <Overline>STATUS BAR NOTIFICATION</Overline>
-            <Text style={[s.title, { color: t.textPrimary }]}>Quick Controls Notification</Text>
-            <Text style={[s.subtitle, { color: t.textSecondary }]}>
+            <LocalizedText style={[s.title, { color: t.textPrimary }]}>Quick Controls Notification</LocalizedText>
+            <LocalizedText style={[s.subtitle, { color: t.textSecondary }]}>
               Keep developer tools accessible directly from your Android status bar and lock screen with custom cybernetic toggle chips.
-            </Text>
+            </LocalizedText>
           </View>
 
           {/* In-App Push Notification Promotion Banner (Clickable) */}
@@ -119,15 +119,15 @@ export default function NotificationSettings() {
                 />
                 <View style={s.promoBadgeOverlay}>
                   <Maximize2 size={12} color="#4ADE80" />
-                  <Text style={s.promoBadgeText}>TAP TO EXPAND</Text>
+                  <LocalizedText style={s.promoBadgeText}>TAP TO EXPAND</LocalizedText>
                 </View>
               </View>
               <View style={s.promoDetailsBar}>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[s.promoTitle, { color: t.textPrimary }]}>Live Status Bar Notification</Text>
-                  <Text style={[s.promoDesc, { color: t.textSecondary }]}>
+                  <LocalizedText style={[s.promoTitle, { color: t.textPrimary }]}>Live Status Bar Notification</LocalizedText>
+                  <LocalizedText style={[s.promoDesc, { color: t.textSecondary }]}>
                     Interactive toggle notification shade. Tap banner to view full preview.
-                  </Text>
+                  </LocalizedText>
                 </View>
                 <Pill label="PREVIEW" tone="success" />
               </View>
@@ -136,7 +136,7 @@ export default function NotificationSettings() {
 
           {/* Mode Selection */}
           <View style={s.sectionHeader}>
-            <Text style={[s.sectionTitle, { color: t.textMuted }]}>NOTIFICATION DISPLAY MODE</Text>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>NOTIFICATION DISPLAY MODE</LocalizedText>
           </View>
 
           <View style={s.list}>
@@ -156,10 +156,10 @@ export default function NotificationSettings() {
                     <BellRing size={22} color={t.success} />
                   </IconContainer>
                   <View style={s.rowCopy}>
-                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Always Persistent</Text>
-                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                    <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Always Persistent</LocalizedText>
+                    <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
                       Pins an ongoing notification with 1-tap toggles that remains in the status bar at all times.
-                    </Text>
+                    </LocalizedText>
                   </View>
                   <Pill
                     label={notifMode === 'always' ? 'ACTIVE' : 'SELECT'}
@@ -185,10 +185,10 @@ export default function NotificationSettings() {
                     <Bell size={22} color={t.accentCyan} />
                   </IconContainer>
                   <View style={s.rowCopy}>
-                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Active While Dev Mode ON</Text>
-                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                    <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Active While Dev Mode ON</LocalizedText>
+                    <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
                       Automatically appears when Developer Options is ON, and disappears immediately when turned OFF.
-                    </Text>
+                    </LocalizedText>
                   </View>
                   <Pill
                     label={notifMode === 'when_dev_active' ? 'ACTIVE' : 'SELECT'}
@@ -214,10 +214,10 @@ export default function NotificationSettings() {
                     <BellOff size={22} color={t.warning} />
                   </IconContainer>
                   <View style={s.rowCopy}>
-                    <Text style={[s.rowTitle, { color: t.textPrimary }]}>Turn Off Notifications</Text>
-                    <Text style={[s.rowDesc, { color: t.textSecondary }]}>
+                    <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Turn Off Notifications</LocalizedText>
+                    <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
                       Completely removes the background status bar notification and quick controls.
-                    </Text>
+                    </LocalizedText>
                   </View>
                   <Pill
                     label={notifMode === 'disabled' ? 'OFF' : 'SELECT'}
@@ -231,7 +231,7 @@ export default function NotificationSettings() {
           {updating && (
             <View style={s.loadingRow}>
               <ActivityIndicator color={t.accentCyan} size="small" />
-              <Text style={[s.loadingText, { color: t.accentCyan }]}>Updating notification mode...</Text>
+              <LocalizedText style={[s.loadingText, { color: t.accentCyan }]}>Updating notification mode...</LocalizedText>
             </View>
           )}
         </ScrollView>
@@ -247,7 +247,7 @@ export default function NotificationSettings() {
               <View style={s.modalHeader}>
                 <View style={{ gap: 2, flex: 1 }}>
                   <Overline>PROMOTION PREVIEW</Overline>
-                  <Text style={[s.modalTitle, { color: '#FFFFFF' }]}>Status Bar Quick Controls</Text>
+                  <LocalizedText style={[s.modalTitle, { color: '#FFFFFF' }]}>Status Bar Quick Controls</LocalizedText>
                 </View>
                 <Pressable
                   accessibilityRole="button"
@@ -277,15 +277,15 @@ export default function NotificationSettings() {
                   }}
                   style={[s.modalActionBtn, { backgroundColor: '#15803D' }]}>
                   <CheckCircle2 size={16} color="#FFFFFF" />
-                  <Text style={s.modalActionBtnText}>
+                  <LocalizedText style={s.modalActionBtnText}>
                     {notifMode === 'disabled' ? 'ENABLE PERSISTENT NOTIFICATION' : 'NOTIFICATION IS ACTIVE'}
-                  </Text>
+                  </LocalizedText>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
                   onPress={() => setShowPromoModal(false)}
                   style={s.modalDismissBtn}>
-                  <Text style={s.modalDismissBtnText}>CLOSE PREVIEW</Text>
+                  <LocalizedText style={s.modalDismissBtnText}>CLOSE PREVIEW</LocalizedText>
                 </Pressable>
               </View>
             </SafeAreaView>

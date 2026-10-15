@@ -14,6 +14,7 @@ import android.widget.Toast
 class WidgetActionActivity : Activity() {
 
     companion object {
+        const val ACTION_LAUNCH_SHIELDED = "expo.modules.devtoggle.ACTION_LAUNCH_SHIELDED"
         private const val DEV_KEY = "development_settings_enabled"
         private const val USB_KEY = "adb_enabled"
         private const val WIRELESS_KEY = "adb_wifi_enabled"
@@ -81,6 +82,14 @@ class WidgetActionActivity : Activity() {
         val cr = contentResolver
         val action = intent.action ?: return
 
+        if (action == ACTION_LAUNCH_SHIELDED) {
+            val targetPkg = intent.getStringExtra("package_name")
+            if (!targetPkg.isNullOrBlank()) {
+                AppShieldManager.launchProtectedApp(this, targetPkg)
+            }
+            return
+        }
+
         when (action) {
             DevToggleWidgetProvider.ACTION_TOGGLE_DEV -> {
                 val current = try { Settings.Global.getInt(cr, DEV_KEY, 0) == 1 } catch (_: Exception) { false }
@@ -96,7 +105,9 @@ class WidgetActionActivity : Activity() {
                         try { Settings.Global.putInt(cr, USB_KEY, 0) } catch (_: Exception) {}
                         try { Settings.Global.putInt(cr, WIRELESS_KEY, 0) } catch (_: Exception) {}
                     }
-                    showToast(this, if (next == 1) "Developer Options: Enabled" else "Developer Options: Disabled")
+                    showToast(this, if (next == 1) "Dev Mode: Enabled" else "Dev Mode: Disabled")
+                    DevToggleNotificationManager.notifyToggle(this, "developerOptions", next == 1)
+                    DevToggleNotificationManager.updateNotification(this)
                 } else {
                     showToast(this, "Permission Required: Run ADB grant command")
                 }
@@ -121,6 +132,8 @@ class WidgetActionActivity : Activity() {
 
                 if (success) {
                     showToast(this, if (next == 1) "USB Debugging: Enabled" else "USB Debugging: Disabled")
+                    DevToggleNotificationManager.notifyToggle(this, "usbDebugging", next == 1)
+                    DevToggleNotificationManager.updateNotification(this)
                 } else {
                     showToast(this, "Permission Required: Run ADB grant command")
                 }
@@ -145,6 +158,8 @@ class WidgetActionActivity : Activity() {
 
                 if (success) {
                     showToast(this, if (next == 1) "Wireless Debugging: Enabled" else "Wireless Debugging: Disabled")
+                    DevToggleNotificationManager.notifyToggle(this, "wirelessDebugging", next == 1)
+                    DevToggleNotificationManager.updateNotification(this)
                     if (next == 1) {
                         AdbEndpointHelper.startDiscovery(applicationContext)
                         Handler(Looper.getMainLooper()).postDelayed({

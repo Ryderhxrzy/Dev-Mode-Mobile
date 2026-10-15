@@ -37,6 +37,9 @@ class DevToggleBridgeService : Service() {
         } catch (_: Exception) {}
 
         DevToggleBridgeServer.start(applicationContext)
+        if (AppShieldManager.isEnabled(applicationContext)) {
+            AppShieldManager.startMonitoring(applicationContext)
+        }
     }
 
     companion object {

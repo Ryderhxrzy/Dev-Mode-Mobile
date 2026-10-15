@@ -1,7 +1,9 @@
 package expo.modules.devtoggle
 
 import android.content.Context
+import android.content.ComponentName
 import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.nsd.NsdManager
@@ -18,6 +20,16 @@ import java.util.Collections
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import com.google.android.gms.tasks.Tasks
+import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.common.model.RemoteModelManager
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.TranslateRemoteModel
+import com.google.mlkit.nl.translate.TranslatorOptions
+import rikka.shizuku.Shizuku
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -42,12 +54,12 @@ class DevToggleModule : Module() {
   private fun context() = appContext.reactContext ?: throw CodedException("ERR_CONTEXT", "Android context is unavailable.", null)
 
   private fun read(key: String): String = try {
-    if (Settings.Global.getInt(context().contentResolver, key) == 1) "enabled" else "disabled"
-  } catch (_: Exception) { "unknown" }
+    if (Settings.Global.getInt(context().contentResolver, key, 0) == 1) "enabled" else "disabled"
+  } catch (_: Exception) { "disabled" }
 
   private fun readSystem(key: String): String = try {
-    if (Settings.System.getInt(context().contentResolver, key) == 1) "enabled" else "disabled"
-  } catch (_: Exception) { "unknown" }
+    if (Settings.System.getInt(context().contentResolver, key, 0) == 1) "enabled" else "disabled"
+  } catch (_: Exception) { "disabled" }
 
   private fun readFloat(key: String): Float = try {
     Settings.Global.getFloat(context().contentResolver, key)
@@ -57,7 +69,98 @@ class DevToggleModule : Module() {
     if (context().checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED) "granted" else "denied"
   } catch (_: Exception) { "unknown" }
 
+  private fun shizukuRunning(): Boolean = try {
+    !Shizuku.isPreV11() && Shizuku.pingBinder()
+  } catch (_: Exception) { false }
+
+  private fun shizukuAuthorized(): Boolean = try {
+    shizukuRunning() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+  } catch (_: Exception) { false }
+
+  private fun shizukuStatus(): String = try {
+    when {
+      !shizukuRunning() -> "unavailable"
+      shizukuAuthorized() -> "authorized"
+      else -> "needs_permission"
+    }
+  } catch (_: Exception) { "unavailable" }
+
+  private fun canWriteSystem(): Boolean = try {
+    Settings.System.canWrite(context())
+  } catch (_: Exception) { false }
+
+  private fun writeShizukuSetting(namespace: String, key: String, value: Int): Boolean {
+    if (!shizukuAuthorized()) return false
+    return try {
+      val method = Shizuku::class.java.getDeclaredMethod(
+        "newProcess",
+        Array<String>::class.java,
+        Array<String>::class.java,
+        String::class.java
+      )
+      method.isAccessible = true
+      val p = method.invoke(
+        null,
+        arrayOf("sh", "-c", "settings put $namespace $key $value"),
+        null,
+        null
+      ) as java.lang.Process
+      p.waitFor() == 0
+    } catch (_: Exception) {
+      false
+    }
+  }
+
+  private fun writeGlobalSetting(key: String, value: Int): Boolean {
+    if (permission() == "granted") {
+      try {
+        if (Settings.Global.putInt(context().contentResolver, key, value)) return true
+      } catch (_: Exception) {}
+    }
+    return writeShizukuSetting("global", key, value)
+  }
+
+  private fun writeSystemSetting(key: String, value: Int): Boolean {
+    if (canWriteSystem()) {
+      try {
+        if (Settings.System.putInt(context().contentResolver, key, value)) return true
+      } catch (_: Exception) {}
+    }
+    if (shizukuAuthorized()) {
+      val ok = writeShizukuSetting("system", key, value)
+      if (ok) return true
+    }
+    try {
+      if (Settings.System.putInt(context().contentResolver, key, value)) return true
+    } catch (_: Exception) {}
+    try {
+      val process = Runtime.getRuntime().exec(arrayOf("settings", "put", "system", key, value.toString()))
+      process.waitFor()
+      if (process.exitValue() == 0) return true
+    } catch (_: Exception) {}
+    return false
+  }
+
   private fun prefs() = context().getSharedPreferences("devtoggle_local_prefs", android.content.Context.MODE_PRIVATE)
+
+  private fun translationLanguage(tag: String): String? = when (tag.lowercase()) {
+    "fil" -> "tl"
+    "pt-br" -> "pt"
+    "zh-cn" -> "zh"
+    "zh-tw" -> "zh"
+    else -> tag.substringBefore('-').lowercase()
+  }
+
+  private fun translatorFor(targetTag: String) = translationLanguage(targetTag)?.let { target ->
+    if (target == "en") return@let null
+    val targetLanguage = TranslateLanguage.fromLanguageTag(target) ?: return@let null
+    Translation.getClient(
+      TranslatorOptions.Builder()
+        .setSourceLanguage(TranslateLanguage.ENGLISH)
+        .setTargetLanguage(targetLanguage)
+        .build()
+    )
+  }
 
   private fun getWirelessDebuggingEndpoint(): String? = AdbEndpointHelper.getEndpoint(context())
 
@@ -82,6 +185,7 @@ class DevToggleModule : Module() {
         "wirelessEndpoint" to endpoint,
         "writeSecureSettings" to permission(),
         "notificationMode" to DevToggleNotificationManager.getNotificationMode(context()),
+        "shizukuStatus" to shizukuStatus(),
         "nativeAvailable" to true
       )
     }
@@ -126,6 +230,28 @@ class DevToggleModule : Module() {
 
     AsyncFunction("getPermissionStatus") { permission() }
 
+    AsyncFunction("getShizukuStatus") { shizukuStatus() }
+
+    AsyncFunction("requestShizukuPermission") {
+      if (!shizukuRunning()) return@AsyncFunction false
+      if (shizukuAuthorized()) return@AsyncFunction true
+      try {
+        Shizuku.requestPermission(9902)
+        true
+      } catch (_: Exception) { false }
+    }
+
+    AsyncFunction("openShizuku") {
+      try {
+        context().startActivity(
+          Intent("moe.shizuku.manager.action.MAIN").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        true
+      } catch (_: Exception) {
+        false
+      }
+    }
+
     AsyncFunction("getOnboardingComplete") {
       try { prefs().getBoolean("onboarding_complete", false) } catch (_: Exception) { false }
     }
@@ -133,6 +259,70 @@ class DevToggleModule : Module() {
     AsyncFunction("setOnboardingComplete") { complete: Boolean ->
       try { prefs().edit().putBoolean("onboarding_complete", complete).commit() } catch (_: Exception) { false }
     }
+
+    AsyncFunction("getLanguagePreference") {
+      prefs().getString("language_preference", "auto") ?: "auto"
+    }
+
+    AsyncFunction("setLanguagePreference") { language: String ->
+      val saved = prefs().edit().putString("language_preference", language).commit()
+      if (saved) {
+        try { DevToggleWidgetProvider.updateAllWidgets(context()) } catch (_: Exception) {}
+        try { DevToggleNotificationManager.updateNotification(context()) } catch (_: Exception) {}
+      }
+      saved
+    }
+
+    AsyncFunction("downloadTranslationModel") { language: String ->
+      val translator = translatorFor(language) ?: return@AsyncFunction language == "en" || language == "auto"
+      val target = translationLanguage(language)
+      try {
+        val downloaded = Tasks.await(
+          RemoteModelManager.getInstance().getDownloadedModels(TranslateRemoteModel::class.java)
+        )
+        val targetLanguage = target?.let { TranslateLanguage.fromLanguageTag(it) }
+        if (targetLanguage != null && downloaded.any { it.language == targetLanguage }) {
+          return@AsyncFunction true
+        }
+        // Let ML Kit use the device's currently available connection. The UI
+        // already asks the user to download over Wi-Fi, but requiring the
+        // transport here incorrectly rejects hotspots and some OEM Wi-Fi APIs.
+        val conditions = DownloadConditions.Builder().build()
+        Tasks.await(translator.downloadModelIfNeeded(conditions))
+        true
+      } catch (_: Exception) {
+        false
+      } finally {
+        translator.close()
+      }
+    }.runOnQueue(Queues.DEFAULT)
+
+    AsyncFunction("isTranslationModelDownloaded") { language: String ->
+      val target = translationLanguage(language)
+      if (target == "en") return@AsyncFunction true
+      val targetLanguage = target?.let { TranslateLanguage.fromLanguageTag(it) } ?: return@AsyncFunction false
+      try {
+        val downloaded = Tasks.await(
+          RemoteModelManager.getInstance().getDownloadedModels(TranslateRemoteModel::class.java)
+        )
+        downloaded.any { it.language == targetLanguage }
+      } catch (_: Exception) {
+        false
+      }
+    }.runOnQueue(Queues.DEFAULT)
+
+    AsyncFunction("translateText") { text: String, language: String ->
+      if (text.isBlank() || language == "en" || language == "auto") return@AsyncFunction text
+      val translator = translatorFor(language) ?: return@AsyncFunction text
+      try {
+        Tasks.await(translator.downloadModelIfNeeded(DownloadConditions.Builder().build()))
+        Tasks.await(translator.translate(text))
+      } catch (_: Exception) {
+        text
+      } finally {
+        translator.close()
+      }
+    }.runOnQueue(Queues.DEFAULT)
 
     // Animation Scales
     AsyncFunction("getAnimationScales") {
@@ -195,7 +385,7 @@ class DevToggleModule : Module() {
     }
 
     AsyncFunction("setExtraSetting") { setting: String, enabled: Boolean ->
-      // App preferences: no WRITE_SECURE_SETTINGS needed
+      // App preferences: no special permissions needed
       if (setting == "keepWirelessOn") {
         DevToggleBridgeServer.setKeepWirelessOn(context(), enabled)
         return@AsyncFunction mapOf("changed" to true, "message" to "Setting updated.")
@@ -208,30 +398,68 @@ class DevToggleModule : Module() {
         DevToggleBridgeServer.setAutoWirelessConnect(context(), enabled)
         return@AsyncFunction mapOf("changed" to true, "message" to "Auto Wireless Connect setting updated.")
       }
-      if (permission() != "granted") {
-        return@AsyncFunction mapOf("changed" to false, "message" to "WRITE_SECURE_SETTINGS is not granted.")
-      }
-      val resolver = context().contentResolver
+
       val intVal = if (enabled) 1 else 0
-      try {
-        when (setting) {
-          "stayAwake" -> {
-            // 7 = Battery + AC + USB awake
-            Settings.Global.putInt(resolver, stayAwakeKey, if (enabled) 7 else 0)
-          }
-          "showTouches" -> {
-            Settings.System.putInt(resolver, showTouchesKey, intVal)
-          }
-          "pointerLocation" -> {
-            Settings.System.putInt(resolver, pointerLocationKey, intVal)
-          }
-          else -> throw CodedException("ERR_SETTING", "Unknown setting: $setting", null)
+
+      if (setting == "stayAwake") {
+        if (permission() != "granted" && !shizukuAuthorized()) {
+          return@AsyncFunction mapOf("changed" to false, "message" to "WRITE_SECURE_SETTINGS or Shizuku is required.")
         }
-        mapOf("changed" to true, "message" to "Setting updated.")
-      } catch (_: Exception) {
-        mapOf("changed" to false, "message" to "Could not update setting.")
+        val written = writeGlobalSetting(stayAwakeKey, if (enabled) 7 else 0)
+        return@AsyncFunction mapOf(
+          "changed" to written,
+          "message" to if (written) "Stay awake updated." else "Could not update stay awake."
+        )
       }
+
+      if (setting == "showTouches" || setting == "pointerLocation") {
+        val key = if (setting == "showTouches") showTouchesKey else pointerLocationKey
+        val label = if (setting == "showTouches") "Visual Touch Taps" else "Pointer Location Tracker"
+        val written = writeSystemSetting(key, intVal)
+        if (written) {
+          return@AsyncFunction mapOf("changed" to true, "message" to "$label updated.")
+        }
+
+        // If direct write didn't succeed and app cannot write system settings and Shizuku is not authorized, prompt to enable permission
+        if (!canWriteSystem() && !shizukuAuthorized()) {
+          try {
+            val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+              data = android.net.Uri.parse("package:${context().packageName}")
+              addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            context().startActivity(intent)
+            return@AsyncFunction mapOf(
+              "changed" to false,
+              "message" to "Please allow 'Modify system settings' in the settings screen that just opened, or authorize Shizuku."
+            )
+          } catch (_: Exception) {}
+        }
+
+        return@AsyncFunction mapOf(
+          "changed" to false,
+          "message" to "Permission required to toggle $label. Grant Modify System Settings or authorize via Shizuku."
+        )
+      }
+
+      throw CodedException("ERR_SETTING", "Unknown setting: $setting", null)
     }
+
+    AsyncFunction("canWriteSystemSettings") {
+      canWriteSystem()
+    }
+
+    AsyncFunction("openWriteSettingsPermission") {
+      try {
+        val intent = Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS).apply {
+          data = android.net.Uri.parse("package:${context().packageName}")
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context().startActivity(intent)
+        true
+      } catch (_: Exception) {
+        false
+      }
+    }.runOnQueue(Queues.MAIN)
 
     AsyncFunction("openSettings") { setting: String ->
       val action = when (setting) {
@@ -252,7 +480,14 @@ class DevToggleModule : Module() {
     }.runOnQueue(Queues.MAIN)
 
     AsyncFunction("setEnabled") { setting: String, enabled: Boolean ->
-      if (permission() != "granted") return@AsyncFunction mapOf("changed" to false, "message" to "WRITE_SECURE_SETTINGS is not granted. Use the ADB setup guide.")
+      if (permission() != "granted" && !shizukuAuthorized()) {
+        val message = if (shizukuStatus() == "needs_permission") {
+          "Authorize Dev Mode in Shizuku before using this toggle."
+        } else {
+          "WRITE_SECURE_SETTINGS is not granted. Use Shizuku or the ADB setup guide."
+        }
+        return@AsyncFunction mapOf("changed" to false, "message" to message)
+      }
       val settingKey = when (setting) {
         "developerOptions" -> developerKey
         "usbDebugging" -> usbKey
@@ -270,12 +505,12 @@ class DevToggleModule : Module() {
         }
       }
       try {
-        val written = Settings.Global.putInt(context().contentResolver, settingKey, if (enabled) 1 else 0)
+        val written = writeGlobalSetting(settingKey, if (enabled) 1 else 0)
 
         // When disabling Developer Options, automatically turn off USB and Wireless Debugging
         if (setting == "developerOptions" && !enabled) {
-          try { Settings.Global.putInt(context().contentResolver, usbKey, 0) } catch (_: Exception) {}
-          try { Settings.Global.putInt(context().contentResolver, wirelessKey, 0) } catch (_: Exception) {}
+          writeGlobalSetting(usbKey, 0)
+          writeGlobalSetting(wirelessKey, 0)
         }
 
         val now = read(settingKey)
@@ -283,6 +518,7 @@ class DevToggleModule : Module() {
         if (written && now == expected) {
           DevToggleWidgetProvider.updateAllWidgets(context())
           try { DevToggleNotificationManager.updateNotification(context()) } catch (_: Exception) {}
+          try { DevToggleNotificationManager.notifyToggle(context(), setting, enabled) } catch (_: Exception) {}
         }
         mapOf(
           "changed" to (written && now == expected),
@@ -322,5 +558,84 @@ class DevToggleModule : Module() {
         "streamUrl" to "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
       )
     }
+
+    // App Shield (Auto-disable Dev Options for protected apps)
+    AsyncFunction("getAppShieldSettings") {
+      mapOf(
+        "enabled" to AppShieldManager.isEnabled(context()),
+        "hasUsageAccess" to AppShieldManager.hasUsageAccess(context()),
+        "protectedPackages" to AppShieldManager.getProtectedPackages(context())
+      )
+    }
+
+    AsyncFunction("setAppShieldEnabled") { enabled: Boolean ->
+      AppShieldManager.setEnabled(context(), enabled)
+    }
+
+    AsyncFunction("setProtectedPackages") { packages: List<String> ->
+      AppShieldManager.setProtectedPackages(context(), packages)
+    }
+
+    AsyncFunction("getInstalledApps") {
+      AppShieldManager.getInstalledApps(context())
+    }
+
+    AsyncFunction("openUsageAccessSettings") {
+      AppShieldManager.openUsageAccessSettings(context())
+    }.runOnQueue(Queues.MAIN)
+
+    AsyncFunction("launchProtectedApp") { packageName: String ->
+      AppShieldManager.launchProtectedApp(context(), packageName)
+    }.runOnQueue(Queues.MAIN)
+
+    AsyncFunction("createShieldedShortcut") { packageName: String ->
+      AppShieldManager.createShieldedShortcut(context(), packageName)
+    }.runOnQueue(Queues.MAIN)
+
+    AsyncFunction("openBatteryOptimizationSettings") {
+      try {
+        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context().startActivity(intent)
+        true
+      } catch (_: Exception) {
+        try {
+          val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = android.net.Uri.parse("package:${context().packageName}")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          }
+          context().startActivity(intent)
+          true
+        } catch (_: Exception) {
+          false
+        }
+      }
+    }.runOnQueue(Queues.MAIN)
+
+    AsyncFunction("openAppDetailsSettings") {
+      try {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+          data = android.net.Uri.parse("package:${context().packageName}")
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context().startActivity(intent)
+        true
+      } catch (_: Exception) {
+        false
+      }
+    }.runOnQueue(Queues.MAIN)
+
+    Function("isWidgetPinningSupported") {
+      AppShieldManager.isWidgetPinningSupported(context())
+    }
+
+    AsyncFunction("pinShieldWidget1x1") { packageName: String ->
+      AppShieldManager.requestPinShieldWidget1x1(context(), packageName)
+    }.runOnQueue(Queues.MAIN)
+
+    AsyncFunction("pinShieldWidget3x1") {
+      AppShieldManager.requestPinShieldWidget3x1(context())
+    }.runOnQueue(Queues.MAIN)
   }
 }
