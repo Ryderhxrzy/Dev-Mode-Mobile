@@ -16,6 +16,9 @@
     <img src="https://img.shields.io/badge/Telemetry-Zero-10B981?style=flat-square" alt="Telemetry" />
     <img src="https://img.shields.io/badge/Security-Local%20Only-06B6D4?style=flat-square" alt="Security" />
   </p>
+  <p>
+    <a href="https://ko-fi.com/V8C228TP47"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi" /></a>
+  </p>
 
   <p>
     A high-performance Android utility built for developers, power users, and modders to instantly toggle Developer Options, ADB Debugging, and System Performance scales without navigating deep into Android Settings.
@@ -323,6 +326,14 @@ npx eas-cli@latest build --platform android --profile development
 # Production APK / AAB
 npx eas-cli@latest build --platform android --profile production
 ```
+
+---
+
+## ☕ Support the Project
+
+If you find **Dev Mode** useful and want to support ongoing updates, features, and maintenance, feel free to support via Ko-fi:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/V8C228TP47)
 
 ---
 
