@@ -360,25 +360,45 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
           <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>
             SHIELDED APPS ({shieldedApps.length})
           </LocalizedText>
-          {shieldedApps.length > 0 && (
+          <View style={s.headerActionsRow}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Add app to shield"
-              onPress={handleOpenPicker}
+              accessibilityLabel="Open home screen widgets"
+              onPress={() => router.push('/widget-settings')}
               style={({ pressed }) => [
-                s.headerAddBtn,
+                s.headerBtn,
                 {
-                  backgroundColor: `${t.accentCyan}18`,
-                  borderColor: `${t.accentCyan}70`,
+                  backgroundColor: 'rgba(34, 197, 94, 0.16)',
+                  borderColor: '#22C55E',
                   opacity: pressed ? 0.75 : 1,
                 },
               ]}>
-              <Plus size={13} color={t.accentCyan} />
-              <LocalizedText style={[s.headerAddBtnText, { color: t.accentCyan }]}>
-                Add App
+              <LayoutGrid size={13} color="#4ADE80" />
+              <LocalizedText style={[s.headerBtnText, { color: '#4ADE80' }]}>
+                Widgets
               </LocalizedText>
             </Pressable>
-          )}
+
+            {shieldedApps.length > 0 && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add app to shield"
+                onPress={handleOpenPicker}
+                style={({ pressed }) => [
+                  s.headerBtn,
+                  {
+                    backgroundColor: `${t.accentCyan}18`,
+                    borderColor: `${t.accentCyan}70`,
+                    opacity: pressed ? 0.75 : 1,
+                  },
+                ]}>
+                <Plus size={13} color={t.accentCyan} />
+                <LocalizedText style={[s.headerBtnText, { color: t.accentCyan }]}>
+                  Add App
+                </LocalizedText>
+              </Pressable>
+            )}
+          </View>
         </View>
 
         {shieldedApps.length === 0 ? (
@@ -393,13 +413,22 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
             <LocalizedText style={[s.emptyDesc, { color: t.textSecondary }]}>
               Add banking apps, digital wallets, or games. An automatic Shielded icon will be pinned to your Home screen for guaranteed bypass!
             </LocalizedText>
-            <Button
-              label="Add App to Shield"
-              variant="primary"
-              icon={<Plus size={16} color="#FFFFFF" />}
-              onPress={handleOpenPicker}
-              style={{ width: '100%', marginTop: space.xs }}
-            />
+            <View style={{ flexDirection: 'row', gap: space.sm, width: '100%', marginTop: space.xs }}>
+              <Button
+                label="Home Widgets"
+                variant="secondary"
+                icon={<LayoutGrid size={16} color={t.success} />}
+                onPress={() => router.push('/widget-settings')}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label="Add App"
+                variant="primary"
+                icon={<Plus size={16} color="#FFFFFF" />}
+                onPress={handleOpenPicker}
+                style={{ flex: 1 }}
+              />
+            </View>
           </Card>
         ) : (
           /* List of Shielded Apps */
@@ -466,24 +495,46 @@ export function AppShieldView({ isActive = false }: AppShieldViewProps) {
               </Card>
             ))}
 
-            {/* Bottom Add More Button */}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Add more protected apps"
-              onPress={handleOpenPicker}
-              style={({ pressed }) => [
-                s.addMoreCard,
-                {
-                  borderColor: `${t.accentCyan}40`,
-                  backgroundColor: `${t.accentCyan}0A`,
-                  opacity: pressed ? 0.75 : 1,
-                },
-              ]}>
-              <Plus size={16} color={t.accentCyan} />
-              <LocalizedText style={[s.addMoreText, { color: t.accentCyan }]}>
-                + Add More Protected Apps
-              </LocalizedText>
-            </Pressable>
+            {/* Bottom Actions Row: Widgets first, then Add More */}
+            <View style={s.bottomActionsRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Open home screen widgets"
+                onPress={() => router.push('/widget-settings')}
+                style={({ pressed }) => [
+                  s.addMoreCard,
+                  {
+                    flex: 1,
+                    borderColor: 'rgba(34, 197, 94, 0.45)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                    opacity: pressed ? 0.75 : 1,
+                  },
+                ]}>
+                <LayoutGrid size={15} color="#4ADE80" />
+                <LocalizedText style={[s.addMoreText, { color: '#4ADE80' }]}>
+                  Widgets
+                </LocalizedText>
+              </Pressable>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add more protected apps"
+                onPress={handleOpenPicker}
+                style={({ pressed }) => [
+                  s.addMoreCard,
+                  {
+                    flex: 1,
+                    borderColor: `${t.accentCyan}40`,
+                    backgroundColor: `${t.accentCyan}0A`,
+                    opacity: pressed ? 0.75 : 1,
+                  },
+                ]}>
+                <Plus size={15} color={t.accentCyan} />
+                <LocalizedText style={[s.addMoreText, { color: t.accentCyan }]}>
+                  + Add More
+                </LocalizedText>
+              </Pressable>
+            </View>
           </View>
         )}
 
@@ -878,18 +929,28 @@ const s = StyleSheet.create({
     fontSize: 11.5,
     letterSpacing: 1.2,
   },
-  headerAddBtn: {
+  headerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+  },
+  headerBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingHorizontal: 9,
     borderRadius: radius.sm,
     borderWidth: 1,
   },
-  headerAddBtnText: {
+  headerBtnText: {
     fontFamily: fonts.heading,
     fontSize: 12,
+  },
+  bottomActionsRow: {
+    flexDirection: 'row',
+    gap: space.sm,
+    marginTop: 4,
   },
   emptyCard: {
     alignItems: 'center',

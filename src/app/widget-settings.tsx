@@ -18,9 +18,11 @@ import LayoutGrid from 'lucide-react-native/icons/layout-grid';
 import Maximize2 from 'lucide-react-native/icons/maximize-2';
 import Plus from 'lucide-react-native/icons/plus';
 import ShieldCheck from 'lucide-react-native/icons/shield-check';
-import SlidersHorizontal from 'lucide-react-native/icons/sliders-horizontal';
 import Smartphone from 'lucide-react-native/icons/smartphone';
 import Sparkles from 'lucide-react-native/icons/sparkles';
+import Terminal from 'lucide-react-native/icons/terminal';
+import Usb from 'lucide-react-native/icons/usb';
+import Wifi from 'lucide-react-native/icons/wifi';
 import X from 'lucide-react-native/icons/x';
 import Zap from 'lucide-react-native/icons/zap';
 
@@ -163,71 +165,139 @@ export default function WidgetSettings() {
             </LocalizedText>
           </View>
 
-          {/* Widget Style Selector Pills */}
-          <View style={s.sectionHeader}>
-            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>SELECT WIDGET STYLE</LocalizedText>
-          </View>
+          {/* Widget Style Selector: Spacious, Modern Layout */}
+          <View style={s.styleSelectorWrapper}>
+            <LocalizedText style={[s.sectionTitle, { color: t.textMuted }]}>
+              CHOOSE WIDGET FORMAT
+            </LocalizedText>
 
-          <View style={s.styleTabsContainer}>
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: selectedStyle === '1x1' }}
-              onPress={() => setSelectedStyle('1x1')}
-              style={[
-                s.styleTab,
-                selectedStyle === '1x1'
-                  ? { backgroundColor: 'rgba(34, 197, 94, 0.16)', borderColor: '#22C55E' }
-                  : { backgroundColor: t.canvasElevated, borderColor: t.borderSubtle },
-              ]}>
-              <Smartphone size={16} color={selectedStyle === '1x1' ? '#4ADE80' : t.textMuted} />
-              <LocalizedText
+            <View style={s.styleTabsRow}>
+              {/* Tab 1: 1x1 Quick Launch */}
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel="1x1 Single App Widget"
+                accessibilityState={{ selected: selectedStyle === '1x1' }}
+                onPress={() => setSelectedStyle('1x1')}
                 style={[
-                  s.styleTabText,
-                  { color: selectedStyle === '1x1' ? '#4ADE80' : t.textSecondary },
+                  s.styleTabCard,
+                  selectedStyle === '1x1'
+                    ? {
+                        backgroundColor: '#0B2014',
+                        borderColor: '#4ADE80',
+                        borderWidth: 2,
+                      }
+                    : {
+                        backgroundColor: '#07150E',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        borderWidth: 1.5,
+                      },
                 ]}>
-                1x1 Quick Launch
-              </LocalizedText>
-            </Pressable>
+                <View
+                  style={[
+                    s.styleTabIconWrap,
+                    {
+                      backgroundColor:
+                        selectedStyle === '1x1' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    },
+                  ]}>
+                  <Smartphone size={20} color={selectedStyle === '1x1' ? '#4ADE80' : t.textMuted} />
+                </View>
+                <LocalizedText
+                  style={[
+                    s.styleTabTitle,
+                    { color: selectedStyle === '1x1' ? '#FFFFFF' : t.textSecondary },
+                  ]}>
+                  1x1 App
+                </LocalizedText>
+                <LocalizedText style={[s.styleTabSub, { color: selectedStyle === '1x1' ? '#4ADE80' : t.textMuted }]}>
+                  Single Launch
+                </LocalizedText>
+              </Pressable>
 
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: selectedStyle === '3x1' }}
-              onPress={() => setSelectedStyle('3x1')}
-              style={[
-                s.styleTab,
-                selectedStyle === '3x1'
-                  ? { backgroundColor: 'rgba(34, 197, 94, 0.16)', borderColor: '#22C55E' }
-                  : { backgroundColor: t.canvasElevated, borderColor: t.borderSubtle },
-              ]}>
-              <LayoutGrid size={16} color={selectedStyle === '3x1' ? '#4ADE80' : t.textMuted} />
-              <LocalizedText
+              {/* Tab 2: 3x1 Shield Dock */}
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel="3x1 Multi-App Shield Dock"
+                accessibilityState={{ selected: selectedStyle === '3x1' }}
+                onPress={() => setSelectedStyle('3x1')}
                 style={[
-                  s.styleTabText,
-                  { color: selectedStyle === '3x1' ? '#4ADE80' : t.textSecondary },
+                  s.styleTabCard,
+                  selectedStyle === '3x1'
+                    ? {
+                        backgroundColor: '#0B2014',
+                        borderColor: '#4ADE80',
+                        borderWidth: 2,
+                      }
+                    : {
+                        backgroundColor: '#07150E',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        borderWidth: 1.5,
+                      },
                 ]}>
-                3x1 Shield Dock
-              </LocalizedText>
-            </Pressable>
+                <View
+                  style={[
+                    s.styleTabIconWrap,
+                    {
+                      backgroundColor:
+                        selectedStyle === '3x1' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    },
+                  ]}>
+                  <LayoutGrid size={20} color={selectedStyle === '3x1' ? '#4ADE80' : t.textMuted} />
+                </View>
+                <LocalizedText
+                  style={[
+                    s.styleTabTitle,
+                    { color: selectedStyle === '3x1' ? '#FFFFFF' : t.textSecondary },
+                  ]}>
+                  3x1 Dock
+                </LocalizedText>
+                <LocalizedText style={[s.styleTabSub, { color: selectedStyle === '3x1' ? '#4ADE80' : t.textMuted }]}>
+                  Multi-App Row
+                </LocalizedText>
+              </Pressable>
 
-            <Pressable
-              accessibilityRole="tab"
-              accessibilityState={{ selected: selectedStyle === 'dev' }}
-              onPress={() => setSelectedStyle('dev')}
-              style={[
-                s.styleTab,
-                selectedStyle === 'dev'
-                  ? { backgroundColor: 'rgba(56, 189, 248, 0.16)', borderColor: '#38BDF8' }
-                  : { backgroundColor: t.canvasElevated, borderColor: t.borderSubtle },
-              ]}>
-              <SlidersHorizontal size={16} color={selectedStyle === 'dev' ? '#38BDF8' : t.textMuted} />
-              <LocalizedText
+              {/* Tab 3: Dev Toggles */}
+              <Pressable
+                accessibilityRole="tab"
+                accessibilityLabel="Developer Options Quick Toggles"
+                accessibilityState={{ selected: selectedStyle === 'dev' }}
+                onPress={() => setSelectedStyle('dev')}
                 style={[
-                  s.styleTabText,
-                  { color: selectedStyle === 'dev' ? '#38BDF8' : t.textSecondary },
+                  s.styleTabCard,
+                  selectedStyle === 'dev'
+                    ? {
+                        backgroundColor: '#0B2014',
+                        borderColor: '#4ADE80',
+                        borderWidth: 2,
+                      }
+                    : {
+                        backgroundColor: '#07150E',
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        borderWidth: 1.5,
+                      },
                 ]}>
-                Dev Toggles
-              </LocalizedText>
-            </Pressable>
+                <View
+                  style={[
+                    s.styleTabIconWrap,
+                    {
+                      backgroundColor:
+                        selectedStyle === 'dev' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                    },
+                  ]}>
+                  <Terminal size={20} color={selectedStyle === 'dev' ? '#4ADE80' : t.textMuted} />
+                </View>
+                <LocalizedText
+                  style={[
+                    s.styleTabTitle,
+                    { color: selectedStyle === 'dev' ? '#FFFFFF' : t.textSecondary },
+                  ]}>
+                  Dev Mode
+                </LocalizedText>
+                <LocalizedText style={[s.styleTabSub, { color: selectedStyle === 'dev' ? '#4ADE80' : t.textMuted }]}>
+                  Quick Toggles
+                </LocalizedText>
+              </Pressable>
+            </View>
           </View>
 
           {/* ACTIVE STYLE CARD */}
@@ -237,33 +307,34 @@ export default function WidgetSettings() {
                 borderColor: `${t.success}60`,
                 backgroundColor: '#06150E',
                 borderWidth: 1.5,
+                padding: space.lg,
               }}>
               <View style={{ gap: space.md }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flex: 1 }}>
-                    <IconContainer tone="success" size={40}>
-                      <ShieldCheck size={20} color={t.success} />
+                    <IconContainer tone="success" size={42}>
+                      <ShieldCheck size={22} color={t.success} />
                     </IconContainer>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, gap: 2 }}>
                       <LocalizedText style={[s.cardTitle, { color: t.textPrimary }]}>
-                        1x1 Single App Widget
+                        1x1 Quick Launch Widget
                       </LocalizedText>
                       <LocalizedText style={[s.cardDesc, { color: t.textSecondary }]}>
                         Instant Auto-Off &amp; direct app launch
                       </LocalizedText>
                     </View>
                   </View>
-                  <Pill label="1x1 STYLE" tone="success" />
+                  <Pill label="1x1 WIDGET" tone="success" />
                 </View>
 
                 {/* App Selector */}
-                <View style={{ gap: space.xs }}>
+                <View style={{ gap: space.xs, marginTop: space.xs }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <LocalizedText style={[s.inputLabel, { color: t.textSecondary }]}>
-                      SELECT SHIELDED APP:
+                      CHOOSE PROTECTED APP TO PIN:
                     </LocalizedText>
                     <Pressable onPress={() => router.push('/app-shield')} hitSlop={8}>
-                      <LocalizedText style={[s.linkText, { color: t.accentCyan }]}>
+                      <LocalizedText style={[s.linkText, { color: '#4ADE80' }]}>
                         Manage Apps &rarr;
                       </LocalizedText>
                     </Pressable>
@@ -287,7 +358,7 @@ export default function WidgetSettings() {
                             style={[
                               s.appChip,
                               isSelected
-                                ? { backgroundColor: 'rgba(34, 197, 94, 0.2)', borderColor: '#4ADE80' }
+                                ? { backgroundColor: 'rgba(34, 197, 94, 0.22)', borderColor: '#4ADE80' }
                                 : { backgroundColor: '#091C12', borderColor: 'rgba(34, 197, 94, 0.2)' },
                             ]}>
                             <WidgetAppIcon icon={app.icon} size={28} />
@@ -311,7 +382,7 @@ export default function WidgetSettings() {
                   ) : (
                     <View style={s.emptyNoticeBox}>
                       <LocalizedText style={[s.emptyNoticeText, { color: t.textSecondary }]}>
-                        No apps protected in App Shield yet. Select an app or configure your shield list first.
+                        No apps protected in App Shield yet. Configure your shield list first.
                       </LocalizedText>
                       <Button
                         label="Configure Protected Apps"
@@ -326,8 +397,8 @@ export default function WidgetSettings() {
 
                 {/* 1x1 Widget Live Preview */}
                 <View style={s.previewContainer}>
-                  <LocalizedText style={[s.previewLabel, { color: t.textMuted }]}>
-                    LIVE WIDGET PREVIEW (1x1)
+                  <LocalizedText style={[s.previewLabel, { color: '#4ADE80' }]}>
+                    LIVE 1x1 WIDGET PREVIEW
                   </LocalizedText>
                   <View style={s.widget1x1MockupBox}>
                     <View style={s.widget1x1Tile}>
@@ -350,21 +421,21 @@ export default function WidgetSettings() {
                     </View>
                     <View style={s.previewInfoCopy}>
                       <View style={s.previewBullet}>
-                        <Sparkles size={13} color="#4ADE80" />
+                        <Sparkles size={14} color="#4ADE80" />
                         <LocalizedText style={[s.previewBulletText, { color: t.textSecondary }]}>
-                          Turns OFF Developer Options instantly
+                          Auto-disables Developer Options instantly
                         </LocalizedText>
                       </View>
                       <View style={s.previewBullet}>
-                        <Zap size={13} color="#4ADE80" />
+                        <Zap size={14} color="#4ADE80" />
                         <LocalizedText style={[s.previewBulletText, { color: t.textSecondary }]}>
-                          Launches {activeSelectedApp?.appName || 'App'} without banking warnings
+                          Launches {activeSelectedApp?.appName || 'App'} without security blocks
                         </LocalizedText>
                       </View>
                       <View style={s.previewBullet}>
-                        <ShieldCheck size={13} color="#4ADE80" />
+                        <ShieldCheck size={14} color="#4ADE80" />
                         <LocalizedText style={[s.previewBulletText, { color: t.textSecondary }]}>
-                          Auto-restores settings when you return
+                          Restores settings when you switch back
                         </LocalizedText>
                       </View>
                     </View>
@@ -388,14 +459,15 @@ export default function WidgetSettings() {
                 borderColor: `${t.success}60`,
                 backgroundColor: '#06150E',
                 borderWidth: 1.5,
+                padding: space.lg,
               }}>
               <View style={{ gap: space.md }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flex: 1 }}>
-                    <IconContainer tone="success" size={40}>
-                      <LayoutGrid size={20} color={t.success} />
+                    <IconContainer tone="success" size={42}>
+                      <LayoutGrid size={22} color={t.success} />
                     </IconContainer>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, gap: 2 }}>
                       <LocalizedText style={[s.cardTitle, { color: t.textPrimary }]}>
                         3x1 Multi-App Shield Dock
                       </LocalizedText>
@@ -409,15 +481,15 @@ export default function WidgetSettings() {
 
                 {/* 3x1 Live Preview */}
                 <View style={s.previewContainer}>
-                  <LocalizedText style={[s.previewLabel, { color: t.textMuted }]}>
-                    LIVE WIDGET PREVIEW (3x1)
+                  <LocalizedText style={[s.previewLabel, { color: '#4ADE80' }]}>
+                    LIVE 3x1 DOCK PREVIEW
                   </LocalizedText>
 
                   <View style={s.dockWidgetMockup}>
                     {/* Header Strip inside Dock */}
                     <View style={s.dockHeaderStrip}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                        <ShieldCheck size={13} color="#4ADE80" />
+                        <ShieldCheck size={14} color="#4ADE80" />
                         <LocalizedText style={s.dockHeaderTitle}>SHIELD DOCK</LocalizedText>
                       </View>
                       <View style={s.dockStatusPill}>
@@ -479,73 +551,90 @@ export default function WidgetSettings() {
           {selectedStyle === 'dev' && (
             <Card
               style={{
-                borderColor: `${t.accentCyan}55`,
-                backgroundColor: '#061318',
+                borderColor: `${t.success}60`,
+                backgroundColor: '#06150E',
                 borderWidth: 1.5,
+                padding: space.lg,
               }}>
               <View style={{ gap: space.md }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, flex: 1 }}>
-                    <IconContainer tone="cyan" size={40}>
-                      <SlidersHorizontal size={20} color={t.accentCyan} />
+                    <IconContainer tone="success" size={42}>
+                      <Terminal size={22} color={t.success} />
                     </IconContainer>
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, gap: 2 }}>
                       <LocalizedText style={[s.cardTitle, { color: t.textPrimary }]}>
                         Developer Mode Quick Toggles
                       </LocalizedText>
                       <LocalizedText style={[s.cardDesc, { color: t.textSecondary }]}>
-                        Toggle Dev Settings right from your desktop
+                        Native switches for Dev Mode, USB ADB &amp; Wireless
                       </LocalizedText>
                     </View>
                   </View>
-                  <Pill label="TOGGLES" tone="cyan" />
+                  <Pill label="DEV TOGGLES" tone="success" />
                 </View>
 
-                {/* 3x1 Multi-Toggle Preview */}
+                {/* 3x1 Multi-Toggle Preview (Matching native dev_toggle_widget.xml) */}
                 <View style={s.previewContainer}>
-                  <LocalizedText style={[s.previewLabel, { color: t.textMuted }]}>
-                    3x1 MULTI-TOGGLE WIDGET
+                  <LocalizedText style={[s.previewLabel, { color: '#4ADE80' }]}>
+                    3x1 MULTI-TOGGLE WIDGET (ACTUAL STYLE)
                   </LocalizedText>
-                  <View style={s.previewWidgetRow}>
-                    <View style={s.previewWidgetBtn}>
-                      <LocalizedText style={s.previewWidgetBtnText}>DEV OPTIONS</LocalizedText>
-                      <LocalizedText style={s.previewWidgetBtnStatus}>ON</LocalizedText>
+
+                  <View style={s.nativeWidget3x1Box}>
+                    {/* Button 1: DEV MODE (Active state: #15803D / #4ADE80) */}
+                    <View style={[s.nativeWidgetBtn, s.nativeWidgetBtnActive]}>
+                      <Terminal size={22} color="#FFFFFF" />
+                      <LocalizedText style={s.nativeWidgetBtnLabelActive}>DEV MODE</LocalizedText>
+                      <LocalizedText style={s.nativeWidgetBtnStatusActive}>ON</LocalizedText>
                     </View>
-                    <View style={s.previewWidgetBtn}>
-                      <LocalizedText style={s.previewWidgetBtnText}>USB DEBUG</LocalizedText>
-                      <LocalizedText style={s.previewWidgetBtnStatus}>ON</LocalizedText>
+
+                    {/* Button 2: USB ADB (Active state: #15803D / #4ADE80) */}
+                    <View style={[s.nativeWidgetBtn, s.nativeWidgetBtnActive]}>
+                      <Usb size={22} color="#FFFFFF" />
+                      <LocalizedText style={s.nativeWidgetBtnLabelActive}>USB ADB</LocalizedText>
+                      <LocalizedText style={s.nativeWidgetBtnStatusActive}>ON</LocalizedText>
                     </View>
-                    <View style={[s.previewWidgetBtn, { backgroundColor: '#1E293B', borderColor: '#475569' }]}>
-                      <LocalizedText style={s.previewWidgetBtnText}>WIRELESS ADB</LocalizedText>
-                      <LocalizedText style={[s.previewWidgetBtnStatus, { color: '#94A3B8' }]}>OFF</LocalizedText>
+
+                    {/* Button 3: WIRELESS (Inactive state: #0E1D17 / #1A3328) */}
+                    <View style={[s.nativeWidgetBtn, s.nativeWidgetBtnInactive]}>
+                      <Wifi size={22} color="#5C7A6B" />
+                      <LocalizedText style={s.nativeWidgetBtnLabelInactive}>WIRELESS</LocalizedText>
+                      <LocalizedText style={s.nativeWidgetBtnStatusInactive}>OFF</LocalizedText>
                     </View>
                   </View>
                 </View>
 
-                {/* 1x1 Single Widgets Preview */}
+                {/* 1x1 Single Widgets Preview (Matching native dev_toggle_single_dev_widget.xml) */}
                 <View style={s.previewContainer}>
-                  <LocalizedText style={[s.previewLabel, { color: t.textMuted }]}>
-                    1x1 SINGLE TOGGLE BUTTONS
+                  <LocalizedText style={[s.previewLabel, { color: '#4ADE80' }]}>
+                    1x1 INDIVIDUAL TOGGLES
                   </LocalizedText>
-                  <View style={s.singleGrid}>
-                    <View style={s.singleCard}>
-                      <LocalizedText style={[s.singleCardText, { color: '#4ADE80' }]}>DEV MODE</LocalizedText>
-                      <Pill label="1x1" tone="success" />
+
+                  <View style={s.nativeSingleGrid}>
+                    <View style={[s.nativeSingleCard, s.nativeWidgetBtnActive]}>
+                      <Terminal size={26} color="#FFFFFF" />
+                      <LocalizedText style={s.nativeSingleLabelActive}>DEV MODE</LocalizedText>
+                      <LocalizedText style={s.nativeSingleStatusActive}>ON</LocalizedText>
                     </View>
-                    <View style={s.singleCard}>
-                      <LocalizedText style={[s.singleCardText, { color: '#4ADE80' }]}>USB DEBUG</LocalizedText>
-                      <Pill label="1x1" tone="success" />
+
+                    <View style={[s.nativeSingleCard, s.nativeWidgetBtnActive]}>
+                      <Usb size={26} color="#FFFFFF" />
+                      <LocalizedText style={s.nativeSingleLabelActive}>USB ADB</LocalizedText>
+                      <LocalizedText style={s.nativeSingleStatusActive}>ON</LocalizedText>
                     </View>
-                    <View style={s.singleCard}>
-                      <LocalizedText style={[s.singleCardText, { color: '#38BDF8' }]}>WIRELESS</LocalizedText>
-                      <Pill label="1x1" tone="cyan" />
+
+                    <View style={[s.nativeSingleCard, s.nativeWidgetBtnInactive]}>
+                      <Wifi size={26} color="#5C7A6B" />
+                      <LocalizedText style={s.nativeSingleLabelInactive}>WIRELESS</LocalizedText>
+                      <LocalizedText style={s.nativeSingleStatusInactive}>OFF</LocalizedText>
                     </View>
                   </View>
                 </View>
 
+                {/* How to add notice */}
                 <View style={s.infoTip}>
                   <LocalizedText style={[s.infoTipText, { color: t.textSecondary }]}>
-                    To add Developer Quick Toggles, long press an empty area on your home screen &rarr; tap &ldquo;Widgets&rdquo; &rarr; scroll to &ldquo;Dev Mode&rdquo; &rarr; drag to screen.
+                    To add Developer Quick Toggles, long press an empty space on your home screen &rarr; tap &ldquo;Widgets&rdquo; &rarr; scroll to &ldquo;Dev Mode&rdquo; &rarr; drag to your desktop.
                   </LocalizedText>
                 </View>
               </View>
@@ -610,7 +699,7 @@ export default function WidgetSettings() {
                   <LocalizedText style={s.stepNumText}>2</LocalizedText>
                 </View>
                 <LocalizedText style={[s.stepText, { color: t.textPrimary }]}>
-                  Tap <LocalizedText style={{ fontFamily: fonts.heading, color: t.accentCyan }}>Widgets</LocalizedText> in the launcher popup menu.
+                  Tap <LocalizedText style={{ fontFamily: fonts.heading, color: '#4ADE80' }}>Widgets</LocalizedText> in the launcher popup menu.
                 </LocalizedText>
               </View>
 
@@ -619,7 +708,7 @@ export default function WidgetSettings() {
                   <LocalizedText style={s.stepNumText}>3</LocalizedText>
                 </View>
                 <LocalizedText style={[s.stepText, { color: t.textPrimary }]}>
-                  Scroll to <LocalizedText style={{ fontFamily: fonts.heading, color: t.accentCyan }}>Dev Mode</LocalizedText> in the widgets list.
+                  Scroll to <LocalizedText style={{ fontFamily: fonts.heading, color: '#4ADE80' }}>Dev Mode</LocalizedText> in the widgets list.
                 </LocalizedText>
               </View>
 
@@ -686,11 +775,11 @@ const s = StyleSheet.create({
   content: {
     paddingHorizontal: space.lg,
     paddingTop: space.sm,
-    paddingBottom: 40,
-    gap: space.md,
+    paddingBottom: 50,
+    gap: space.lg,
     width: '100%',
   },
-  header: { gap: space.xs, width: '100%', marginBottom: space.xs },
+  header: { gap: space.xs, width: '100%', marginBottom: 2 },
   title: {
     fontFamily: fonts.heading,
     fontSize: 26,
@@ -707,34 +796,51 @@ const s = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 1.5,
   },
-  styleTabsContainer: {
-    flexDirection: 'row',
+  styleSelectorWrapper: {
     gap: space.xs,
     width: '100%',
   },
-  styleTab: {
-    flex: 1,
+  styleTabsRow: {
     flexDirection: 'row',
+    gap: space.sm,
+    width: '100%',
+    marginTop: 4,
+  },
+  styleTabCard: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    borderRadius: radius.lg,
+    gap: 4,
   },
-  styleTabText: {
+  styleTabIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  styleTabTitle: {
+    fontFamily: fonts.heading,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  styleTabSub: {
     fontFamily: fonts.monoBold,
-    fontSize: 11,
+    fontSize: 9.5,
     letterSpacing: 0.3,
+    textAlign: 'center',
   },
   cardTitle: {
     fontFamily: fonts.heading,
-    fontSize: 15.5,
+    fontSize: 16,
   },
   cardDesc: {
     fontFamily: fonts.body,
-    fontSize: 12,
+    fontSize: 12.5,
     lineHeight: 16,
   },
   inputLabel: {
@@ -744,25 +850,25 @@ const s = StyleSheet.create({
   },
   linkText: {
     fontFamily: fonts.monoBold,
-    fontSize: 11,
+    fontSize: 11.5,
   },
   appChipsScroll: {
     gap: space.xs,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   appChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: radius.md,
     borderWidth: 1.5,
   },
   appChipText: {
     fontFamily: fonts.heading,
     fontSize: 12.5,
-    maxWidth: 110,
+    maxWidth: 120,
   },
   appChipCheck: {
     width: 16,
@@ -788,12 +894,12 @@ const s = StyleSheet.create({
     borderRadius: radius.md,
     padding: space.md,
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.2)',
+    borderColor: 'rgba(34, 197, 94, 0.25)',
     gap: space.sm,
   },
   previewLabel: {
     fontFamily: fonts.monoBold,
-    fontSize: 10,
+    fontSize: 10.5,
     letterSpacing: 1.2,
   },
   widget1x1MockupBox: {
@@ -802,10 +908,10 @@ const s = StyleSheet.create({
     gap: space.md,
   },
   widget1x1Tile: {
-    width: 90,
-    height: 94,
+    width: 92,
+    height: 96,
     backgroundColor: '#0A1E14',
-    borderRadius: radius.lg,
+    borderRadius: 18,
     borderWidth: 1.5,
     borderColor: '#4ADE80',
     alignItems: 'center',
@@ -854,7 +960,7 @@ const s = StyleSheet.create({
   },
   previewInfoCopy: {
     flex: 1,
-    gap: 6,
+    gap: 8,
   },
   previewBullet: {
     flexDirection: 'row',
@@ -868,10 +974,10 @@ const s = StyleSheet.create({
     flex: 1,
   },
   dockWidgetMockup: {
-    backgroundColor: '#05120B',
-    borderRadius: radius.md,
+    backgroundColor: '#08140F',
+    borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#22C55E',
+    borderColor: '#3322C55E',
     padding: space.sm,
     gap: space.xs,
   },
@@ -911,7 +1017,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(34, 197, 94, 0.08)',
-    borderRadius: radius.sm,
+    borderRadius: 12,
     paddingVertical: 8,
     gap: 4,
     borderWidth: 1,
@@ -943,67 +1049,102 @@ const s = StyleSheet.create({
     fontSize: 11.5,
     lineHeight: 16,
   },
-  previewWidgetRow: {
+  nativeWidget3x1Box: {
     flexDirection: 'row',
     backgroundColor: '#08140F',
-    borderRadius: radius.md,
-    padding: 4,
+    borderRadius: 18,
+    padding: 8,
     borderWidth: 1.5,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
-    gap: 4,
+    borderColor: '#3322C55E',
+    gap: 6,
   },
-  previewWidgetBtn: {
+  nativeWidgetBtn: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0284C7',
-    borderRadius: radius.sm,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 14,
+    gap: 3,
+  },
+  nativeWidgetBtnActive: {
+    backgroundColor: '#15803D',
+    borderWidth: 1.5,
+    borderColor: '#4ADE80',
+  },
+  nativeWidgetBtnInactive: {
+    backgroundColor: '#0E1D17',
     borderWidth: 1,
-    borderColor: '#38BDF8',
-    paddingVertical: 6,
-    gap: 2,
+    borderColor: '#1A3328',
   },
-  previewWidgetBtnText: {
+  nativeWidgetBtnLabelActive: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    color: '#FFFFFF',
+    marginTop: 2,
+  },
+  nativeWidgetBtnStatusActive: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    color: '#DCFCE7',
+  },
+  nativeWidgetBtnLabelInactive: {
+    fontFamily: fonts.monoBold,
+    fontSize: 10,
+    color: '#7A9988',
+    marginTop: 2,
+  },
+  nativeWidgetBtnStatusInactive: {
     fontFamily: fonts.monoBold,
     fontSize: 8.5,
-    color: '#FFFFFF',
+    color: '#5C7A6B',
   },
-  previewWidgetBtnStatus: {
-    fontFamily: fonts.monoBold,
-    fontSize: 8.5,
-    color: '#FFFFFF',
-  },
-  singleGrid: {
+  nativeSingleGrid: {
     flexDirection: 'row',
     gap: space.sm,
   },
-  singleCard: {
+  nativeSingleCard: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.06)',
-    borderRadius: radius.md,
-    paddingVertical: 10,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
     gap: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
   },
-  singleCardText: {
+  nativeSingleLabelActive: {
     fontFamily: fonts.monoBold,
     fontSize: 9.5,
+    color: '#FFFFFF',
     textAlign: 'center',
   },
+  nativeSingleStatusActive: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9,
+    color: '#DCFCE7',
+  },
+  nativeSingleLabelInactive: {
+    fontFamily: fonts.monoBold,
+    fontSize: 9.5,
+    color: '#7A9988',
+    textAlign: 'center',
+  },
+  nativeSingleStatusInactive: {
+    fontFamily: fonts.monoBold,
+    fontSize: 8.5,
+    color: '#5C7A6B',
+  },
   infoTip: {
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    backgroundColor: 'rgba(34, 197, 94, 0.08)',
     borderRadius: radius.md,
-    padding: space.sm,
+    padding: space.md,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
+    borderColor: 'rgba(34, 197, 94, 0.25)',
   },
   infoTipText: {
     fontFamily: fonts.body,
     fontSize: 12,
-    lineHeight: 17,
+    lineHeight: 18,
   },
   promoImageWrapper: {
     position: 'relative',
