@@ -126,8 +126,9 @@ android {
     // APK so emulators (x86_64) keep working. Play Store uses the AAB and splits on its own.
     splits {
         abi {
+            def isBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains('bundle') }
             def isReleaseBuild = gradle.startParameter.taskNames.any { it.toLowerCase().contains('release') }
-            enable isReleaseBuild
+            enable isReleaseBuild && !isBundle
             reset()
             include 'armeabi-v7a', 'arm64-v8a'
             universalApk false
