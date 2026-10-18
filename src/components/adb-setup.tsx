@@ -24,13 +24,18 @@ export const REVOKE_COMMAND = `adb shell pm revoke ${APP_ID} android.permission.
 
 export function useWriteSecurePermission() {
   const [permission, setPermission] = useState<PermissionStatus>('unknown');
+  const [shizukuStatus, setShizukuStatus] = useState<'unavailable' | 'needs_permission' | 'authorized'>('unavailable');
   const [checking, setChecking] = useState(false);
 
   const check = useCallback(async () => {
     setChecking(true);
     try {
-      const status = await DevToggle.getPermissionStatus();
-      setPermission(status);
+      const [permissionStatus, currentShizukuStatus] = await Promise.all([
+        DevToggle.getPermissionStatus(),
+        DevToggle.getShizukuStatus(),
+      ]);
+      setPermission(permissionStatus);
+      setShizukuStatus(currentShizukuStatus);
     } finally {
       setChecking(false);
     }
@@ -38,9 +43,13 @@ export function useWriteSecurePermission() {
 
   useEffect(() => {
     let active = true;
-    DevToggle.getPermissionStatus().then(value => {
-      if (active) setPermission(value);
-    });
+    Promise.all([DevToggle.getPermissionStatus(), DevToggle.getShizukuStatus()]).then(
+      ([permissionStatus, currentShizukuStatus]) => {
+        if (!active) return;
+        setPermission(permissionStatus);
+        setShizukuStatus(currentShizukuStatus);
+      }
+    );
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') check();
     });
@@ -50,32 +59,38 @@ export function useWriteSecurePermission() {
     };
   }, [check]);
 
-  return { permission, checking, check };
+  return {
+    permission,
+    shizukuStatus,
+    accessGranted: permission === 'granted' || shizukuStatus === 'authorized',
+    checking,
+    check,
+  };
 }
 
 export function AdbSetupGuide({
   permission,
+  shizukuStatus,
   checking,
   onCheck,
 }: {
   permission: PermissionStatus;
+  shizukuStatus: 'unavailable' | 'needs_permission' | 'authorized';
   checking: boolean;
-  onCheck: () => void;
+  onCheck: () => void | Promise<void>;
 }) {
   const t = useTheme();
   const [method, setMethod] = useState<'npx' | 'adb' | 'shizuku'>('npx');
-  const [shizukuStatus, setShizukuStatus] = useState<string>('unavailable');
-
-  useEffect(() => {
-    DevToggle.getShizukuStatus?.().then(st => {
-      if (st) setShizukuStatus(st);
-    });
-  }, []);
 
   return (
     <View style={s.wrap}>
       {/* Live Status Header */}
-      <PermissionStatusCard permission={permission} checking={checking} onCheck={onCheck} />
+      <PermissionStatusCard
+        permission={permission}
+        shizukuStatus={shizukuStatus}
+        checking={checking}
+        onCheck={onCheck}
+      />
 
       {/* Method switch: CLI, plain ADB, or Shizuku */}
       <View style={s.methodRow}>
@@ -289,9 +304,7 @@ export function AdbSetupGuide({
                       Linking.openURL('https://shizuku.rikka.app/');
                     }
                   }
-                  const st = await DevToggle.getShizukuStatus?.();
-                  if (st) setShizukuStatus(st);
-                  onCheck();
+                  await onCheck();
                 }}
               />
             </View>
@@ -338,15 +351,19 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 
 export function PermissionStatusCard({
   permission,
+  shizukuStatus = 'unavailable',
   checking,
   onCheck,
 }: {
   permission: PermissionStatus;
+  shizukuStatus?: 'unavailable' | 'needs_permission' | 'authorized';
   checking?: boolean;
-  onCheck?: () => void;
+  onCheck?: () => void | Promise<void>;
 }) {
   const t = useTheme();
-  const granted = permission === 'granted';
+  const adbGranted = permission === 'granted';
+  const shizukuGranted = shizukuStatus === 'authorized';
+  const granted = adbGranted || shizukuGranted;
 
   return (
     <Animated.View
@@ -366,16 +383,25 @@ export function PermissionStatusCard({
       )}
       <View style={{ flex: 1, gap: 2 }}>
         <LocalizedText style={[s.statusTitle, { color: t.textPrimary }]}>
-          {granted ? 'ADB PERMISSION ACTIVE' : 'WRITE_SECURE_SETTINGS: PENDING'}
+          {adbGranted
+            ? 'ADB PERMISSION ACTIVE'
+            : shizukuGranted
+              ? 'SHIZUKU ACCESS ACTIVE'
+              : 'WRITE_SECURE_SETTINGS: PENDING'}
         </LocalizedText>
         <LocalizedText style={[s.statusBody, { color: t.textSecondary }]}>
           {granted
-            ? 'Hardware permission verified. Instant switching is enabled.'
+            ? shizukuGranted && !adbGranted
+              ? 'Shizuku authorization verified. Instant switching is enabled.'
+              : 'Hardware permission verified. Instant switching is enabled.'
             : 'Run the grant command from your PC (Dev Mode CLI or ADB) to unlock direct controls.'}
         </LocalizedText>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
-        <Pill label={granted ? 'GRANTED' : 'DENIED'} tone={granted ? 'success' : 'warning'} />
+        <Pill
+          label={adbGranted ? 'GRANTED' : shizukuGranted ? 'SHIZUKU' : 'DENIED'}
+          tone={granted ? 'success' : 'warning'}
+        />
         {onCheck && (
           <Button
             variant="ghost"

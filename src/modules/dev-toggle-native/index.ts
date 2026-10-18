@@ -1,7 +1,8 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export type SettingName = 'developerOptions' | 'usbDebugging' | 'wirelessDebugging';
-export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn' | 'webRemote' | 'autoWirelessConnect';
+export type ExtraSettingName = 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn';
+// Web Remote Dashboard disabled: | 'webRemote' | 'autoWirelessConnect'
 export type SettingState = 'enabled' | 'disabled' | 'unknown';
 export type PermissionStatus = 'granted' | 'denied' | 'unknown';
 
@@ -38,12 +39,13 @@ export type AnimationScales = {
   animator: number;
 };
 
-export type ScreenMirrorStatus = {
-  streaming: boolean;
-  width: number;
-  height: number;
-  streamUrl: string;
-};
+// MediaProjection disabled.
+// export type ScreenMirrorStatus = {
+//   streaming: boolean;
+//   width: number;
+//   height: number;
+//   streamUrl: string;
+// };
 
 type Result = { opened?: boolean; changed?: boolean; message: string };
 
@@ -81,11 +83,12 @@ type NativeModule = {
   requestNotificationPermission?(): Promise<boolean>;
   getPerformanceMetrics?(): Promise<string>;
   getDeviceInfo?(): Promise<string>;
-  isScreenMirroring?(): Promise<boolean>;
-  startScreenMirror?(): Promise<boolean>;
-  stopScreenMirror?(): Promise<boolean>;
-  getScreenMirrorUrl?(): Promise<string>;
-  getScreenMirrorStatus?(): Promise<ScreenMirrorStatus>;
+  // MediaProjection disabled.
+  // isScreenMirroring?(): Promise<boolean>;
+  // startScreenMirror?(): Promise<boolean>;
+  // stopScreenMirror?(): Promise<boolean>;
+  // getScreenMirrorUrl?(): Promise<string>;
+  // getScreenMirrorStatus?(): Promise<ScreenMirrorStatus>;
   getLanguagePreference?(): Promise<string>;
   setLanguagePreference?(language: string): Promise<boolean>;
   canWriteSystemSettings?(): Promise<boolean>;
@@ -157,7 +160,7 @@ export default {
   getExtraSettings: async (): Promise<Record<ExtraSettingName, SettingState>> =>
     native?.getExtraSettings
       ? native.getExtraSettings()
-      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown', keepWirelessOn: 'unknown', webRemote: 'unknown', autoWirelessConnect: 'unknown' },
+      : { stayAwake: 'unknown', showTouches: 'unknown', pointerLocation: 'unknown', keepWirelessOn: 'unknown' },
   setExtraSetting: async (setting: ExtraSettingName, enabled: boolean): Promise<Result> =>
     native?.setExtraSetting
       ? native.setExtraSetting(setting, enabled)
@@ -198,18 +201,19 @@ export default {
       return null;
     }
   },
-  isScreenMirroring: async (): Promise<boolean> =>
-    native?.isScreenMirroring ? native.isScreenMirroring() : false,
-  startScreenMirror: async (): Promise<boolean> =>
-    native?.startScreenMirror ? native.startScreenMirror() : false,
-  stopScreenMirror: async (): Promise<boolean> =>
-    native?.stopScreenMirror ? native.stopScreenMirror() : false,
-  getScreenMirrorUrl: async (): Promise<string> =>
-    native?.getScreenMirrorUrl ? native.getScreenMirrorUrl() : '',
-  getScreenMirrorStatus: async (): Promise<ScreenMirrorStatus> =>
-    native?.getScreenMirrorStatus
-      ? native.getScreenMirrorStatus()
-      : { streaming: false, width: 540, height: 1170, streamUrl: '' },
+  // MediaProjection disabled.
+  // isScreenMirroring: async (): Promise<boolean> =>
+  //   native?.isScreenMirroring ? native.isScreenMirroring() : false,
+  // startScreenMirror: async (): Promise<boolean> =>
+  //   native?.startScreenMirror ? native.startScreenMirror() : false,
+  // stopScreenMirror: async (): Promise<boolean> =>
+  //   native?.stopScreenMirror ? native.stopScreenMirror() : false,
+  // getScreenMirrorUrl: async (): Promise<string> =>
+  //   native?.getScreenMirrorUrl ? native.getScreenMirrorUrl() : '',
+  // getScreenMirrorStatus: async (): Promise<ScreenMirrorStatus> =>
+  //   native?.getScreenMirrorStatus
+  //     ? native.getScreenMirrorStatus()
+  //     : { streaming: false, width: 540, height: 1170, streamUrl: '' },
   getLanguagePreference: async (): Promise<string> =>
     native?.getLanguagePreference ? native.getLanguagePreference() : 'auto',
   setLanguagePreference: async (language: string): Promise<boolean> =>

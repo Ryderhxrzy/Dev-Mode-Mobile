@@ -1,3 +1,5 @@
+/* MediaProjection feature disabled. This source is intentionally kept commented
+ * so it can be restored later without recovering deleted code.
 package expo.modules.devtoggle
 
 import android.app.Activity
@@ -70,4 +72,5 @@ class DevToggleScreenCaptureActivity : Activity() {
         finish()
     }
 }
+*/
 

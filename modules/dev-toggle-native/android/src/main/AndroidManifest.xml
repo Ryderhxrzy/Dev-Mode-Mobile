@@ -11,7 +11,7 @@
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+  <!-- MediaProjection disabled: <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" /> -->
   <uses-permission android:name="android.permission.WAKE_LOCK" />
   <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
 
@@ -129,7 +129,7 @@
       android:launchMode="singleInstance"
       android:exported="true" />
 
-    <!-- Transparent activity for system-level screen capture permission dialog -->
+    <!-- MediaProjection disabled. Keep the previous activity declaration commented for easy restoration.
     <activity
       android:name="expo.modules.devtoggle.DevToggleScreenCaptureActivity"
       android:theme="@android:style/Theme.Translucent.NoTitleBar"
@@ -137,13 +137,20 @@
       android:noHistory="true"
       android:taskAffinity=""
       android:launchMode="singleInstance"
-      android:exported="false" />
+      android:exported="false" /> -->
 
-    <!-- Foreground Service to keep Bridge Server & WifiLock active in background -->
+    <!-- Foreground Service to keep Bridge Server & WifiLock active in background.
+    Previous MediaProjection declaration, intentionally disabled:
     <service
       android:name="expo.modules.devtoggle.DevToggleBridgeService"
       android:enabled="true"
       android:exported="false"
       android:foregroundServiceType="connectedDevice|mediaProjection" />
+    -->
+    <service
+      android:name="expo.modules.devtoggle.DevToggleBridgeService"
+      android:enabled="true"
+      android:exported="false"
+      android:foregroundServiceType="connectedDevice" />
   </application>
 </manifest>

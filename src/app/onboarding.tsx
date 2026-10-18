@@ -32,7 +32,7 @@ const PAGES = ['welcome', 'privacy', 'how', 'adb'] as const;
 export default function Onboarding() {
   const t = useTheme();
   const { finish } = useOnboarding();
-  const { permission, checking, check } = useWriteSecurePermission();
+  const { permission, shizukuStatus, accessGranted, checking, check } = useWriteSecurePermission();
   const [page, setPage] = useState(0);
   const [acknowledged, setAcknowledged] = useState(false);
   const current = PAGES[page];
@@ -41,7 +41,7 @@ export default function Onboarding() {
 
   const handleNext = async () => {
     if (isLast) {
-      if (permission === 'granted') {
+      if (accessGranted) {
         await finish();
         router.replace('/success');
       } else {
@@ -93,7 +93,12 @@ export default function Onboarding() {
                   title="Configure ADB Permission"
                   subtitle="To toggle secure system values directly without root, Android requires WRITE_SECURE_SETTINGS granted from your computer. Use the Dev Mode CLI or plain ADB."
                 />
-                <AdbSetupGuide permission={permission} checking={checking} onCheck={check} />
+                <AdbSetupGuide
+                  permission={permission}
+                  shizukuStatus={shizukuStatus}
+                  checking={checking}
+                  onCheck={check}
+                />
               </>
             )}
           </Animated.View>
@@ -112,7 +117,7 @@ export default function Onboarding() {
           )}
 
           {isLast ? (
-            permission === 'granted' ? (
+            accessGranted ? (
               <Button
                 variant="cyan"
                 label="Launch Dev Mode"

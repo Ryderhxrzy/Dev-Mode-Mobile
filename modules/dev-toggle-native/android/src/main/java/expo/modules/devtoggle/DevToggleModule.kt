@@ -370,9 +370,10 @@ class DevToggleModule : Module() {
         "stayAwake" to stayAwake,
         "showTouches" to readSystem(showTouchesKey),
         "pointerLocation" to readSystem(pointerLocationKey),
-        "keepWirelessOn" to (if (DevToggleBridgeServer.isKeepWirelessOn(context())) "enabled" else "disabled"),
-        "webRemote" to (if (DevToggleBridgeServer.isWebRemoteEnabled(context())) "enabled" else "disabled"),
-        "autoWirelessConnect" to (if (DevToggleBridgeServer.isAutoWirelessConnect(context())) "enabled" else "disabled")
+        "keepWirelessOn" to (if (DevToggleBridgeServer.isKeepWirelessOn(context())) "enabled" else "disabled")
+        // Web Remote Dashboard disabled.
+        // "webRemote" to (if (DevToggleBridgeServer.isWebRemoteEnabled(context())) "enabled" else "disabled"),
+        // "autoWirelessConnect" to (if (DevToggleBridgeServer.isAutoWirelessConnect(context())) "enabled" else "disabled")
       )
     }
 
@@ -390,14 +391,16 @@ class DevToggleModule : Module() {
         DevToggleBridgeServer.setKeepWirelessOn(context(), enabled)
         return@AsyncFunction mapOf("changed" to true, "message" to "Setting updated.")
       }
-      if (setting == "webRemote") {
-        DevToggleBridgeServer.setWebRemoteEnabled(context(), enabled)
-        return@AsyncFunction mapOf("changed" to true, "message" to "Web Remote setting updated.")
-      }
-      if (setting == "autoWirelessConnect") {
-        DevToggleBridgeServer.setAutoWirelessConnect(context(), enabled)
-        return@AsyncFunction mapOf("changed" to true, "message" to "Auto Wireless Connect setting updated.")
-      }
+      // Web Remote Dashboard disabled.
+      // if (setting == "webRemote") {
+      //   DevToggleBridgeServer.setWebRemoteEnabled(context(), enabled)
+      //   return@AsyncFunction mapOf("changed" to true, "message" to "Web Remote setting updated.")
+      // }
+      // Web Remote Dashboard disabled.
+      // if (setting == "autoWirelessConnect") {
+      //   DevToggleBridgeServer.setAutoWirelessConnect(context(), enabled)
+      //   return@AsyncFunction mapOf("changed" to true, "message" to "Auto Wireless Connect setting updated.")
+      // }
 
       val intVal = if (enabled) 1 else 0
 
@@ -529,35 +532,12 @@ class DevToggleModule : Module() {
       }
     }
 
-    AsyncFunction("isScreenMirroring") {
-      DevToggleScreenMirrorManager.isStreaming()
-    }
-
-    AsyncFunction("startScreenMirror") {
-      DevToggleScreenCaptureActivity.start(context())
-      true
-    }
-
-    AsyncFunction("stopScreenMirror") {
-      DevToggleScreenCaptureActivity.stop(context())
-      true
-    }
-
-    AsyncFunction("getScreenMirrorUrl") {
-      val ip = AdbEndpointHelper.getLocalIpAddress(context()) ?: "127.0.0.1"
-      "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
-    }
-
-    AsyncFunction("getScreenMirrorStatus") {
-      val streaming = DevToggleScreenMirrorManager.isStreaming()
-      val ip = AdbEndpointHelper.getLocalIpAddress(context()) ?: "127.0.0.1"
-      mapOf(
-        "streaming" to streaming,
-        "width" to DevToggleScreenMirrorManager.streamWidth,
-        "height" to DevToggleScreenMirrorManager.streamHeight,
-        "streamUrl" to "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
-      )
-    }
+    // MediaProjection disabled.
+    // AsyncFunction("isScreenMirroring") { DevToggleScreenMirrorManager.isStreaming() }
+    // AsyncFunction("startScreenMirror") { DevToggleScreenCaptureActivity.start(context()); true }
+    // AsyncFunction("stopScreenMirror") { DevToggleScreenCaptureActivity.stop(context()); true }
+    // AsyncFunction("getScreenMirrorUrl") { ... }
+    // AsyncFunction("getScreenMirrorStatus") { ... }
 
     // App Shield (Auto-disable Dev Options for protected apps)
     AsyncFunction("getAppShieldSettings") {
