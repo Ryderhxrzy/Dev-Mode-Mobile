@@ -38,12 +38,13 @@ export type AnimationScales = {
   animator: number;
 };
 
-export type ScreenMirrorStatus = {
-  streaming: boolean;
-  width: number;
-  height: number;
-  streamUrl: string;
-};
+// MediaProjection disabled.
+// export type ScreenMirrorStatus = {
+//   streaming: boolean;
+//   width: number;
+//   height: number;
+//   streamUrl: string;
+// };
 
 type Result = { opened?: boolean; changed?: boolean; message: string };
 
@@ -81,11 +82,12 @@ type NativeModule = {
   requestNotificationPermission?(): Promise<boolean>;
   getPerformanceMetrics?(): Promise<string>;
   getDeviceInfo?(): Promise<string>;
-  isScreenMirroring?(): Promise<boolean>;
-  startScreenMirror?(): Promise<boolean>;
-  stopScreenMirror?(): Promise<boolean>;
-  getScreenMirrorUrl?(): Promise<string>;
-  getScreenMirrorStatus?(): Promise<ScreenMirrorStatus>;
+  // MediaProjection disabled.
+  // isScreenMirroring?(): Promise<boolean>;
+  // startScreenMirror?(): Promise<boolean>;
+  // stopScreenMirror?(): Promise<boolean>;
+  // getScreenMirrorUrl?(): Promise<string>;
+  // getScreenMirrorStatus?(): Promise<ScreenMirrorStatus>;
   getLanguagePreference?(): Promise<string>;
   setLanguagePreference?(language: string): Promise<boolean>;
   canWriteSystemSettings?(): Promise<boolean>;
@@ -198,18 +200,19 @@ export default {
       return null;
     }
   },
-  isScreenMirroring: async (): Promise<boolean> =>
-    native?.isScreenMirroring ? native.isScreenMirroring() : false,
-  startScreenMirror: async (): Promise<boolean> =>
-    native?.startScreenMirror ? native.startScreenMirror() : false,
-  stopScreenMirror: async (): Promise<boolean> =>
-    native?.stopScreenMirror ? native.stopScreenMirror() : false,
-  getScreenMirrorUrl: async (): Promise<string> =>
-    native?.getScreenMirrorUrl ? native.getScreenMirrorUrl() : '',
-  getScreenMirrorStatus: async (): Promise<ScreenMirrorStatus> =>
-    native?.getScreenMirrorStatus
-      ? native.getScreenMirrorStatus()
-      : { streaming: false, width: 540, height: 1170, streamUrl: '' },
+  // MediaProjection disabled.
+  // isScreenMirroring: async (): Promise<boolean> =>
+  //   native?.isScreenMirroring ? native.isScreenMirroring() : false,
+  // startScreenMirror: async (): Promise<boolean> =>
+  //   native?.startScreenMirror ? native.startScreenMirror() : false,
+  // stopScreenMirror: async (): Promise<boolean> =>
+  //   native?.stopScreenMirror ? native.stopScreenMirror() : false,
+  // getScreenMirrorUrl: async (): Promise<string> =>
+  //   native?.getScreenMirrorUrl ? native.getScreenMirrorUrl() : '',
+  // getScreenMirrorStatus: async (): Promise<ScreenMirrorStatus> =>
+  //   native?.getScreenMirrorStatus
+  //     ? native.getScreenMirrorStatus()
+  //     : { streaming: false, width: 540, height: 1170, streamUrl: '' },
   getLanguagePreference: async (): Promise<string> =>
     native?.getLanguagePreference ? native.getLanguagePreference() : 'auto',
   setLanguagePreference: async (language: string): Promise<boolean> =>

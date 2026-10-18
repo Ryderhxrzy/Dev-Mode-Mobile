@@ -241,6 +241,7 @@ object DevToggleBridgeServer {
                 Settings.Global.putInt(cr, key, value)
             } catch (_: Exception) { false }
 
+            /* MediaProjection disabled.
             if (path == "/api/screen/stream" || path == "/screen/stream") {
                 socket.soTimeout = 0
                 val rawOut = socket.getOutputStream()
@@ -272,11 +273,13 @@ object DevToggleBridgeServer {
                 }
                 return
             }
+            */
 
             var jsonResponse = "{}"
             var statusCode = "200 OK"
 
             when {
+                /* MediaProjection disabled.
                 path == "/api/screen/status" || path == "/screen/status" -> {
                     val streaming = DevToggleScreenMirrorManager.isStreaming()
                     val w = DevToggleScreenMirrorManager.streamWidth
@@ -326,6 +329,7 @@ object DevToggleBridgeServer {
                         jsonResponse = """{"success":false,"error":"Missing package parameter"}"""
                     }
                 }
+                */
                 path == "/api/apps" || path == "/apps" -> {
                     val pm = context.packageManager
                     val mainIntent = Intent(Intent.ACTION_MAIN, null).apply { addCategory(Intent.CATEGORY_LAUNCHER) }

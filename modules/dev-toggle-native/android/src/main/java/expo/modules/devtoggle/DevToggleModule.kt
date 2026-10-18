@@ -529,35 +529,12 @@ class DevToggleModule : Module() {
       }
     }
 
-    AsyncFunction("isScreenMirroring") {
-      DevToggleScreenMirrorManager.isStreaming()
-    }
-
-    AsyncFunction("startScreenMirror") {
-      DevToggleScreenCaptureActivity.start(context())
-      true
-    }
-
-    AsyncFunction("stopScreenMirror") {
-      DevToggleScreenCaptureActivity.stop(context())
-      true
-    }
-
-    AsyncFunction("getScreenMirrorUrl") {
-      val ip = AdbEndpointHelper.getLocalIpAddress(context()) ?: "127.0.0.1"
-      "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
-    }
-
-    AsyncFunction("getScreenMirrorStatus") {
-      val streaming = DevToggleScreenMirrorManager.isStreaming()
-      val ip = AdbEndpointHelper.getLocalIpAddress(context()) ?: "127.0.0.1"
-      mapOf(
-        "streaming" to streaming,
-        "width" to DevToggleScreenMirrorManager.streamWidth,
-        "height" to DevToggleScreenMirrorManager.streamHeight,
-        "streamUrl" to "http://$ip:${DevToggleBridgeServer.PORT}/api/screen/stream"
-      )
-    }
+    // MediaProjection disabled.
+    // AsyncFunction("isScreenMirroring") { DevToggleScreenMirrorManager.isStreaming() }
+    // AsyncFunction("startScreenMirror") { DevToggleScreenCaptureActivity.start(context()); true }
+    // AsyncFunction("stopScreenMirror") { DevToggleScreenCaptureActivity.stop(context()); true }
+    // AsyncFunction("getScreenMirrorUrl") { ... }
+    // AsyncFunction("getScreenMirrorStatus") { ... }
 
     // App Shield (Auto-disable Dev Options for protected apps)
     AsyncFunction("getAppShieldSettings") {
