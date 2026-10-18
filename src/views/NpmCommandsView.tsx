@@ -3,9 +3,9 @@ import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Sliders from 'lucide-react-native/icons/sliders-vertical';
 import Wifi from 'lucide-react-native/icons/wifi';
 import Laptop from 'lucide-react-native/icons/laptop';
-import Monitor from 'lucide-react-native/icons/monitor';
+// Web Remote Dashboard disabled: import Monitor from 'lucide-react-native/icons/monitor';
 import Gauge from 'lucide-react-native/icons/gauge';
-import Network from 'lucide-react-native/icons/network';
+// Web Remote Dashboard disabled: import Network from 'lucide-react-native/icons/network';
 import Bug from 'lucide-react-native/icons/bug';
 import LocalizedText from '@/components/LocalizedText';
 import { Button, Card, CodeBlock, IconContainer, Overline, Pill } from '@/components/ui';
@@ -13,21 +13,20 @@ import { fonts, radius, space, useTheme } from '@/theme';
 import { GithubIcon, GITHUB_REPO_URL, GITHUB_ISSUES_URL } from '@/components/GithubHeaderButton';
 
 const CLI_COMMAND_GROUPS = [
-  {
-    category: 'LOCAL NETWORK BRIDGE (REQUIRED FOR WI-FI)',
-    icon: Network,
-    badge: 'SAME WI-FI',
-    badgeTone: 'warning' as const,
-    note: 'Important: To control your phone over the local network without cables, your computer and phone must be on the same local Wi-Fi. Run the bridge command first to discover and pair with this app!',
-    items: [
-      {
-        title: 'Network Bridge to Mobile App',
-        desc: 'Discovers this Dev Mode app over local Wi-Fi and connects direct terminal control.',
-        installedCmd: 'devmode bridge',
-        npxCmd: 'npx dev-mode-cli bridge',
-      },
-    ],
-  },
+  // Web Remote Dashboard and its local network bridge are disabled.
+  // {
+  //   category: 'LOCAL NETWORK BRIDGE (REQUIRED FOR WI-FI)',
+  //   icon: Network,
+  //   badge: 'SAME WI-FI',
+  //   badgeTone: 'warning' as const,
+  //   items: [
+  //     {
+  //       title: 'Network Bridge to Mobile App',
+  //       installedCmd: 'devmode bridge',
+  //       npxCmd: 'npx dev-mode-cli bridge',
+  //     },
+  //   ],
+  // },
   {
     category: 'CORE POWER & DEV MODE',
     icon: Sliders,
@@ -118,20 +117,21 @@ const CLI_COMMAND_GROUPS = [
       },
     ],
   },
-  {
-    category: 'PC DESKTOP WEB REMOTE',
-    icon: Monitor,
-    badge: 'BROWSER',
-    badgeTone: 'primary' as const,
-    items: [
-      {
-        title: 'Launch Web Dashboard in Browser',
-        desc: 'Opens an interactive browser GUI on your PC to toggle your phone settings.',
-        installedCmd: 'devmode web',
-        npxCmd: 'npx dev-mode-cli web',
-      },
-    ],
-  },
+  // Web Remote Dashboard disabled.
+  // {
+  //   category: 'PC DESKTOP WEB REMOTE',
+  //   icon: Monitor,
+  //   badge: 'BROWSER',
+  //   badgeTone: 'primary' as const,
+  //   items: [
+  //     {
+  //       title: 'Launch Web Dashboard in Browser',
+  //       desc: 'Opens an interactive browser GUI on your PC to toggle your phone settings.',
+  //       installedCmd: 'devmode web',
+  //       npxCmd: 'npx dev-mode-cli web',
+  //     },
+  //   ],
+  // },
 ];
 
 export function NpmCommandsView() {
@@ -305,7 +305,7 @@ export function NpmCommandsView() {
                 Same Local Network Requirement
               </LocalizedText>
               <LocalizedText style={[s.tipDesc, { color: t.textSecondary }]}>
-                For wireless bridge commands (`devmode bridge`), your computer and phone must be connected to the exact same Wi-Fi router or subnet.
+                Wireless ADB commands require your computer and phone to be reachable on the same local network.
               </LocalizedText>
             </View>
           </View>

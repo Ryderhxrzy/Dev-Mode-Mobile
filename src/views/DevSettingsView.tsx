@@ -34,55 +34,50 @@ import DevToggle, {
   type NotificationMode,
   type SettingState,
 } from '@/modules/dev-toggle-native';
-import { Button, Card, CyberToggle, IconContainer, Overline, Pill } from '@/components/ui';
+import { Button, Card, CyberToggle, IconContainer, Overline } from '@/components/ui';
 import { fonts, radius, space, useTheme } from '@/theme';
 import { SCALE_OPTIONS } from '@/views/DashboardView';
 
 const ALL_EXTRA_SETTINGS: {
   key: ExtraSettingName;
   title: string;
-  desc: string;
-  icon: 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn' | 'webRemote';
+  icon: 'stayAwake' | 'showTouches' | 'pointerLocation' | 'keepWirelessOn';
 }[] = [
-  {
-    key: 'webRemote',
-    title: 'Web Remote Dashboard (Local Dev Only)',
-    desc: 'Allows controlling Developer Options & ADB remotely from your PC browser (e.g. via devmode web) over local Wi-Fi.',
-    icon: 'webRemote',
-  },
+  // Web Remote Dashboard disabled.
+  // {
+  //   key: 'webRemote',
+  //   title: 'Web Remote Dashboard (Local Dev Only)',
+  //   icon: 'webRemote',
+  // },
   {
     key: 'stayAwake',
     title: 'Stay Awake While Charging',
-    desc: 'Screen will never sleep while connected to AC or USB power.',
     icon: 'stayAwake',
   },
   {
     key: 'showTouches',
     title: 'Show Visual Touch Taps',
-    desc: 'Display circular touch indicators for touches on the screen (great for screen recording).',
     icon: 'showTouches',
   },
   {
     key: 'pointerLocation',
     title: 'Pointer Location Tracker',
-    desc: 'Overlay screen touch coordinates, velocity, and pressure values.',
     icon: 'pointerLocation',
   },
-  {
-    key: 'autoWirelessConnect',
-    title: 'Local Network Auto-Pairing',
-    desc: 'Automatically discover and reconnect paired devices over local Wi-Fi when ADB is available.',
-    icon: 'keepWirelessOn',
-  },
+  // Web Remote Dashboard disabled.
+  // {
+  //   key: 'autoWirelessConnect',
+  //   title: 'Local Network Auto-Pairing',
+  //   icon: 'keepWirelessOn',
+  // },
   {
     key: 'keepWirelessOn',
     title: 'Keep Wireless Debugging On',
-    desc: 'Android turns Wireless Debugging off whenever Wi-Fi drops. Re-enable it automatically when Wi-Fi is back.',
     icon: 'keepWirelessOn',
   },
 ];
 
-const EXTRA_SETTINGS = ALL_EXTRA_SETTINGS.filter(item => item.key !== 'webRemote' || __DEV__);
+const EXTRA_SETTINGS = ALL_EXTRA_SETTINGS;
 
 export function DevSettingsView() {
   const t = useTheme();
@@ -102,11 +97,8 @@ export function DevSettingsView() {
     showTouches: 'unknown',
     pointerLocation: 'unknown',
     keepWirelessOn: 'unknown',
-    webRemote: 'unknown',
-    autoWirelessConnect: 'unknown',
   });
   const [notifMode, setNotifMode] = useState<NotificationMode>('always');
-
   const loadData = useCallback(async () => {
     try {
       const [perm, scales, extra, mode, canSys, shizuku] = await Promise.all([
@@ -117,8 +109,6 @@ export function DevSettingsView() {
           showTouches: 'unknown',
           pointerLocation: 'unknown',
           keepWirelessOn: 'unknown',
-          webRemote: 'unknown',
-          autoWirelessConnect: 'unknown',
         } as Record<ExtraSettingName, SettingState>)),
         DevToggle.getNotificationMode?.().catch(() => 'always' as NotificationMode),
         DevToggle.canWriteSystemSettings?.().catch(() => false),
@@ -143,8 +133,6 @@ export function DevSettingsView() {
         showTouches: 'unknown',
         pointerLocation: 'unknown',
         keepWirelessOn: 'unknown',
-        webRemote: 'unknown',
-        autoWirelessConnect: 'unknown',
       } as Record<ExtraSettingName, SettingState>)),
       DevToggle.getNotificationMode?.().catch(() => 'always' as NotificationMode),
       DevToggle.canWriteSystemSettings?.().catch(() => false),
@@ -233,8 +221,8 @@ export function DevSettingsView() {
       ]);
       await loadData();
       Alert.alert(
-        'Instant Cleanup Complete',
-        'All animation duration scales have been restored to default 1.0x, screen inspection overlays turned off, and local Dev Mode preferences wiped.'
+        'Cleanup Complete',
+        'Settings restored.'
       );
     } catch {
       Alert.alert('Cleanup Error', 'Failed to complete cleanup. Please check permissions.');
@@ -246,7 +234,7 @@ export function DevSettingsView() {
   const confirmCleanup = () => {
     Alert.alert(
       'Perform Instant Cleanup?',
-      'This will reset all system animation scales to 1.0x, turn off touch & coordinate overlays, and restore default settings.',
+      'Reset animations and overlays?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Reset Everything', style: 'destructive', onPress: handleInstantCleanup },
@@ -271,8 +259,9 @@ export function DevSettingsView() {
         return <Crosshair size={22} color={isEnabled ? t.success : t.warning} />;
       case 'keepWirelessOn':
         return <Wifi size={22} color={isEnabled ? t.success : t.accentCyan} />;
-      case 'webRemote':
-        return <Globe size={22} color={isEnabled ? t.success : t.accentCyan} />;
+      // Web Remote Dashboard disabled.
+      // case 'webRemote':
+      //   return <Globe size={22} color={isEnabled ? t.success : t.accentCyan} />;
       default:
         return <SunMedium size={22} color={t.accentCyan} />;
     }
@@ -285,9 +274,6 @@ export function DevSettingsView() {
         <View style={s.header}>
           <Overline>SYSTEM CONFIGURATION</Overline>
           <LocalizedText style={[s.title, { color: t.textPrimary }]}>Developer Settings</LocalizedText>
-          <LocalizedText style={[s.subtitle, { color: t.textSecondary }]}>
-            Advanced Android controls for screen wake, touch feedback, coordinate overlays, and animation duration tuning.
-          </LocalizedText>
         </View>
 
         <Pressable
@@ -301,7 +287,6 @@ export function DevSettingsView() {
               </IconContainer>
               <View style={s.rowCopy}>
                 <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>App Language</LocalizedText>
-                <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>Automatic device language or manual ML Kit language selection</LocalizedText>
               </View>
               <ChevronRight size={18} color={t.accentCyan} />
             </View>
@@ -325,14 +310,9 @@ export function DevSettingsView() {
                   <ShieldCheck size={22} color={t.accentCyan} />
                 </IconContainer>
                 <View style={s.rowCopy}>
-                  <View style={s.badgeRow}>
-                    <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>App Shield & Auto-Off</LocalizedText>
-                    <Pill label="SECURITY" tone="success" />
-                  </View>
-                  <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                    Auto-turn OFF Developer Options & ADB while protected banking/game apps are open.
-                  </LocalizedText>
+                  <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>App Shield & Auto-Off</LocalizedText>
                 </View>
+                <CompactBadge label="SECURITY" color={t.success} />
                 <ChevronRight size={18} color={t.accentCyan} />
               </View>
             </Card>
@@ -350,9 +330,6 @@ export function DevSettingsView() {
                 </IconContainer>
                 <View style={s.rowCopy}>
                   <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Home Screen Widgets</LocalizedText>
-                  <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                    Pin 3x1 multi-toggles or 1x1 standalone switches to your Android home launcher.
-                  </LocalizedText>
                 </View>
                 <ChevronRight size={18} color={t.accentCyan} />
               </View>
@@ -370,17 +347,12 @@ export function DevSettingsView() {
                   <BellRing size={22} color={t.accentCyan} />
                 </IconContainer>
                 <View style={s.rowCopy}>
-                  <View style={s.badgeRow}>
-                    <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Persistent Notification Shade</LocalizedText>
-                    <Pill
-                      label={notifMode === 'always' ? 'ALWAYS ON' : notifMode === 'when_dev_active' ? 'DYNAMIC' : 'DISABLED'}
-                      tone={notifMode === 'disabled' ? 'neutral' : 'primary'}
-                    />
-                  </View>
-                  <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                    Configure status bar quick controls and notification behavior modes.
-                  </LocalizedText>
+                  <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Persistent Notification Shade</LocalizedText>
                 </View>
+                <CompactBadge
+                  label={notifMode === 'always' ? 'ON' : notifMode === 'when_dev_active' ? 'AUTO' : 'OFF'}
+                  color={notifMode === 'disabled' ? t.textMuted : t.primary}
+                />
                 <ChevronRight size={18} color={t.accentCyan} />
               </View>
             </Card>
@@ -397,17 +369,12 @@ export function DevSettingsView() {
                   <Shield size={22} color={t.accentCyan} />
                 </IconContainer>
                 <View style={s.rowCopy}>
-                  <View style={s.badgeRow}>
-                    <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Security & Privacy</LocalizedText>
-                    <Pill
-                      label={permission ? 'GRANTED' : shizukuStatus === 'authorized' ? 'SHIZUKU' : 'PENDING'}
-                      tone={permission || shizukuStatus === 'authorized' ? 'success' : 'warning'}
-                    />
-                  </View>
-                  <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                    Permissions status, WRITE_SECURE_SETTINGS, zero telemetry guarantee, and revoking guide.
-                  </LocalizedText>
+                  <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Security & Privacy</LocalizedText>
                 </View>
+                <CompactBadge
+                  label={permission ? 'GRANTED' : shizukuStatus === 'authorized' ? 'SHIZUKU' : 'PENDING'}
+                  color={permission || shizukuStatus === 'authorized' ? t.success : t.warning}
+                />
                 <ChevronRight size={18} color={t.accentCyan} />
               </View>
             </Card>
@@ -432,7 +399,6 @@ export function DevSettingsView() {
                   </IconContainer>
                   <View style={s.rowCopy}>
                     <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>{item.title}</LocalizedText>
-                    <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>{item.desc}</LocalizedText>
                   </View>
                   {isChanging ? (
                     <ActivityIndicator size="small" color={t.accentCyan} />
@@ -462,11 +428,8 @@ export function DevSettingsView() {
             </IconContainer>
             <View style={s.rowCopy}>
               <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Animation Duration Scale</LocalizedText>
-              <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                Adjust Window, Transition, and Animator duration scales simultaneously.
-              </LocalizedText>
             </View>
-            <Pill label={currentScaleObj.short} tone="primary" />
+            <CompactBadge label={currentScaleObj.short} color={t.primary} />
           </View>
 
           {/* Dropdown Selector */}
@@ -524,9 +487,6 @@ export function DevSettingsView() {
             </IconContainer>
             <View style={s.rowCopy}>
               <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Snappy Speed Booster</LocalizedText>
-              <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                Instantly tunes window, transition, and animator durations to 0.5x for ultra-responsive animations.
-              </LocalizedText>
             </View>
           </View>
           <Button
@@ -551,9 +511,6 @@ export function DevSettingsView() {
             </IconContainer>
             <View style={s.rowCopy}>
               <LocalizedText style={[s.rowTitle, { color: t.textPrimary }]}>Instant Cleanup</LocalizedText>
-              <LocalizedText style={[s.rowDesc, { color: t.textSecondary }]}>
-                Restore all animation scales to 1.0x default, disable touch & pointer overlays, and wipe saved tweaks.
-              </LocalizedText>
             </View>
           </View>
           <Button
@@ -566,6 +523,14 @@ export function DevSettingsView() {
           />
         </Card>
       </ScrollView>
+    </View>
+  );
+}
+
+function CompactBadge({ label, color }: { label: string; color: string }) {
+  return (
+    <View style={[s.compactBadge, { borderColor: `${color}50`, backgroundColor: `${color}12` }]}>
+      <LocalizedText style={[s.compactBadgeText, { color }]}>{label}</LocalizedText>
     </View>
   );
 }
@@ -589,11 +554,6 @@ const s = StyleSheet.create({
     fontSize: 26,
     letterSpacing: -0.5,
   },
-  subtitle: {
-    fontFamily: fonts.body,
-    fontSize: 13.5,
-    lineHeight: 19,
-  },
   sectionHeader: {
     marginTop: space.xs,
   },
@@ -614,20 +574,21 @@ const s = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
   rowTitle: {
     fontFamily: fonts.heading,
     fontSize: 15,
   },
-  rowDesc: {
-    fontFamily: fonts.body,
-    fontSize: 12.5,
-    lineHeight: 17,
+  compactBadge: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderRadius: radius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  compactBadgeText: {
+    fontFamily: fonts.monoBold,
+    fontSize: 8.5,
+    letterSpacing: 0.3,
   },
   dropdownWrap: {
     borderTopWidth: 1,

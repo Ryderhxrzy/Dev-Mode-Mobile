@@ -33,8 +33,9 @@ object DevToggleBridgeServer {
     const val PORT = 52882
     private const val KEY_KEEP_WIRELESS_ON = "keep_wireless_on"
     private const val KEY_WIRELESS_WANTED = "wireless_wanted"
-    private const val KEY_WEB_REMOTE_ENABLED = "web_remote_enabled"
-    private const val KEY_AUTO_WIRELESS_CONNECT = "auto_wireless_connect"
+    // Web Remote Dashboard disabled.
+    // private const val KEY_WEB_REMOTE_ENABLED = "web_remote_enabled"
+    // Web Remote Dashboard disabled: private const val KEY_AUTO_WIRELESS_CONNECT = "auto_wireless_connect"
     private val isRunning = AtomicBoolean(false)
     private var serverSocket: ServerSocket? = null
     private var udpSocket: DatagramSocket? = null
@@ -48,6 +49,7 @@ object DevToggleBridgeServer {
         // Always ensure ContentObserver runs so local widgets stay in sync with settings
         ensureSettingsObserver(context)
 
+        /* Web Remote Dashboard disabled. Keep only the local settings observer above.
         if (!isWebRemoteEnabled(context)) return
         if (isRunning.get()) return
         isRunning.set(true)
@@ -100,6 +102,7 @@ object DevToggleBridgeServer {
 
         // 4. Register real-time ContentObserver for global settings
         ensureSettingsObserver(context)
+        */
     }
 
     private fun prefs(context: Context) = context.getSharedPreferences("devtoggle_local_prefs", Context.MODE_PRIVATE)
@@ -110,22 +113,13 @@ object DevToggleBridgeServer {
         prefs(context).edit().putBoolean(KEY_KEEP_WIRELESS_ON, enabled).apply()
     }
 
-    /** User preference: enable web remote control bridge (port 52882) */
-    fun isWebRemoteEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_WEB_REMOTE_ENABLED, true)
-    fun setWebRemoteEnabled(context: Context, enabled: Boolean) {
-        prefs(context).edit().putBoolean(KEY_WEB_REMOTE_ENABLED, enabled).apply()
-        if (enabled) {
-            start(context)
-        } else {
-            stop()
-        }
-    }
+    // Web Remote Dashboard disabled.
+    // fun isWebRemoteEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_WEB_REMOTE_ENABLED, false)
+    // fun setWebRemoteEnabled(context: Context, enabled: Boolean) { ... }
 
-    /** User preference: auto wireless ADB discovery and reconnect */
-    fun isAutoWirelessConnect(context: Context): Boolean = prefs(context).getBoolean(KEY_AUTO_WIRELESS_CONNECT, true)
-    fun setAutoWirelessConnect(context: Context, enabled: Boolean) {
-        prefs(context).edit().putBoolean(KEY_AUTO_WIRELESS_CONNECT, enabled).apply()
-    }
+    // Web Remote Dashboard disabled.
+    // fun isAutoWirelessConnect(context: Context): Boolean = prefs(context).getBoolean(KEY_AUTO_WIRELESS_CONNECT, false)
+    // fun setAutoWirelessConnect(context: Context, enabled: Boolean) { ... }
 
     private fun isWifiConnected(context: Context): Boolean = try {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
